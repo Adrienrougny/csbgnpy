@@ -1,0 +1,61 @@
+<?xml version="1.0" encoding="UTF-8"?><sbgn xmlns="http://sbgn.org/libsbgn/0.2">
+    <map language="process description">
+        <glyph id="glyph0" class="macromolecule" orientation="horizontal">
+            <label text="E"/>
+            <bbox x="0.0" y="0.0" w="108.0" h="60.0"/>
+        </glyph>
+        <glyph id="glyph1" class="macromolecule" orientation="horizontal">
+            <label text="A"/>
+            <bbox x="0.0" y="0.0" w="108.0" h="60.0"/>
+        </glyph>
+        <glyph id="glyph2" class="macromolecule" orientation="horizontal">
+            <label text="C"/>
+            <bbox x="0.0" y="0.0" w="108.0" h="60.0"/>
+        </glyph>
+        <glyph id="glyph3" class="macromolecule" orientation="horizontal">
+            <label text="D"/>
+            <bbox x="0.0" y="0.0" w="108.0" h="60.0"/>
+        </glyph>
+        <glyph id="glyph4" class="macromolecule" orientation="horizontal">
+            <label text="B"/>
+            <bbox x="0.0" y="0.0" w="108.0" h="60.0"/>
+        </glyph>
+        <glyph id="glyph5" class="or" orientation="horizontal">
+            <bbox x="0.0" y="0.0" w="20.0" h="20.0"/>
+        </glyph>
+        <glyph id="glyph6" class="and" orientation="horizontal">
+            <bbox x="0.0" y="0.0" w="20.0" h="20.0"/>
+        </glyph>
+        <glyph id="glyph7" class="process" orientation="horizontal">
+            <bbox x="0.0" y="0.0" w="24.0" h="24.0"/>
+        </glyph>
+        <arc source="glyph0" target="glyph5" class="logic arc" id="arc3">
+            <start x="0.0" y="0.0"/>
+            <end x="0.0" y="0.0"/>
+        </arc>
+        <arc source="glyph3" target="glyph6" class="logic arc" id="arc2">
+            <start x="0.0" y="0.0"/>
+            <end x="0.0" y="0.0"/>
+        </arc>
+        <arc source="glyph6" target="glyph5" class="logic arc" id="arc0">
+            <start x="0.0" y="0.0"/>
+            <end x="0.0" y="0.0"/>
+        </arc>
+        <arc source="glyph2" target="glyph6" class="logic arc" id="arc1">
+            <start x="0.0" y="0.0"/>
+            <end x="0.0" y="0.0"/>
+        </arc>
+        <arc source="glyph1" target="glyph7" class="consumption" id="arc4">
+            <start x="0.0" y="0.0"/>
+            <end x="0.0" y="0.0"/>
+        </arc>
+        <arc source="glyph7" target="glyph4" class="production" id="arc5">
+            <start x="0.0" y="0.0"/>
+            <end x="0.0" y="0.0"/>
+        </arc>
+        <arc source="glyph5" target="glyph7" class="stimulation" id="arc6">
+            <start x="0.0" y="0.0"/>
+            <end x="0.0" y="0.0"/>
+        </arc>
+    </map>
+</sbgn>
