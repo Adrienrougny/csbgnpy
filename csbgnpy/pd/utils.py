@@ -430,3 +430,37 @@ def write_SBGNML(net, filename, renew_ids = True):
     ofile = open(filename, "w")
     ofile.write(s)
     ofile.close()
+
+def check_same_ids(net):
+    ids = set()
+    for entity in net.entities:
+        if entity.id in ids:
+            return True
+        else:
+            ids.add(entity.id)
+        for subentity in entity.components: #should be made recursive
+            if subentity.id in ids:
+                return True
+            else:
+                ids.add(subentity.id)
+        for subentity in entity.components: #should be made recursive
+            if subentity.id in ids:
+                return True
+            else:
+                ids.add(subentity.id)
+        for subentity in entity.components: #should be made recursive
+            if subentity.id in ids:
+                return True
+            else:
+                ids.add(subentity.id)
+    for process in net.processes:
+        if process.id in ids:
+            return True
+        else:
+            ids.add(process.id)
+    for compartment in net.compartments:
+        if compartment.id in ids:
+            return True
+        else:
+            ids.add(compartment.id)
+    return False
