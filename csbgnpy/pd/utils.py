@@ -390,14 +390,15 @@ def _renew_ids(net):
     for i, op in enumerate(net.logical_operator_nodes):
         op.id = "op_{0}".format(i)
 
-def write_SBGNML(net, filename):
+def write_SBGNML(net, filename, renew_ids = True):
     sbgn = libsbgn.sbgn()
     sbgnmap = libsbgn.map()
     language = libsbgn.Language.PD
     sbgnmap.set_language(language)
     sbgn.set_map(sbgnmap);
     dids = {}
-    csbgnpy.pd.utils._renew_ids(net)
+    if renew_ids:
+        csbgnpy.pd.utils._renew_ids(net)
     for entity in net.entities:
         g = csbgnpy.pd.utils._make_glyph_from_entity(entity)
         sbgnmap.add_glyph(g)
