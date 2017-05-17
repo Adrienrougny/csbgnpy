@@ -1,7 +1,6 @@
 from math import atan2
 
 import libsbgnpy.libsbgn as libsbgn
-import csbgnpy.pd
 
 def get_ordered_list_of_state_variables(glyph):
     l = []
@@ -48,7 +47,7 @@ def get_object_by_id(coll, id):
     return None
 
 
-def read_sbgnml(*filenames):
+def read_SBGNML(*filenames):
     net = csbgnpy.pd.Network()
     compartments = set()
     entities = set()
@@ -60,23 +59,23 @@ def read_sbgnml(*filenames):
         sbgnmap = sbgn.get_map()
         for glyph in sbgnmap.get_glyph(): # making compartments
             if glyph.get_class().name == "COMPARTMENT":
-                comp = _make_compartment_from_glyph(glyph)
+                comp = csbgnpy.pd.utils._make_compartment_from_glyph(glyph)
                 compartments.add(comp)
         for glyph in sbgnmap.get_glyph(): # making entities
             if glyph.get_class().name in [attribute.name for attribute in list(csbgnpy.pd.EntityClazz)]:
-                entity = _make_entity_from_glyph(glyph, sbgnmap, compartments)
+                entity = csbgnpy.pd.utils._make_entity_from_glyph(glyph, sbgnmap, compartments)
                 entities.add(entity)
         for glyph in sbgnmap.get_glyph(): # making processes
             if glyph.get_class().name in [attribute.name for attribute in list(csbgnpy.pd.ProcessClazz)]:
-                proc = _make_process_from_glyph(glyph, sbgnmap, entities, compartments)
+                proc = csbgnpy.pd.utils._make_process_from_glyph(glyph, sbgnmap, entities, compartments)
                 processes.add(proc)
         for glyph in sbgnmap.get_glyph(): # making logical operator nodes
             if glyph.get_class().name in [attribute.name for attribute in list(csbgnpy.pd.LogicalOperatorClazz)]:
-                op  = _make_logical_operator_node_from_glyph(glyph, sbgnmap, entities, compartments, logical_operator_nodes)
+                op  = csbgnpy.pd.utils._make_logical_operator_node_from_glyph(glyph, sbgnmap, entities, compartments, logical_operator_nodes)
                 logical_operator_nodes.add(op)
         for arc in sbgnmap.get_arc(): # making modulations
             if arc.get_class().name in [attribute.name for attribute in list(csbgnpy.pd.ModulationClazz)]:
-                mod = _make_modulation_from_arc(arc, sbgnmap, entities, compartments, logical_operator_nodes, processes)
+                mod = csbgnpy.pd.utils._make_modulation_from_arc(arc, sbgnmap, entities, compartments, logical_operator_nodes, processes)
                 modulations.add(mod)
     for entity in entities:
         net.add_entity(entity)
@@ -129,20 +128,20 @@ def _make_entity_from_glyph(glyph, sbgnmap, compartments):
         entity.label = glyph.get_label().get_text()
     comp_id = glyph.get_compartmentRef()
     if comp_id is not None:
-        comp_glyph = get_glyph_by_id(sbgnmap, comp_id)
-        comp = _make_compartment_from_glyph(comp_glyph)
-        existent_comp = get_object_from_collection(comp, compartments)
+        comp_glyph = csbgnpy.pd.utils.get_glyph_by_id(sbgnmap, comp_id)
+        comp = csbgnpy.pd.utils._make_compartment_from_glyph(comp_glyph)
+        existent_comp = csbgnpy.pd.utils.get_object_from_collection(comp, compartments)
         entity.compartment = existent_comp
     for subglyph in glyph.get_glyph():
         if subglyph.get_class().name in [attribute.name for attribute in list(csbgnpy.pd.EntityClazz)]:
-            subentity = _make_subentity_from_glyph(subglyph, sbgnmap)
+            subentity = csbgnpy.pd.utils._make_subentity_from_glyph(subglyph, sbgnmap)
             entity.add_component(subentity)
         elif subglyph.get_class().name == "UNIT_OF_INFORMATION":
-            ui = _make_ui_from_glyph(subglyph)
+            ui = csbgnpy.pd.utils._make_ui_from_glyph(subglyph)
             entity.add_unit_of_information(ui)
     i = 1
-    for subglyph in get_ordered_list_of_state_variables(glyph):
-        sv = _make_sv_from_glyph(subglyph, i)
+    for subglyph in csbgnpy.pd.utils.get_ordered_list_of_state_variables(glyph):
+        sv = csbgnpy.pd.utils._make_sv_from_glyph(subglyph, i)
         if isinstance(sv.variable, csbgnpy.utils.Undefined):
             i += 1
         entity.add_state_variable(sv)
@@ -156,14 +155,14 @@ def _make_subentity_from_glyph(glyph, sbgnmap):
         subentity.label = glyph.get_label().get_text()
     for subglyph in glyph.get_glyph():
         if subglyph.get_class().name in [attribute.name for attribute in list(csbgnpy.pd.EntityClazz)]:
-            subsubentity = _make_subentity_from_glyph(subglyph, sbgnmap)
+            subsubentity = csbgnpy.pd.utils._make_subentity_from_glyph(subglyph, sbgnmap)
             subentity.add_component(subsubentity)
         elif subglyph.get_class().name == "UNIT_OF_INFORMATION":
-            ui = _make_ui_from_glyph(subglyph)
+            ui = csbgnpy.pd.utils._make_ui_from_glyph(subglyph)
             subentity.add_unit_of_information(ui)
     i = 1
-    for subglyph in get_ordered_list_of_state_variables(glyph):
-        sv = _make_sv_from_glyph(subglyph, i)
+    for subglyph in csbgnpy.pd.utils.get_ordered_list_of_state_variables(glyph):
+        sv = csbgnpy.pd.utils._make_sv_from_glyph(subglyph, i)
         if isinstance(sv.variable, csbgnpy.utils.Undefined):
             i += 1
         subentity.add_state_variable(sv)
@@ -175,14 +174,14 @@ def _make_logical_operator_node_from_glyph(glyph, sbgnmap, entities, compartment
     for arc in sbgnmap.get_arc():
         if arc.get_class().name == "LOGIC_ARC" and arc.get_target() in [port.get_id() for port in glyph.get_port()]:
             source_id = arc.get_source()
-            source_glyph = get_glyph_by_id_or_port_id(sbgnmap, source_id)
+            source_glyph = csbgnpy.pd.utils.get_glyph_by_id_or_port_id(sbgnmap, source_id)
             if source_glyph.get_class().name in [attribute.name for attribute in list(csbgnpy.pd.EntityClazz)]:
-                source = _make_entity_from_glyph(source_glyph, sbgnmap, compartments)
-                existent_source = get_object_from_collection(source, entities)
+                source = csbgnpy.pd.utils._make_entity_from_glyph(source_glyph, sbgnmap, compartments)
+                existent_source = csbgnpy.pd.utils.get_object_from_collection(source, entities)
                 op.add_child(existent_source)
             elif source_glyph.get_class().name in [attribute.name for attribute in list(csbgnpy.pd.LogicalOperatorClazz)]:
-                source = _make_logical_operator_node_from_glyph(source_glyph, sbgnmap, entities, compartments, logical_operator_nodes)
-                existent_source = get_object_from_collection(source, logical_operator_nodes)
+                source = csbgnpy.pd.utils._make_logical_operator_node_from_glyph(source_glyph, sbgnmap, entities, compartments, logical_operator_nodes)
+                existent_source = csbgnpy.pd.utils.get_object_from_collection(source, logical_operator_nodes)
                 if existent_source is not None:
                     op.add_child(existent_source)
                 else:
@@ -197,33 +196,33 @@ def _make_process_from_glyph(glyph, sbgnmap, entities, compartments):
     if glyph.get_label() is not None:
         proc.label = glyph.get_label().get_text()
     for arc in sbgnmap.get_arc():
-        if arc.get_class().name == "CONSUMPTION" and get_glyph_by_id_or_port_id(sbgnmap, arc.get_target()) == glyph:
+        if arc.get_class().name == "CONSUMPTION" and csbgnpy.pd.utils.get_glyph_by_id_or_port_id(sbgnmap, arc.get_target()) == glyph:
             source_id = arc.get_source()
-            source_glyph = get_glyph_by_id_or_port_id(sbgnmap, source_id)
-            source = _make_entity_from_glyph(source_glyph, sbgnmap, compartments)
-            existent_source = get_object_from_collection(source, entities)
+            source_glyph = csbgnpy.pd.utils.get_glyph_by_id_or_port_id(sbgnmap, source_id)
+            source = csbgnpy.pd.utils._make_entity_from_glyph(source_glyph, sbgnmap, compartments)
+            existent_source = csbgnpy.pd.utils.get_object_from_collection(source, entities)
             proc.add_reactant(existent_source)
-        elif arc.get_class().name == "PRODUCTION" and get_glyph_by_id_or_port_id(sbgnmap, arc.get_source()) == glyph:
+        elif arc.get_class().name == "PRODUCTION" and csbgnpy.pd.utils.get_glyph_by_id_or_port_id(sbgnmap, arc.get_source()) == glyph:
             target_id = arc.get_target()
-            target_glyph = get_glyph_by_id_or_port_id(sbgnmap, target_id)
-            target = _make_entity_from_glyph(target_glyph, sbgnmap, compartments)
-            existent_target = get_object_from_collection(target, entities)
+            target_glyph = csbgnpy.pd.utils.get_glyph_by_id_or_port_id(sbgnmap, target_id)
+            target = csbgnpy.pd.utils._make_entity_from_glyph(target_glyph, sbgnmap, compartments)
+            existent_target = csbgnpy.pd.utils.get_object_from_collection(target, entities)
             proc.add_product(existent_target)
     return proc
 
 def _make_modulation_from_arc(arc, sbgnmap, entities, compartments, logical_operator_nodes, processes):
     source_id = arc.get_source()
-    source_glyph = get_glyph_by_id_or_port_id(sbgnmap, source_id)
+    source_glyph = csbgnpy.pd.utils.get_glyph_by_id_or_port_id(sbgnmap, source_id)
     if source_glyph.get_class().name in [attribute.name for attribute in list(csbgnpy.pd.EntityClazz)]:
-        source = _make_entity_from_glyph(source_glyph, sbgnmap, compartments)
-        existent_source = get_object_from_collection(source, entities)
+        source = csbgnpy.pd.utils._make_entity_from_glyph(source_glyph, sbgnmap, compartments)
+        existent_source = csbgnpy.pd.utils.get_object_from_collection(source, entities)
     elif source_glyph.get_class().name in [attribute.name for attribute in list(csbgnpy.pd.LogicalOperatorClazz)]:
-        source = _make_logical_operator_node_from_glyph(source_glyph, sbgnmap, entities, compartments, logical_operator_nodes)
-        existent_source = get_object_from_collection(source, logical_operator_nodes)
+        source = csbgnpy.pd.utils._make_logical_operator_node_from_glyph(source_glyph, sbgnmap, entities, compartments, logical_operator_nodes)
+        existent_source = csbgnpy.pd.utils.get_object_from_collection(source, logical_operator_nodes)
     target_id = arc.get_target()
-    target_glyph = get_glyph_by_id_or_port_id(sbgnmap, target_id)
-    target = _make_process_from_glyph(target_glyph, sbgnmap, entities, compartments)
-    existent_target = get_object_from_collection(target, processes)
+    target_glyph = csbgnpy.pd.utils.get_glyph_by_id_or_port_id(sbgnmap, target_id)
+    target = csbgnpy.pd.utils._make_process_from_glyph(target_glyph, sbgnmap, entities, compartments)
+    existent_target = csbgnpy.pd.utils.get_object_from_collection(target, processes)
     clazz = csbgnpy.pd.ModulationClazz[arc.get_class().name]
     modulation = csbgnpy.pd.Modulation(clazz, existent_source, existent_target)
     return modulation
@@ -240,7 +239,7 @@ def _make_glyph_from_entity(entity):
             label.set_text("")
         g.set_label(label)
         for subentity in entity.components:
-            gc = _make_glyph_from_subentity(subentity)
+            gc = csbgnpy.pd.utils._make_glyph_from_subentity(subentity)
             g.add_glyph(gc)
         for i, sv in enumerate(entity.svs):
             gsv = libsbgn.glyph()
@@ -256,16 +255,16 @@ def _make_glyph_from_entity(entity):
             gui.set_class(libsbgn.GlyphClass["UNIT_OF_INFORMATION"])
             label = libsbgn.label()
             if ui.prefix is not None:
-                label.set_text(ui.prefix + ':' + ui.label)
+                label.set_text(ui.prefix() + ':' + ui.label)
             else:
                 label.set_text(ui.label)
             gui.set_label(label)
             bbox = libsbgn.bbox(0, 0, 0, 0)
-            gui.set_bbox(bbox)
+            gui.set_box(bbox)
             g.add_glyph(gui)
     elif isinstance(entity, csbgnpy.pd.EmptySet):
         g.set_id("emptyset")
-        g.set_class(libsbgn.GlyphClass.SOURCE_AND_SINK)
+        g.set_class(libsbgn.GlyphClass.SOURCE)
     bbox = libsbgn.bbox(0, 0, 0, 0)
     g.set_bbox(bbox)
     return g
@@ -288,7 +287,7 @@ def _make_glyph_from_subentity(subentity):
     label.set_text(subentity.label)
     g.set_label(label)
     for subsubentity in subentity.components:
-        gc = _make_glyph_from_subentity(subsubentity)
+        gc = utils._make_glyph_from_subentity(subsubentity)
         g.add_glyph(gc)
     for i, sv in enumerate(subentity.svs):
         gsv = libsbgn.glyph()
@@ -318,13 +317,7 @@ def _make_glyph_from_process(process):
     p = libsbgn.glyph()
     p.set_class(libsbgn.GlyphClass[process.clazz.name])
     p.set_id(process.id)
-    label = libsbgn.label()
-    if process.has_label():
-        label.set_text(process.label)
-    else:
-        label.set_text("")
-    p.set_label(label)
-    bbox = libsbgn.bbox(0, 0, 0, 0)
+    bbox = libsbgn.bbox(0, 0, 0, 0) 
     p.set_bbox(bbox)
     # port1 = libsbgn.port()
     # port1.set_id("{0}.1".format(p.get_id()))
@@ -347,7 +340,7 @@ def _make_arcs_from_process(process, dids):
         arc.set_source(dids[reactant])
         # arc.set_target("{0}.1".format(process.getId()))
         arc.set_target(dids[process])
-        arc.set_id("cons_{0}_{1}".format(dids[reactant], dids[process]))
+        arc.set_id("arc_{0}_{1}".format(dids[reactant], dids[process]))
         arc.set_start(start)
         arc.set_end(end)
         arc.set_class(libsbgn.ArcClass.CONSUMPTION)
@@ -359,7 +352,7 @@ def _make_arcs_from_process(process, dids):
         # arc.set_source("{0}.2".format(process.getId()))
         arc.set_source(dids[process])
         arc.set_target(dids[product])
-        arc.set_id("prod_{0}_{1}".format(dids[process], dids[product]))
+        arc.set_id("arc_{0}_{1}".format(dids[product], dids[process]))
         arc.set_start(start)
         arc.set_end(end)
         arc.set_class(libsbgn.ArcClass.PRODUCTION)
@@ -372,7 +365,7 @@ def _make_arc_from_modulation(modulation, dids):
     end = libsbgn.endType(0, 0)
     arc.set_source(dids[modulation.source])
     arc.set_target(dids[modulation.target])
-    arc.set_id("mod_{0}_{1}".format(dids[modulation.source], dids[modulation.target]))
+    arc.set_id("arc_{0}_{1}".format(dids[modulation.source], dids[modulation.target]))
     arc.set_start(start)
     arc.set_end(end)
     arc.set_class(libsbgn.ArcClass[modulation.clazz.name])
@@ -386,7 +379,7 @@ def _make_arcs_from_logical_operator_node(op, dids):
         end = libsbgn.endType(0, 0)
         arc.set_source(dids[child])
         arc.set_target(dids[op])
-        arc.set_id("log_{0}_{1}".format(dids[child], dids[op]))
+        arc.set_id("arc_{0}_{1}".format(dids[child], dids[op]))
         arc.set_start(start)
         arc.set_end(end)
         arc.set_class(libsbgn.ArcClass["LOGIC_ARC"])
@@ -410,7 +403,7 @@ def _renew_ids(net):
     for i, op in enumerate(net.logical_operator_nodes):
         op.id = "op_{0}".format(i)
 
-def write_sbgnml(net, filename, renew_ids = True):
+def write_SBGNML(net, filename, renew_ids = True):
     sbgn = libsbgn.sbgn()
     sbgnmap = libsbgn.map()
     language = libsbgn.Language.PD
@@ -418,27 +411,27 @@ def write_sbgnml(net, filename, renew_ids = True):
     sbgn.set_map(sbgnmap);
     dids = {}
     if renew_ids:
-        _renew_ids(net)
+        csbgnpy.pd.utils._renew_ids(net)
     for entity in net.entities:
-        g = _make_glyph_from_entity(entity)
+        g = csbgnpy.pd.utils._make_glyph_from_entity(entity)
         sbgnmap.add_glyph(g)
         dids[entity] = g.get_id()
     for op in net.logical_operator_nodes:
-        g = _make_glyph_from_logical_operator_node(op)
+        g = utils._make_glyph_from_logical_operaor_node(op)
         sbgnmap.add_glyph(g)
         dids[op] = g.get_id()
-        arcs = _make_arcs_from_logical_operator_node(op, dids)
+        arcs = utils._make_arcs_from_logical_operator_node(op, dids)
         for arc in arcs:
             sbgnmap.add_arc(arc)
     for process in net.processes:
-        p = _make_glyph_from_process(process)
+        p = csbgnpy.pd.utils._make_glyph_from_process(process)
         sbgnmap.add_glyph(p)
         dids[process] = p.get_id()
-        arcs = _make_arcs_from_process(process, dids)
+        arcs = csbgnpy.pd.utils._make_arcs_from_process(process, dids)
         for arc in arcs:
             sbgnmap.add_arc(arc)
     for modulation in net.modulations:
-        arc = _make_arc_from_modulation(modulation, dids)
+        arc = csbgnpy.pd.utils._make_arc_from_modulation(modulation, dids)
         sbgnmap.add_arc(arc)
     sbgn.write_file(filename)
     ifile = open(filename)
@@ -451,9 +444,42 @@ def write_sbgnml(net, filename, renew_ids = True):
     ofile.write(s)
     ofile.close()
 
-ns = {"sbml":"http://www.sbml.org/sbml/level2/version4", "cd":"http://www.sbml.org/2001/ns/celldesigner"}
+def check_same_ids(net):
+    ids = set()
+    for entity in net.entities:
+        if entity.id in ids:
+            return True
+        else:
+            ids.add(entity.id)
+        for subentity in entity.components: #should be made recursive
+            if subentity.id in ids:
+                return True
+            else:
+                ids.add(subentity.id)
+        for subentity in entity.components: #should be made recursive
+            if subentity.id in ids:
+                return True
+            else:
+                ids.add(subentity.id)
+        for subentity in entity.components: #should be made recursive
+            if subentity.id in ids:
+                return True
+            else:
+                ids.add(subentity.id)
+    for process in net.processes:
+        if process.id in ids:
+            return True
+        else:
+            ids.add(process.id)
+    for compartment in net.compartments:
+        if compartment.id in ids:
+            return True
+        else:
+            ids.add(compartment.id)
+    return False
+
 dic_cd2sbgnml = {
-    "PROTEIN": "macromolecule",
+    "PROTEIN": "macromolecule", #csbgnpy.pd.EntityClazz.MACROMOLECULE,
     "GENE": "macromolecule",
     "RNA": "macromolecule",
     "ANTISENSE_RNA": "macromolecule",
@@ -462,80 +488,50 @@ dic_cd2sbgnml = {
     "DRUG": "unspecified entity",
     "UNKNOWN": "unspecified entity",
     "COMPLEX": "complex",
-    "DEGRADED": "source and sink",
-    "PHENOTYPE": "phenotype",
+    "DEGRADED": "empty set",
     "phosphorylated": "P",
-    "acetylated": "Ac",
-    "ubiquitinated": "Ub",
-    "methylated": "Me",
-    "hydroxylated": "OH",
-    "glycosylated": "G",
-    "myristoylated": "My",
-    "palmytoylated": "Pa",
-    "prenylated": "Pr",
-    "protonated": "H",
-    "sulfated": "S",
-    "unknown": "",
-    "don't care": "?",
     "STATE_TRANSITION": "process",
-    "TRANSLATION": "process",
-    "TRANSCRIPTION": "process",
-    "KNOWN_TRANSITION_OMITTED": "omitted process",
-    "UNKNOWN_TRANSITION": "uncertain process",
-    "TRANSPORT": "process",
-    "HETERODIMER_ASSOCIATION": "association",
-    "DISSOCIATION": "dissociation",
-    "TRUNCATION": "process",
-    "CATALYSIS": "catalysis",
-    "UNKNOWN_CATALYSIS": "catalysis",
-    "INHIBITION": "inhibition",
-    "UNKNOWN_INHIBITION": "inhibition",
-    "PHYSICAL_STIMULATION": "stimulation",
-    "POSITIVE_INFLUENCE": "stimulation",
-    "MODULATION": "modulation",
-    "TRIGGER": "necessary stimulation",
-    "AND": "and",
-    "OR": "or",
-    "NOT": "not"
+    "CATALYSIS": "catalysis"
 }
+
+
+ns = {"sbml":"http://www.sbml.org/sbml/level2/version4", "cd":"http://www.sbml.org/2001/ns/celldesigner"}
 
 def read_cd(*filenames):
     import xml.etree.ElementTree as ET
-
     net = csbgnpy.pd.Network()
-    compartments = []
-    entities = []
-    processes = []
-    modulations = []
-    logical_operator_nodes = []
+    compartments = set()
+    entities = set()
+    processes = set()
+    modulations = set()
+    logical_operator_nodes = set()
     for filename in filenames:
         tree = ET.parse(filename)
         root = tree.getroot()
         for cdcomp in root.findall(".//sbml:compartment", ns):
             comp = _make_compartment_from_cd(cdcomp)
-            compartments.append(comp)
+            compartments.add(comp)
         for cdspecies in root.findall(".//sbml:species", ns):
-            cd_class = cdspecies.find(".//cd:class", ns).text
-            if cd_class == "PHENOTYPE":
-                process = _make_phenotype_from_cd(cdspecies)
-                processes.append(process)
-            else:
-                entity = _make_entity_from_cd(cdspecies, compartments)
-                entities.append(entity)
+            entity = _make_entity_from_cd(cdspecies, compartments)
+            entities.add(entity)
+            if entity is None:
+                print(cdspecies.get("name"))
         for cdsubspecies in root.findall(".//cd:species", ns):
             subentity, eid = _make_subentity_from_cd(cdsubspecies)
             entity = get_object_by_id(entities, eid)
             entity.add_component(subentity)
         for cdproc in root.findall(".//sbml:reaction", ns):
-            process, mods, los = _make_process_and_modulations_and_los_from_cd(cdproc, entities)
-            processes.append(process)
-            modulations = modulations + mods
-            logical_operator_nodes = logical_operator_nodes + los
-    net.compartments = set(compartments)
-    net.entities = set(entities)
-    net.processes = set(processes)
-    net.modulations = set(modulations)
-    net.logical_operator_nodes = set(logical_operator_nodes)
+            process, mods = _make_process_and_modulations_from_cd(cdproc, entities)
+            processes.add(process)
+            modulations = modulations.union(mods)
+    print(compartments)
+    print(entities)
+    print(processes)
+    print(modulations)
+    net.compartments = compartments
+    net.entities = entities
+    net.processes = processes
+    net.modulations = modulations
     return net
 
 def _make_compartment_from_cd(cdcomp):
@@ -544,14 +540,6 @@ def _make_compartment_from_cd(cdcomp):
     comp.label = cdcomp.get("name")
     return comp
 
-def _make_phenotype_from_cd(cdspecies):
-    cd_class = cdspecies.find(".//cd:class", ns).text
-    process = csbgnpy.pd.Process()
-    process.id = cdspecies.get("id")
-    process.label = cdspecies.get("name")
-    process.clazz = csbgnpy.pd.ProcessClazz(dic_cd2sbgnml[cd_class])
-    return process
-
 def _make_entity_from_cd(cdspecies, compartments):
     # a faire : phenotype
     cd_class = cdspecies.find(".//cd:class", ns).text
@@ -559,16 +547,12 @@ def _make_entity_from_cd(cdspecies, compartments):
         entity = csbgnpy.pd.Entity()
         entity.id = cdspecies.get("id")
         entity.label = cdspecies.get("name")
-        entity.clazz = csbgnpy.pd.EntityClazz(dic_cd2sbgnml[cd_class])
+        entity.clazz = dic_cd2sbgnml[cd_class]
         if cd_class == "GENE":
-            ui = csbgnpy.pd.UnitOfInformation()
-            ui.prefix = "ct"
-            ui.label = "gene"
+            ui = csbgnpy.pd.UnitOfInformation("ct", "gene")
             entity.add_unit_of_information(ui)
         elif cd_class == "RNA" or cd_class == "ANTISENSE_RNA":
-            ui = csbgnpy.pd.UnitOfInformation()
-            ui.prefix = "mt"
-            ui.label = "rna"
+            ui = csbgnpy.pd.UnitOfInformation("mt", "rna")
             entity.add_unit_of_information(ui)
         entity.compartment = get_object_by_id(compartments, cdspecies.get("compartment"))
         for cdsv in cdspecies.findall(".//cd:modification", ns):
@@ -578,7 +562,7 @@ def _make_entity_from_cd(cdspecies, compartments):
             entity.add_state_variable(sv)
         return entity
     elif cd_class == "DEGRADED":
-        return csbgnpy.pd.EmptySet(cdspecies.get("id"))
+        return csbgnpy.pd.EmptySet()
 
 def _make_subentity_from_cd(cdsubspecies):
     # a faire : phenotype
@@ -588,13 +572,14 @@ def _make_subentity_from_cd(cdsubspecies):
         subentity = csbgnpy.pd.Entity()
         subentity.id = cdsubspecies.get("id")
         subentity.label = cdsubspecies.get("name")
-        subentity.clazz = csbgnpy.pd.SubEntityClazz(dic_cd2sbgnml[cd_class])
+        subentity.clazz = dic_cd2sbgnml[cd_class]
         if cd_class == "GENE":
             ui = csbgnpy.pd.UnitOfInformation("ct", "gene")
             subentity.add_unit_of_information(ui)
         elif cd_class == "RNA" or cd_class == "ANTISENSE_RNA":
             ui = csbgnpy.pd.UnitOfInformation("mt", "rna")
             subentity.add_unit_of_information(ui)
+        # subentity.compartment = get_object_by_id(compartments, cdspecies.get("compartment"))
         for cdsv in cdsubspecies.findall(".//cd:modification", ns):
             sv = csbgnpy.pd.StateVariable()
             sv.var = cdsv.get("residue")
@@ -602,91 +587,54 @@ def _make_subentity_from_cd(cdsubspecies):
             subentity.add_state_variable(sv)
         return subentity, eid
     elif cd_class == "DEGRADED":
-        return csbgnpy.pd.EmptySet(cdsubspecies.get("id")), eid
+        return csbgnpy.pd.EmptySet(), eid
 
-def _make_process_and_modulations_and_los_from_cd(cdproc, entities):
-    mods = []
-    los = []
+def _make_process_and_modulations_from_cd(cdproc, entities):
     process = csbgnpy.pd.Process()
     process.id = cdproc.get("id")
-    cd_class = cdproc.find(".//cd:reactionType", ns).text
-    process.clazz = csbgnpy.pd.ProcessClazz(dic_cd2sbgnml[cd_class])
-    if cd_class == "TRANSCRIPTION" or cd_class == "TRANSLATION":
-        es = csbgnpy.pd.EmptySet()
-        entities.append(es)
-        process.add_reactant(get_object_from_collection(es, entities))
-        modulation = csbgnpy.pd.Modulation()
-        modulation.clazz = csbgnpy.pd.ModulationClazz.NECESSARY_STIMULATION
-        cd_nstim = cdproc.find("./sbml:listOfReactants", ns).find("./sbml:speciesReference", ns)
-        nstim = get_object_by_id(entities, cd_nstim.get("species"))
-        modulation.source = nstim
-        modulation.target = process
-        mods.append(modulation)
-    else:
-        for cdreact in cdproc.find("./sbml:listOfReactants", ns).findall("./sbml:speciesReference", ns):
-            reac = get_object_by_id(entities, cdreact.get("species"))
-            process.add_reactant(reac)
+    process.clazz = dic_cd2sbgnml[cdproc.find(".//cd:reactionType", ns).text]
+    for cdreact in cdproc.find("./sbml:listOfReactants", ns).findall("./sbml:speciesReference", ns):
+        reac = get_object_by_id(entities, cdreact.get("species"))
+        process.add_reactant(reac)
     for cdprod in cdproc.find("./sbml:listOfProducts", ns).findall("./sbml:speciesReference", ns):
         prod = get_object_by_id(entities, cdprod.get("species"))
         process.add_product(prod)
-        to_skip = 0
+    mods = set()
     for cdmod in cdproc.findall(".//cd:modification", ns):
-        if to_skip > 0:
-            to_skip -= 1
-            continue
-        modulation, lo = _make_modulation_and_lo_from_cd(cdmod, process, entities)
-        mods.append(modulation)
-        if lo is not None:
-            to_skip = 2
-            los.append(lo)
-    return process, mods, los
+        modulation = _make_modualtion_from_cd(cdmod, process, entities)
+        mods.add(modulation)
+    return process, mods
 
-# problem with los, double the modulations
-def _make_modulation_and_lo_from_cd(cdmod, process, entities):
+def _make_modualtion_from_cd(cdmod, process, entities):
     modulation = csbgnpy.pd.Modulation()
-    lo = None
-    mtype = cdmod.get("type")
-    if mtype.startswith("BOOLEAN"):
-        lo = _make_lo_from_cd(cdmod, entities)
-        modulation.clazz = csbgnpy.pd.ModulationClazz(dic_cd2sbgnml[cdmod.get("modificationType")])
-        modulation.source = lo
-    else:
-        modulation.clazz = csbgnpy.pd.ModulationClazz(dic_cd2sbgnml[cdmod.get("type")])
-        modulation.source = get_object_by_id(entities, cdmod.get("modifiers"))
+    modulation.clazz = clazz = dic_cd2sbgnml[cdmod.get("type")]
+    modulation.source = get_object_by_id(entities, cdmod.get("modifiers"))
     modulation.target = process
-    return modulation, lo
+    return modulation
 
-def _make_lo_from_cd(cdmod, entities):
-    lo = csbgnpy.pd.LogicalOperatorNode()
-    chids = cdmod.get("modifiers").split(',')
-    lo.clazz = csbgnpy.pd.LogicalOperatorClazz(dic_cd2sbgnml[cdmod.get("type").split('_')[-1]])
-    for chid in chids:
-        entity = get_object_by_id(entities, chid)
-        lo.add_child(entity)
-    return lo
 
     #
     #     sbgn = libsbgn.parse(filename, silence=True)
     #     sbgnmap = sbgn.get_map()
     #     for glyph in sbgnmap.get_glyph(): # making compartments
     #         if glyph.get_class().name == "COMPARTMENT":
-    #             comp = csbgnpy.pd._make_compartment_from_glyph(glyph)
+    #             comp = csbgnpy.pd.utils._make_compartment_from_glyph(glyph)
     #             compartments.add(comp)
     #     for glyph in sbgnmap.get_glyph(): # making entities
     #         if glyph.get_class().name in [attribute.name for attribute in list(csbgnpy.pd.EntityClazz)]:
-    #             entity = csbgnpy.pd._make_entity_from_glyph(glyph, sbgnmap, compartments)
+    #             entity = csbgnpy.pd.utils._make_entity_from_glyph(glyph, sbgnmap, compartments)
     #             entities.add(entity)
     #     for glyph in sbgnmap.get_glyph(): # making processes
     #         if glyph.get_class().name in [attribute.name for attribute in list(csbgnpy.pd.ProcessClazz)]:
-    #             proc = csbgnpy.pd._make_process_from_glyph(glyph, sbgnmap, entities, compartments)
+    #             proc = csbgnpy.pd.utils._make_process_from_glyph(glyph, sbgnmap, entities, compartments)
     #             processes.add(proc)
     #     for glyph in sbgnmap.get_glyph(): # making logical operator nodes
     #         if glyph.get_class().name in [attribute.name for attribute in list(csbgnpy.pd.LogicalOperatorClazz)]:
-    #             op  = csbgnpy.pd._make_logical_operator_node_from_glyph(glyph, sbgnmap, entities, compartments, logical_operator_nodes)
+    #             op  = csbgnpy.pd.utils._make_logical_operator_node_from_glyph(glyph, sbgnmap, entities, compartments, logical_operator_nodes)
     #             logical_operator_nodes.add(op)
     #     for arc in sbgnmap.get_arc(): # making modulations
     #         if arc.get_class().name in [attribute.name for attribute in list(csbgnpy.pd.ModulationClazz)]:
-    #             mod = csbgnpy.pd._make_modulation_from_arc(arc, sbgnmap, entities, compartments, logical_operator_nodes, processes)
+    #             mod = csbgnpy.pd.utils._make_modulation_from_arc(arc, sbgnmap, entities, compartments, logical_operator_nodes, processes)
     #             modulations.add(mod)
     # for entity in entities:
     #     net.add_entity(entity)

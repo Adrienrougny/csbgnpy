@@ -12,3 +12,4 @@
 # from .UnitOfInformation import *
 # from .PDNetwork import *
 # from .Utils import *
+import csbgnpy.utils
