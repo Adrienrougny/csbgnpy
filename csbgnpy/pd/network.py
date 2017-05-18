@@ -8,7 +8,7 @@ from csbgnpy import *
 
 class Network:
 
-    def __init__(self, entities = None, processes = None, modulations = None, compartments = None, logical_operator_nodes = None):
+    def __init__(self, entities = None, processes = None, modulations = None, compartments = None, los = None):
         if entities is not None:
             self.entities = entities
         else:
@@ -25,10 +25,10 @@ class Network:
             self.compartments = compartments
         else:
             self.compartments = set()
-        if logical_operator_nodes is not None:
-            self.logical_operator_nodes = logical_operator_nodes
+        if los is not None:
+            self.los = los
         else:
-            self.logical_operator_nodes = set()
+            self.los = set()
 
     def add_process(self, proc):
         self.processes.add(proc)
@@ -42,8 +42,8 @@ class Network:
     def add_compartment(self, comp):
         self.compartments.add(comp)
 
-    def add_logical_operator_node(self, op):
-        self.logical_operator_nodes.add(op)
+    def add_lo(self, op):
+        self.lo(op)
 
     # def getEntity(self, entity):
     #     if isinstance(entity, Entity):
