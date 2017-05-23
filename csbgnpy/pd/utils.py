@@ -246,7 +246,7 @@ def _make_glyph_from_entity(entity):
             gsv = libsbgn.glyph()
             gsv.set_id(entity.id + "_sv_{0}".format(i))
             gsv.set_class(libsbgn.GlyphClass["STATE_VARIABLE"])
-            gsv.set_state(libsbgn.stateType(sv.variable, sv.value))
+            gsv.set_state(libsbgn.stateType(sv.val, sv.var))
             bbox = libsbgn.bbox(0, 0, 0, 0)
             gsv.set_bbox(bbox)
             g.add_glyph(gsv)
