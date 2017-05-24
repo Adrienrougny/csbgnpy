@@ -12,7 +12,7 @@ class Process(object):
 
 class NonStoichiometricProcess(Process):
     def __init__(self, label = None, id = None):
-        super().__init__(self, id)
+        super().__init__(id)
         self.label = label
 
     def __eq__(self, other):
@@ -27,7 +27,7 @@ class Phenotype(NonStoichiometricProcess):
 
 class StoichiometricProcess(Process):
     def __init__(self, reactants = None, products = None, id = None):
-        super().__init__(self, id)
+        super().__init__(id)
         if reactants is not None:
             self.reactants = reactants
         else:
@@ -51,17 +51,17 @@ class StoichiometricProcess(Process):
     def __hash__(self):
         return hash((self.__class__, frozenset(self.reactants), frozenset(self.products)))
 
-class GenericProcess(Process):
+class GenericProcess(StoichiometricProcess):
     pass
 
-class OmittedProcess(Process):
+class OmittedProcess(StoichiometricProcess):
     pass
 
-class UncertainProcess(Process):
+class UncertainProcess(StoichiometricProcess):
     pass
 
-class Association(Process):
+class Association(StoichiometricProcess):
     pass
 
-class Dissociation(Process):
+class Dissociation(StoichiometricProcess):
     pass

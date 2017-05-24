@@ -5,6 +5,9 @@ class Entity(object):
     def __eq__(self, other):
         return self.__class__ == other.__class__
 
+    def __hash__(self):
+        return hash((self.__class__))
+
 class EmptySet(Entity):
     pass
 
@@ -47,7 +50,10 @@ class StatelessEntity(Entity):
     def __eq__(self, other):
         return self.__class__ == other.__class__ and \
             self.label == other.label and \
-            self.compartment == other.compartment and \
+            self.compartment == other.compartment
+
+    def __hash__(self):
+        return hash((self.__class__, self.label, self.compartment))
 
 class UnspecifiedEntity(StatelessEntity):
     pass
@@ -66,7 +72,7 @@ class NucleicAcidFeature(StatefulEntity):
 
 class Complex(StatefulEntity):
     def __init__(self, label = None, compartment = None, svs = None, uis = None, components = None, id = None):
-        super().__init__(self, label, compartment, svs, uis, id)
+        super().__init__(label, compartment, svs, uis, id)
         if components is not None:
             self.components = components
         else:
@@ -100,7 +106,7 @@ class NucleicAcidFeatureMultimer(Multimer):
 
 class ComplexMultimer(Multimer):
     def __init__(self, label = None, compartment = None, svs = None, uis = None, components = None, id = None):
-        super().__init__(self, label, compartment, svs, uis, id)
+        super().__init__(label, compartment, svs, uis, id)
         if components is not None:
             self.components = components
         else:
