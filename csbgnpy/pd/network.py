@@ -87,3 +87,11 @@ class Network(object):
         new.los = self.los.intersection(other.los)
         new.compartments = self.compartments.intersection(other.compartments)
         return new
+
+    def __eq__(self, other):
+        return isinstance(other, Network) and \
+                self.entities == other.entities and \
+                self.processes == other.processes and \
+                self.compartments == other.compartments and \
+                self.los == other.los and \
+                self.modulations == other.modulations
