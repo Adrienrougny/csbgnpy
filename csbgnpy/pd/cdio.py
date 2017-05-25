@@ -89,13 +89,6 @@ def read_cd(*filenames):
                 es = EmptySet("emptyset")
                 entities.add(es)
                 break
-        # for cdsubspecies in tree.xpath("//celldesigner:species", namespaces = ns): #making subentities
-        #     subentity = _make_entity_from_cd(cdsubspecies, tree, ns, entities)
-        #     eid = cdsubspecies.xpath(".//celldesigner:complexSpecies", namespaces = ns)[0].text
-        #     cdentity = _get_cdentity_by_id(tree, ns, eid)
-        #     entity = _make_entity_from_cd(cdentity, tree, ns, compartments)
-        #     existent_entity = get_object(entity, entities)
-        #     existent_entity.add_component(subentity)
         for cdproc in tree.xpath("//sbml:reaction", namespaces = ns): #making processes
             process = _make_process_from_cd(cdproc, tree, ns, entities, compartments)
             processes.add(process)
@@ -124,7 +117,8 @@ def read_cd(*filenames):
                     modulations.add(modulation)
                     mtype = cdmod.get("type")
                     if mtype.startswith("BOOLEAN"):
-                        toskip = 2
+                        chids = cdmod.get("modifiers").split(',')
+                        toskip = len(chids)
                 else:
                     toskip -= 1
     net.compartments = compartments
@@ -175,11 +169,13 @@ def _make_entity_from_cd(cdspecies, tree, ns, compartments):
             ui = UnitOfInformation()
             ui.prefix = "ct"
             ui.label = "gene"
+            ui.id = entity.id + "_" + "ui"
             entity.add_ui(ui)
         elif cd_class == "RNA" or cd_class == "ANTISENSE_RNA":
             ui = UnitOfInformation()
             ui.prefix = "mt"
             ui.label = "rna"
+            ui.id = entity.id + "_" + "ui"
             entity.add_ui(ui)
         if hasattr(entity, "compartment"):
             cid = cdspecies.get("compartment")
@@ -188,11 +184,25 @@ def _make_entity_from_cd(cdspecies, tree, ns, compartments):
                 compartment = _make_compartment_from_cd(cdcompartment, ns)
                 existent_compartment = get_object(compartment, compartments)
                 entity.compartment = existent_compartment
-        for cdsv in cdspecies.xpath(".//celldesigner:modification", namespaces = ns):
-            sv = StateVariable()
-            sv.var = cdsv.get("residue")
-            sv.val = dic_cd2sbgnml[cdsv.get("state")]
-            entity.add_sv(sv)
+        # making svs
+        if cd_class == "PROTEIN":
+            prid = cdspecies.xpath(".//celldesigner:proteinReference", namespaces = ns)[0].text
+            cdprot = tree.xpath("//celldesigner:protein[@id='{0}']".format(prid), namespaces = ns)[0]
+            svars = [(mod.get("id"), mod.get("angle")) for mod in cdprot.xpath(".//celldesigner:modificationResidue", namespaces = ns)]
+            svarssorted = sorted(svars, key = lambda var: var[1])
+            for i, svar in enumerate(svarssorted):
+                sv = StateVariable()
+                sv.id
+                lval = cdspecies.xpath(".//celldesigner:modification[@residue='{0}']".format(svar[0]), namespaces = ns)
+                if lval:
+                    val = dic_cd2sbgnml[lval[0].get("state")]
+                else:
+                    val = None
+                var = UndefinedVar(i)
+                sv.val = val
+                sv.var = var
+                sv.id = entity.id + "_" + svar[0]
+                entity.add_sv(sv)
         for cdsubspecies in [cd.getparent().getparent() for cd in tree.xpath(".//celldesigner:complexSpecies[text()='{0}']".format(cdspecies.get("id")), namespaces = ns)]:
             subentity = _make_entity_from_cd(cdsubspecies, tree, ns, compartments)
             entity.add_component(subentity)
@@ -230,6 +240,7 @@ def _make_process_from_cd(cdproc, tree, ns, entities, compartments):
 def _make_lo_from_cd(cdmod, tree, ns, entities, compartments):
     lo = dic_cd2sbgnml[cdmod.get("type").split('_')[-1]]()
     chids = cdmod.get("modifiers").split(',')
+    lo.id = '_'.join(chids)
     for chid in chids:
         cdentity = _get_cdentity_by_id(tree, ns, chid)
         entity = _make_entity_from_cd(cdentity, tree, ns, compartments)
