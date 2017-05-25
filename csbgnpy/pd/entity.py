@@ -1,13 +1,21 @@
-class Entity:
-    def __init__(self, id = None, clazz = None, label = None, compartment = None, components = None, svs = None, uis = None):
+class Entity(object):
+    def __init__(self, id = None):
         self.id = id
-        self.clazz = clazz
+
+    def __eq__(self, other):
+        return self.__class__ == other.__class__
+
+    def __hash__(self):
+        return hash((self.__class__))
+
+class EmptySet(Entity):
+    pass
+
+class StatefulEntity(Entity):
+    def __init__(self, label = None, compartment = None, svs = None, uis = None, id = None):
+        super().__init__(id)
         self.label = label
         self.compartment = compartment
-        if components is not None:
-            self.components = components
-        else:
-            self.components = set()
         if svs is not None:
             self.svs = svs
         else:
@@ -17,27 +25,102 @@ class Entity:
         else:
             self.uis = uis
 
-    def add_component(self, component):
-        self.components.add(component)
-
-    def add_state_variable(self, sv):
+    def add_sv(self, sv):
         self.svs.add(sv)
 
-    def add_unit_of_information(self, ui):
+    def add_ui(self, ui):
         self.uis.add(ui)
 
-    def has_label(self):
-        return self.label is not None
-
     def __eq__(self, other):
-        if not isinstance(other, Entity):
-            return False
-        return self.label == other.label and \
-            self.clazz == other.clazz and \
+        return self.__class__ == other.__class__ and \
+            self.label == other.label and \
             self.compartment == other.compartment and \
-            self.components == other.components and \
             self.svs == other.svs and \
             self.uis == other.uis
 
     def __hash__(self):
-        return hash((self.clazz, self.label, self.compartment, frozenset(self.components), frozenset(self.svs), frozenset(self.uis)))
+        return hash((self.__class__, self.label, self.compartment, frozenset(self.svs), frozenset(self.uis)))
+
+class StatelessEntity(Entity):
+    def __init__(self, label = None, compartment = None, id = None):
+        super().__init__(id)
+        self.label = label
+        self.compartment = compartment
+
+    def __eq__(self, other):
+        return self.__class__ == other.__class__ and \
+            self.label == other.label and \
+            self.compartment == other.compartment
+
+    def __hash__(self):
+        return hash((self.__class__, self.label, self.compartment))
+
+class UnspecifiedEntity(StatelessEntity):
+    pass
+
+class PerturbingAgent(StatelessEntity):
+    pass
+
+class SimpleChemical(StatefulEntity):
+    pass
+
+class Macromolecule(StatefulEntity):
+    pass
+
+class NucleicAcidFeature(StatefulEntity):
+    pass
+
+class Complex(StatefulEntity):
+    def __init__(self, label = None, compartment = None, svs = None, uis = None, components = None, id = None):
+        super().__init__(label, compartment, svs, uis, id)
+        if components is not None:
+            self.components = components
+        else:
+            self.components = set()
+
+    def add_component(self, component):
+        self.components.add(component)
+
+    def __eq__(self, other):
+        return self.__class__ == other.__class__ and \
+            self.label == other.label and \
+            self.compartment == other.compartment and \
+            self.svs == other.svs and \
+            self.uis == other.uis and \
+            self.components == other.components
+
+    def __hash__(self):
+        return hash((self.__class__, self.label, self.compartment, frozenset(self.svs), frozenset(self.uis), frozenset(self.components)))
+
+class Multimer(StatefulEntity):
+    pass
+
+class SimpleChemicalMultimer(Multimer):
+    pass
+
+class MacromoleculeMultimer(Multimer):
+    pass
+
+class NucleicAcidFeatureMultimer(Multimer):
+    pass
+
+class ComplexMultimer(Multimer):
+    def __init__(self, label = None, compartment = None, svs = None, uis = None, components = None, id = None):
+        super().__init__(label, compartment, svs, uis, id)
+        if components is not None:
+            self.components = components
+        else:
+            self.components = set()
+    def add_component(self, component):
+        self.components.add(component)
+
+    def __eq__(self, other):
+        return self.__class__ == other.__class__ and \
+            self.label == other.label and \
+            self.compartment == other.compartment and \
+            self.svs == other.svs and \
+            self.uis == other.uis and \
+            self.components == other.components
+
+    def __hash__(self):
+        return hash((self.__class__, self.label, self.compartment, frozenset(self.svs), frozenset(self.uis), frozenset(self.components)))

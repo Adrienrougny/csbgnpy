@@ -1,15 +1,25 @@
-from csbgnpy import *
-
 class Modulation(object):
-
-    def __init__(self, clazz = None, source = None, target = None):
+    def __init__(self, source = None, target = None, id = None):
         self.source = source
         self.target = target
-        self.clazz = clazz
+        self.id = id
 
     def __eq__(self, other):
-        return self.source == other.source and \
+        return self.__class__ == other.__class__ and \
+                self.source == other.source and \
                 self.target == other.target
 
     def __hash__(self):
-        return hash((self.source, self.target))
+        return hash((self.__class__, self.source, self.target))
+
+class Stimulation(Modulation):
+    pass
+
+class Inhibition(Modulation):
+    pass
+
+class Catalysis(Stimulation):
+    pass
+
+class NecessaryStimulation(Stimulation):
+    pass

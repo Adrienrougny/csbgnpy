@@ -1,8 +1,7 @@
 # from LogicalOperatorClazz import *
 
-class LogicalOperatorNode:
-    def __init__(self, clazz = None, children = None, id = None):
-        self.clazz = clazz
+class LogicalOperator(object):
+    def __init__(self, children = None, id = None):
         if children is None:
             self.children = set()
         else:
@@ -13,10 +12,22 @@ class LogicalOperatorNode:
         self.children.add(child)
 
     def __hash__(self):
-        hashcode = hash(self.clazz)
+        hashcode = hash(self.__class__)
         for child in self.children:
             hashcode += hash(child)
         return hashcode
 
     def __eq__(self, other):
-        return self.clazz == other.clazz and self.children == other.children
+        return self.__class__ == other.__class__ and \
+        self.children == other.children
+
+class AndOperator(LogicalOperator):
+    pass
+
+class OrOperator(LogicalOperator):
+    pass
+
+class NotOperator(LogicalOperator):
+    pass
+
+

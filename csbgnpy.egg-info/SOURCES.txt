@@ -1,6 +1,8 @@
-csbgnpy/Utils.py
 csbgnpy/__init__.py
+csbgnpy/utils.py
 csbgnpy.egg-info/PKG-INFO
 csbgnpy.egg-info/SOURCES.txt
 csbgnpy.egg-info/dependency_links.txt
 csbgnpy.egg-info/top_level.txt
+scripts/cd2sbgnml
+scripts/merge_sbgnml

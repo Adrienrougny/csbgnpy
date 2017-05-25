@@ -1,9 +1,8 @@
 class UnitOfInformation:
-
-    def __init__(self, id = None, prefix = None, label = None):
-        self.id = id
+    def __init__(self, prefix = None, label = None, id = None):
         self.prefix = prefix
         self.label = label
+        self.id = id
 
     def __eq__(self, other):
         return isinstance(other, UnitOfInformation) and \

@@ -1,12 +1,33 @@
-from csbgnpy import *
-
 """Stoech !"""
-class Process:
+class Process(object):
 
-    def __init__(self, id = None, clazz = None, label = None, reactants = None, products = None):
+    def __init__(self, id = None):
         self.id = id
-        self.clazz = clazz
+
+    def __eq__(self, other):
+        return self.__class__ == other.__class__
+
+    def __hash__(self):
+        return hash((self.__class__))
+
+class NonStoichiometricProcess(Process):
+    def __init__(self, label = None, id = None):
+        super().__init__(id)
         self.label = label
+
+    def __eq__(self, other):
+        return self.__class__ == other.__class__ and \
+                self.label == other.label
+
+    def __hash__(self):
+        return hash((self.__class__, self.label))
+
+class Phenotype(NonStoichiometricProcess):
+    pass
+
+class StoichiometricProcess(Process):
+    def __init__(self, reactants = None, products = None, id = None):
+        super().__init__(id)
         if reactants is not None:
             self.reactants = reactants
         else:
@@ -22,15 +43,25 @@ class Process:
     def add_product(self, product):
         self.products.add(product)
 
-    def has_label(self):
-        return self.label is not None
-
     def __eq__(self, other):
-        return isinstance(other, Process) and \
-                self.clazz == other.clazz and \
-                self.label == other.label and \
+        return self.__class__ == other.__class__ and \
                 self.reactants == other.reactants and \
                 self.products == other.products
 
     def __hash__(self):
-        return hash((self.clazz, self.label, frozenset(self.reactants), frozenset(self.products)))
+        return hash((self.__class__, frozenset(self.reactants), frozenset(self.products)))
+
+class GenericProcess(StoichiometricProcess):
+    pass
+
+class OmittedProcess(StoichiometricProcess):
+    pass
+
+class UncertainProcess(StoichiometricProcess):
+    pass
+
+class Association(StoichiometricProcess):
+    pass
+
+class Dissociation(StoichiometricProcess):
+    pass

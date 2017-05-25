@@ -1,17 +1,16 @@
-import csbgnpy.utils
-
-class Undefined(object):
-    def __init__(self, num = None):
-        self.num = num
-
-    def __eq__(self, other):
-        return isinstance(other, csbgnpy.utils.Undefined) and self.num == other.num
-
-    def __hash__(self):
-        return hash(("undefined", self.num,))
+class IdLookupError(LookupError):
+    def __init__(self, id):
+        self.id = id
 
     def __str__(self):
-        return "Undefined({0})".format(self.num)
+        return "id {0} not found".format(self.id)
+
+class ObjectLookupError(LookupError):
+    def __init__(self, obj):
+        self.obj = obj
+
+    def __str__(self):
+        return "obj {0} not found".format(self.obj)
 
 def mean(c):
     return sum(c) / len(c)
@@ -19,3 +18,15 @@ def mean(c):
 def quote_string(s):
     return '"{0}"'.format(s)
 
+def get_object(obj, coll):
+    for obj2 in coll:
+        if obj2 == obj:
+            return obj2
+    raise ObjectLookupError(obj)
+
+def get_object_by_id(coll, id):
+    for obj in coll:
+        if hasattr(obj, "id"):
+            if obj.id == id:
+                return obj
+    raise IdLookupError(id)
