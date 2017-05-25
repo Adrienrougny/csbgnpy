@@ -220,12 +220,12 @@ def _make_glyph_from_entity(entity):
     g = libsbgn.glyph()
     g.set_class(libsbgn.GlyphClass[EntityEnum(entity.__class__).name])
     g.set_id(entity.id)
-    label = libsbgn.label()
     if hasattr(entity, "label"):
+        label = libsbgn.label()
         label.set_text(entity.label)
     # else:
         # label.set_text("")
-    g.set_label(label)
+        g.set_label(label)
     if hasattr(entity, "compartment"):
         if entity.compartment is not None:
             g.compRef = entity.compartment.id
@@ -238,7 +238,11 @@ def _make_glyph_from_entity(entity):
             gsv = libsbgn.glyph()
             gsv.set_id(sv.id)
             gsv.set_class(libsbgn.GlyphClass["STATE_VARIABLE"])
-            gsv.set_state(libsbgn.stateType(sv.val, sv.var))
+            if isinstance(sv.var, UndefinedVar):
+                var = None
+            else:
+                var = sv.var
+            gsv.set_state(libsbgn.stateType(sv.val, var))
             bbox = libsbgn.bbox(0, 0, 0, 0)
             gsv.set_bbox(bbox)
             g.add_glyph(gsv)
