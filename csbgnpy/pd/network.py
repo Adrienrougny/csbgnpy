@@ -78,3 +78,12 @@ class Network(object):
         new.los = self.los.union(other.los)
         new.compartments = self.compartments.union(other.compartments)
         return new
+
+    def intersection(self, other):
+        new = Network()
+        new.entities = self.entities.intersection(other.entities)
+        new.processes = self.processes.intersection(other.processes)
+        new.modulations = self.modulations.intersection(other.modulations)
+        new.los = self.los.intersection(other.los)
+        new.compartments = self.compartments.intersection(other.compartments)
+        return new
