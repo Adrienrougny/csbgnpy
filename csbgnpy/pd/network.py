@@ -1,13 +1,6 @@
-from csbgnpy import *
-# from Process import *
-# from Modulation import *
-# from StateVariable import *
-# from Compartment import *
-# from LogicalFunction import *
-# from LogicalOperator import *
+from csbgnpy.pd.lo import LogicalOperator
 
-class Network:
-
+class Network(object):
     def __init__(self, entities = None, processes = None, modulations = None, compartments = None, los = None):
         if entities is not None:
             self.entities = entities
@@ -45,125 +38,43 @@ class Network:
     def add_lo(self, op):
         self.lo(op)
 
-    # def getEntity(self, entity):
-    #     if isinstance(entity, Entity):
-    #         for entity2 in self.entities:
-    #             if entity == entity2:
-    #                 return entity2
-    #         return None
-    #     elif isinstance(entity, str):
-    #         for entity2 in self.entities:
-    #             if entity2.getId() == entity:
-    #                 return entity2
-    #         return None
-    #
-    # def getProcess(self, process):
-    #     if isinstance(process, Process):
-    #         for process2 in self.processes:
-    #             if process == process2:
-    #                 return process2
-    #         return None
-    #     elif isinstance(process, str):
-    #         for process2 in self.processes:
-    #             if process2.getId() == process:
-    #                 return process
-    #         return None
-    #
-    # def getModulation(self, modulation):
-    #     for modulation2 in self.modulations:
-    #         if modulation2 == modulation:
-    #             return modulation2
-    #     return None
-    #
-    # def getCompartment(self, compartment):
-    #     for compartment2 in self.compartments:
-    #         if compartment2 == compartment:
-    #             return compartment2
-    #     return None
-    #
-    # def getLogicalFunction(self, logicalFunction):
-    #     for logicalFunction2 in self.logicalFunctions:
-    #         if logicalFunction2 == logicalFunction:
-    #             return logicalFunction2
-    #     return None
-    #
-    # def getLogicalFunctionByRoot(self, logicalOperator):
-    #     for logicalFunction in self.logicalFunctions:
-    #         if logicalFunction.getRoot() == logicalOperator:
-    #             return logicalFunction
-    #     return None
-    #
+    def remove_process(self, process):
+        self.processes.remove(process)
+        for modulation in self.modulations:
+            if modulation.target == process:
+                self.remove_modulation(modulation)
 
-    # def isProduced(self, entity):
-    #     for process in self.getProcesses():
-    #         if entity in process.getProducts():
-    #             return True
-    #     return False
-    #
-    # def isConsumed(self, entity):
-    #     for process in self.getProcesses():
-    #         if entity in process.getReactants():
-    #             return True
-    #     return False
-    #
-    # def isModulator(self, entity):
-    #     for modulation in self.getModulations():
-    #         if entity == modulation.getSource():
-    #             return True
-    #     return False
-    #
-    # def isSource(self, entity):
-    #     if entity.getClazz() == EntityClazz.SOURCE_AND_SINK and not self.isProduced(entity):
-    #         return True
-    #     else:
-    #         return False
-    #
-    # def isSink(self, entity):
-    #     if entity.getClazz() == EntityClazz.SOURCE_AND_SINK and not self.isConsumed(entity):
-    #         return True
-    #     else:
-    #         return False
-    #
-    # def updateIds(self):
-    #     iepn = 0
-    #     isubepn = 0
-    #     isv = 0
-    #     icomp = 0
-    #     iproc = 0
-    #     for epn in self.getEntities():
-    #         epn.setId("epn{0}".format(iepn))
-    #         iepn += 1
-    #         for subepn in epn.getComponents():
-    #             subepn.setId("subepn{0}".format(isubepn))
-    #             isubepn += 1
-    #         for sv in epn.getStateVariables():
-    #             sv.setId("sv{0}".format(isv))
-    #             isv += 1
-    #     for comp in self.getCompartments():
-    #         comp.setId("comp{0}".format(icomp))
-    #         icomp += 1
-    #     for proc in self.getProcesses():
-    #         proc.setId("proc{0}".format(iproc))
-    #         iproc += 1
+    def remove_entity(self, entity):
+        self.entities.remove(entity)
+        for process in self.processes:
+            if entity in process.reactants or entity in process.products:
+                self.remove_process(process)
+        for modulation in self.modulations:
+            if modulation.source == entity:
+                self.remove_modulation(modulation)
 
-    # def removeSingleEntities(self):
-    #     toRemove = set()
-    #     for epn in self.getEntities():
-    #         if not self.isProduced(epn) and not self.isConsumed(epn) and not self.isModulator(epn):
-    #             toRemove.add(epn)
-    #     for epn in toRemove:
-    #         self.entities.remove(epn)
-    #
-    # def setNoneLabelsToEmptyStrings(self):
-    #     for epn in self.entities:
-    #         if epn.getLabel() is None:
-    #             epn.setLabel("")
-    #
-    # def __str__(self):
-    #     s = ""
-    #     for epn in self.getEntities():
-    #         s += "Epn: {0}\n".format(epn)
-    #     for proc in self.getProcesses():
-    #         s += "Process: {0}\n".format(proc)
-    #
-    #     return s
+    def remove_compartment(self, compartment):
+        self.compartments.remove(compartment)
+
+    def remove_lo(self, op):
+        self.los.remove(op)
+        for child in self.children:
+            if isinstance(child, LogicalOperator):
+                self.remove_lo(child)
+        for modulation in self.modulations:
+            if modulation.source == op:
+                self.remove(modulation)
+
+    def remove_modulation(self, modulation):
+        self.modulations.remove(modulation)
+        if isinstance(modulation.source, LogicalOperator):
+            self.remove_lo(modulation.source)
+
+    def union(self, other):
+        new = Network()
+        new.entities = self.entities.union(other.entities)
+        new.processes = self.processes.union(other.processes)
+        new.modulations = self.modulations.union(other.modulations)
+        new.los = self.los.union(other.los)
+        new.compartments = self.compartments.union(other.compartments)
+        return new
