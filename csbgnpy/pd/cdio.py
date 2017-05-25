@@ -37,6 +37,7 @@ dic_cd2sbgnml = {
     "sulfated": "S",
     "unknown": "",
     "don't care": "?",
+    "empty": None,
     "STATE_TRANSITION": GenericProcess,
     "TRANSLATION": GenericProcess,
     "TRANSCRIPTION": GenericProcess,
