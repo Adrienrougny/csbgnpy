@@ -1,0 +1,57 @@
+<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<sbgn xmlns="http://sbgn.org/libsbgn/0.2">
+    <map language="process description">
+        <glyph id="glyph1" class="macromolecule">
+            <label text="A"/>
+            <bbox y="50.0" x="46.0" h="60.0" w="108.0"/>
+            <glyph id="glyph1a" class="state variable">
+                <state value="A"/>
+                <bbox y="40.0" x="61.0" h="20.0" w="24.0"/>
+            </glyph>
+            <glyph id="glyph1b" class="state variable">
+                <state value="D"/>
+                <bbox y="55.0" x="141.5" h="20.0" w="25.0"/>
+            </glyph>
+            <glyph id="glyph1c" class="state variable">
+                <state value="J"/>
+                <bbox y="85.0" x="36.0" h="20.0" w="20.0"/>
+            </glyph>
+            <glyph id="glyph1d" class="state variable">
+                <state value="F"/>
+                <bbox y="85.0" x="142.5" h="20.0" w="23.0"/>
+            </glyph>
+            <glyph id="glyph1e" class="state variable">
+                <state value="I"/>
+                <bbox y="100.0" x="63.0" h="20.0" w="20.0"/>
+            </glyph>
+            <glyph id="glyph1f" class="state variable">
+                <state value="C"/>
+                <bbox y="40.0" x="115.0" h="20.0" w="24.0"/>
+            </glyph>
+            <glyph id="glyph1g" class="state variable">
+                <state value="B"/>
+                <bbox y="40.0" x="88.0" h="20.0" w="24.0"/>
+            </glyph>
+            <glyph id="glyph1h" class="state variable">
+                <state value="H"/>
+                <bbox y="100.0" x="87.5" h="20.0" w="25.0"/>
+            </glyph>
+            <glyph id="glyph1i" class="state variable">
+                <state value="E"/>
+                <bbox y="70.0" x="142.5" h="20.0" w="23.0"/>
+            </glyph>
+            <glyph id="glyph1j" class="state variable">
+                <state value="L"/>
+                <bbox y="55.0" x="34.5" h="20.0" w="23.0"/>
+            </glyph>
+            <glyph id="glyph1k" class="state variable">
+                <state value="K"/>
+                <bbox y="70.0" x="34.0" h="20.0" w="24.0"/>
+            </glyph>
+            <glyph id="glyph1l" class="state variable">
+                <state value="G"/>
+                <bbox y="100.0" x="114.5" h="20.0" w="25.0"/>
+            </glyph>
+        </glyph>
+    </map>
+</sbgn>

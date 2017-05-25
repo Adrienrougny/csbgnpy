@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<sbgn xmlns="http://sbgn.org/libsbgn/0.2">
+    <map language="process description">
+        <glyph id="glyph1" class="macromolecule">
+            <label text="A"/>
+            <bbox y="100.0" x="106.0" h="60.0" w="108.0"/>
+            <glyph id="glyph1a" class="state variable">
+                <bbox y="90.0" x="123.0" h="20.0" w="20.0"/>
+            </glyph>
+        </glyph>
+    </map>
+</sbgn>
