@@ -1,5 +1,6 @@
 from enum import Enum
 from math import atan2
+from math import pi
 import libsbgnpy.libsbgn as libsbgn
 from csbgnpy.utils import *
 from csbgnpy.pd.compartment import *
@@ -10,6 +11,7 @@ from csbgnpy.pd.lo import *
 from csbgnpy.pd.sv import *
 from csbgnpy.pd.ui import *
 from csbgnpy.pd.network import *
+import csbgnpy.utils
 
 class EntityEnum(Enum):
     UNSPECIFIED_ENTITY = UnspecifiedEntity
@@ -54,8 +56,14 @@ def _get_glyph_by_id_or_port_id(sbgnmap, id):
                 return glyph
     raise GlyphLookupError(id)
 
+def atan2pi(y, x):
+    a = atan2(y, x)
+    if a < 0:
+        a = a + 2 * pi
+    return a
+
 def read_sbgnml(*filenames):
-    net = csbgnpy.pd.Network()
+    net = Network()
     compartments = set()
     entities = set()
     processes = set()
@@ -146,11 +154,10 @@ def _make_entity_from_glyph(glyph, sbgnmap, compartments):
             lsvs.append(subglyph)
     if lsvs:
         i = 1
-        lx = [g.bbox.x for g in lsvs]
-        ly = [g.bbox.y for g in lsvs]
-        center = tuple([csbgnpy.utils.mean(lx), csbgnpy.utils.mean(ly)])
-        lsorted = sorted(lsvs, key = lambda g: atan2(center[1] - g.bbox.y, center[0] - g.bbox.x))
-        for g in lsorted:
+        center = (glyph.bbox.x + glyph.bbox.w / 2, glyph.bbox.y + glyph.bbox.h / 2)
+        lsorted = sorted(lsvs, key = lambda g: atan2pi(-(g.bbox.y + g.bbox.h / 2 - center[1]), g.bbox.x + g.bbox.w / 2 - center[0]))
+        # lsorted = sorted(lsvs, key = lambda g: atan2(g.bbox.y - center[1], g.bbox.x - center[0]))
+        for subglyph in lsorted:
             sv = _make_sv_from_glyph(subglyph, i)
             if isinstance(sv.var, UndefinedVar):
                 i += 1
@@ -234,16 +241,20 @@ def _make_glyph_from_entity(entity):
             gc = _make_glyph_from_entity(subentity)
             g.add_glyph(gc)
     if hasattr(entity, "svs"):
-        for sv in entity.svs:
+        defsvs = [sv for sv in entity.svs if not isinstance(sv.var, UndefinedVar)]
+        undefsvs = sorted([sv for sv in entity.svs if isinstance(sv.var, UndefinedVar)], key = lambda sv: sv.var.num)
+        svs = defsvs + undefsvs
+        for sv in svs:
             gsv = libsbgn.glyph()
             gsv.set_id(sv.id)
             gsv.set_class(libsbgn.GlyphClass["STATE_VARIABLE"])
             if isinstance(sv.var, UndefinedVar):
                 var = None
+                bbox = libsbgn.bbox((len(undefsvs) - sv.var.num) * 0.01, 0, 0, 0)
             else:
                 var = sv.var
+                bbox = libsbgn.bbox(0, 0, 0, 0)
             gsv.set_state(libsbgn.stateType(sv.val, var))
-            bbox = libsbgn.bbox(0, 0, 0, 0)
             gsv.set_bbox(bbox)
             g.add_glyph(gsv)
     if hasattr(entity, "svs"):
