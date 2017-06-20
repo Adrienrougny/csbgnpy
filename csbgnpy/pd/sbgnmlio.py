@@ -249,7 +249,7 @@ def _make_glyph_from_entity(entity, dids):
             g.set_compartmentRef(dids[entity.compartment])
     if hasattr(entity, "components"):
         for subentity in entity.components:
-            gc = _make_glyph_from_entity(subentity)
+            gc = _make_glyph_from_entity(subentity, dids)
             g.add_glyph(gc)
     if hasattr(entity, "svs"):
         defsvs = [sv for sv in entity.svs if not isinstance(sv.var, UndefinedVar)]
