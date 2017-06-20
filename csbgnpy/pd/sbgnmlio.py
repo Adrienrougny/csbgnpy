@@ -223,7 +223,18 @@ def _make_modulation_from_arc(arc, sbgnmap, entities, compartments, los, process
     modulation.target = existent_target
     return modulation
 
-def _make_glyph_from_entity(entity):
+def _make_glyph_from_compartment(comp):
+    g = libsbgn.glyph()
+    g.set_class(libsbgn.GlyphClass.COMPARTMENT)
+    g.set_id(comp.id)
+    label = libsbgn.label()
+    label.set_text(comp.label)
+    g.set_label(label)
+    bbox = libsbgn.bbox(0, 0, 0, 0)
+    g.set_bbox(bbox)
+    return g
+
+def _make_glyph_from_entity(entity, dids):
     g = libsbgn.glyph()
     g.set_class(libsbgn.GlyphClass[EntityEnum(entity.__class__).name])
     g.set_id(entity.id)
@@ -235,7 +246,7 @@ def _make_glyph_from_entity(entity):
         g.set_label(label)
     if hasattr(entity, "compartment"):
         if entity.compartment is not None:
-            g.compRef = entity.compartment.id
+            g.set_compartmentRef(dids[entity.compartment])
     if hasattr(entity, "components"):
         for subentity in entity.components:
             gc = _make_glyph_from_entity(subentity)
@@ -420,8 +431,12 @@ def write_sbgnml(net, filename, renew_ids = True):
     dids = {}
     if renew_ids:
         _renew_ids(net)
+    for comp in net.compartments:
+        g = _make_glyph_from_compartment(comp)
+        sbgnmap.add_glyph(g)
+        dids[comp] = g.get_id()
     for entity in net.entities:
-        g = _make_glyph_from_entity(entity)
+        g = _make_glyph_from_entity(entity, dids)
         sbgnmap.add_glyph(g)
         dids[entity] = g.get_id()
     for op in net.los:
