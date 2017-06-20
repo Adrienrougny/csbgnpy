@@ -2,8 +2,14 @@ class Entity(object):
     def __init__(self, id = None):
         self.id = id
 
+    def __ne__(self, other):
+        return not (self == other)
+
     def __eq__(self, other):
         return self.__class__ == other.__class__
+
+    def __repr__(self):
+        return "%s[]" % self.__class__.__name__
 
     def __hash__(self):
         return hash((self.__class__))
@@ -41,6 +47,11 @@ class StatefulEntity(Entity):
     def __hash__(self):
         return hash((self.__class__, self.label, self.compartment, frozenset(self.svs), frozenset(self.uis)))
 
+    def __repr__(self):
+        return "%s[%s {%s,%s} @ %s]" % (self.__class__.__name__, self.label,
+                    self.svs, self.uis,
+                    self.compartment.label if self.compartment else "None")
+
 class StatelessEntity(Entity):
     def __init__(self, label = None, compartment = None, id = None):
         super().__init__(id)
@@ -54,6 +65,10 @@ class StatelessEntity(Entity):
 
     def __hash__(self):
         return hash((self.__class__, self.label, self.compartment))
+
+    def __repr__(self):
+        return "%s[%s @ %s]" % (self.__class__.__name__, self.label, 
+                    self.compartment.label if self.compartment else "None")
 
 class UnspecifiedEntity(StatelessEntity):
     pass
@@ -73,13 +88,10 @@ class NucleicAcidFeature(StatefulEntity):
 class Complex(StatefulEntity):
     def __init__(self, label = None, compartment = None, svs = None, uis = None, components = None, id = None):
         super().__init__(label, compartment, svs, uis, id)
-        if components is not None:
-            self.components = components
-        else:
-            self.components = set()
+        self.components = components if components is not None else []
 
     def add_component(self, component):
-        self.components.add(component)
+        self.components.append(component)
 
     def __eq__(self, other):
         return self.__class__ == other.__class__ and \
@@ -87,7 +99,7 @@ class Complex(StatefulEntity):
             self.compartment == other.compartment and \
             self.svs == other.svs and \
             self.uis == other.uis and \
-            self.components == other.components
+            frozenset(self.components) == frozenset(other.components)
 
     def __hash__(self):
         return hash((self.__class__, self.label, self.compartment, frozenset(self.svs), frozenset(self.uis), frozenset(self.components)))
@@ -110,9 +122,9 @@ class ComplexMultimer(Multimer):
         if components is not None:
             self.components = components
         else:
-            self.components = set()
+            self.components = []
     def add_component(self, component):
-        self.components.add(component)
+        self.components.append(component)
 
     def __eq__(self, other):
         return self.__class__ == other.__class__ and \

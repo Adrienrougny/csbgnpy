@@ -28,25 +28,19 @@ class Phenotype(NonStoichiometricProcess):
 class StoichiometricProcess(Process):
     def __init__(self, reactants = None, products = None, id = None):
         super().__init__(id)
-        if reactants is not None:
-            self.reactants = reactants
-        else:
-            self.reactants = set()
-        if products is not None:
-            self.products = products
-        else:
-            self.products = set()
+        self.reactants = reactants if reactants is not None else []
+        self.products = products if products is not None else []
 
     def add_reactant(self, reactant):
-        self.reactants.add(reactant)
+        self.reactants.append(reactant)
 
     def add_product(self, product):
-        self.products.add(product)
+        self.products.append(product)
 
     def __eq__(self, other):
         return self.__class__ == other.__class__ and \
-                self.reactants == other.reactants and \
-                self.products == other.products
+                frozenset(self.reactants) == frozenset(other.reactants) and \
+                frozenset(self.products) == frozenset(other.products)
 
     def __hash__(self):
         return hash((self.__class__, frozenset(self.reactants), frozenset(self.products)))

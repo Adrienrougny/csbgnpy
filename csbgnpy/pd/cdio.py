@@ -64,8 +64,8 @@ def read_cd(*filenames):
     net = Network()
     compartments = set([])
     entities = set([])
-    processes = set([])
-    modulations = set([])
+    processes = []
+    modulations = []
     los = set([])
     toskip = 0
     for filename in filenames:
@@ -80,7 +80,7 @@ def read_cd(*filenames):
             cd_class = cdspecies.xpath(".//celldesigner:class", namespaces = ns)[0].text
             if cd_class == "PHENOTYPE":
                 process = _make_phenotype_from_cd(cdspecies, tree, ns, compartments)
-                processes.add(process)
+                processes.append(process)
             else:
                 entity = _make_entity_from_cd(cdspecies, tree, ns, compartments)
                 entities.add(entity)
@@ -92,7 +92,7 @@ def read_cd(*filenames):
                 break
         for cdproc in tree.xpath("//sbml:reaction", namespaces = ns): #making processes
             process = _make_process_from_cd(cdproc, tree, ns, entities, compartments)
-            processes.add(process)
+            processes.append(process)
         for cdproc in tree.xpath("//sbml:reaction", namespaces = ns): # making los
             for cdmod in cdproc.xpath(".//celldesigner:modification", namespaces = ns):
                 mtype = cdmod.get("type")
@@ -111,11 +111,11 @@ def read_cd(*filenames):
                 target = _make_process_from_cd(cdproc, tree, ns, entities, compartments)
                 existent_target = get_object(target, processes)
                 modulation.target = existent_target
-                modulations.add(modulation)
+                modulations.append(modulation)
             for cdmod in cdproc.xpath(".//celldesigner:modification", namespaces = ns):
                 if not toskip: # when boolean, two next modulations should be skipped
                     modulation = _make_modulation_from_cd(cdmod, tree, ns, entities, compartments, los, processes)
-                    modulations.add(modulation)
+                    modulations.append(modulation)
                     mtype = cdmod.get("type")
                     if mtype.startswith("BOOLEAN"):
                         chids = cdmod.get("modifiers").split(',')

@@ -8,7 +8,7 @@ class UndefinedVar(object):
     def __hash__(self):
         return hash((self.__class__, self.num,))
 
-    def __str__(self):
+    def __repr__(self):
         return "Undefined({0})".format(self.num)
 
 class StateVariable:
@@ -21,6 +21,9 @@ class StateVariable:
         return isinstance(other, StateVariable) and \
                 self.var == other.var and \
                 self.val == other.val
+
+    def __repr__(self):
+        return "%s=%s" % (self.var, self.val)
 
     def __hash__(self):
         return hash((self.var, self.val))
