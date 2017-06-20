@@ -6,5 +6,8 @@ setup(name='csbgnpy',
       author='Adrien Rougny',
       author_email='rougny.adrien@aist.go.jp',
       packages=['csbgnpy'],
+      install_requires = [
+        "libsbgnpy",
+      ],
       scripts = ["scripts/merge_sbgnml", "scripts/cd2sbgnml"]
      )
