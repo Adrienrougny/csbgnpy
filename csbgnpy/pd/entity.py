@@ -30,7 +30,7 @@ class StatefulEntity(Entity):
             self.svs.append(sv)
 
     def add_ui(self, ui):
-        if io not in self.uis:
+        if ui not in self.uis:
             self.uis.append(ui)
 
     def __eq__(self, other):

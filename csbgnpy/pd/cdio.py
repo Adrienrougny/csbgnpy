@@ -115,7 +115,7 @@ def read_cd(*filenames):
             for cdmod in cdproc.xpath(".//celldesigner:modification", namespaces = ns):
                 if not toskip: # when boolean, two next modulations should be skipped
                     modulation = _make_modulation_from_cd(cdmod, tree, ns, entities, compartments, los, processes)
-                    modulations.append(modulation)
+                    modulations.add(modulation)
                     mtype = cdmod.get("type")
                     if mtype.startswith("BOOLEAN"):
                         chids = cdmod.get("modifiers").split(',')
