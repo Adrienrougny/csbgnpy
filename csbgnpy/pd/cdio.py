@@ -189,19 +189,21 @@ def _make_entity_from_cd(cdspecies, tree, ns, compartments):
         if cd_class == "PROTEIN":
             prid = cdspecies.xpath(".//celldesigner:proteinReference", namespaces = ns)[0].text
             cdprot = tree.xpath("//celldesigner:protein[@id='{0}']".format(prid), namespaces = ns)[0]
-            svars = [(mod.get("id"), mod.get("angle")) for mod in cdprot.xpath(".//celldesigner:modificationResidue", namespaces = ns)]
+            svars = [(mod.get("id"), mod.get("angle"), mod.get("name")) for mod in cdprot.xpath(".//celldesigner:modificationResidue", namespaces = ns)]
             svarssorted = sorted(svars, key = lambda var: var[1])
-            for i, svar in enumerate(svarssorted):
+            i = 1
+            for svar in svarssorted:
                 sv = StateVariable()
-                sv.id
                 lval = cdspecies.xpath(".//celldesigner:modification[@residue='{0}']".format(svar[0]), namespaces = ns)
                 if lval:
-                    val = dic_cd2sbgnml[lval[0].get("state")]
+                    sv.val = dic_cd2sbgnml[lval[0].get("state")]
                 else:
-                    val = None
-                var = UndefinedVar(i)
-                sv.val = val
-                sv.var = var
+                    sv.val = None
+                if svar[2]:
+                    sv.var = svar[2]
+                else:
+                    sv.var = UndefinedVar(i)
+                    i += 1
                 sv.id = entity.id + "_" + svar[0]
                 entity.add_sv(sv)
         for cdsubspecies in [cd.getparent().getparent() for cd in tree.xpath(".//celldesigner:complexSpecies[text()='{0}']".format(cdspecies.get("id")), namespaces = ns)]:
