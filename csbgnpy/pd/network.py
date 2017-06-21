@@ -2,35 +2,31 @@ from csbgnpy.pd.lo import LogicalOperator
 
 class Network(object):
     def __init__(self, entities = None, processes = None, modulations = None, compartments = None, los = None):
-        if entities is not None:
-            self.entities = entities
-        else:
-            self.entities = set()
+        self.entities = entities if entities is not None else []
         self.processes = processes if processes is not None else []
         self.modulations = modulations if modulations is not None else []
-        if compartments is not None:
-            self.compartments = compartments
-        else:
-            self.compartments = set()
-        if los is not None:
-            self.los = los
-        else:
-            self.los = set()
+        self.compartments = compartments if compartments is not None else []
+        self.los = los if los is not None else []
 
     def add_process(self, proc):
-        self.processes.append(proc)
+        if proc not in self.processes:
+            self.processes.append(proc)
 
     def add_entity(self, entity):
-        self.entities.add(entity)
+        if entity not in self.entities:
+            self.entities.add(entity)
 
     def add_modulation(self, mod):
-        self.modulations.append(mod)
+        if mod not in self.modulations:
+            self.modulations.append(mod)
 
     def add_compartment(self, comp):
-        self.compartments.add(comp)
+        if comp not in self.compartments:
+            self.compartments.add(comp)
 
     def add_lo(self, op):
-        self.lo(op)
+        if op not in self.los:
+            self.lo(op)
 
     def remove_process(self, process):
         for modulation in self.modulations:
@@ -66,27 +62,27 @@ class Network(object):
 
     def union(self, other):
         new = Network()
-        new.entities = self.entities.union(other.entities)
+        new.entities = list(set(self.entities.union(other.entities)))
         new.processes = list(set(self.processes).union(other.processes))
         new.modulations = list(set(self.modulations).union(other.modulations))
-        new.los = self.los.union(other.los)
-        new.compartments = self.compartments.union(other.compartments)
+        new.los = list(set(self.los.union(other.los)))
+        new.compartments = list(set(self.compartments.union(other.compartments)))
         return new
 
     def intersection(self, other):
         new = Network()
-        new.entities = self.entities.intersection(other.entities)
+        new.entities = list(set(self.entities.intersection(other.entities)))
         new.processes = list(set(self.processes).intersection(other.processes))
         new.modulations = list(set(self.modulations).intersection(other.modulations))
-        new.los = self.los.intersection(other.los)
-        new.compartments = self.compartments.intersection(other.compartments)
+        new.los = list(set(self.los.intersection(other.los)))
+        new.compartments = list(set(self.compartments.intersection(other.compartments)))
         return new
 
     def __eq__(self, other):
         return isinstance(other, Network) and \
-                self.entities == other.entities and \
-                frozenset(self.processes) == frozenset(other.processes) and \
-                self.compartments == other.compartments and \
-                self.los == other.los and \
-                frozenset(self.modulations) == frozenset(other.modulations)
+                set(self.entities) == set(other.entities) and \
+                set(self.processes) == set(other.processes) and \
+                set(self.compartments) == set(other.compartments) and \
+                set(self.los) == set(other.los) and \
+                set(self.modulations) == set(other.modulations)
 

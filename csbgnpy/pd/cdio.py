@@ -10,7 +10,7 @@ from csbgnpy.pd.sv import *
 from csbgnpy.pd.ui import *
 from csbgnpy.pd.network import *
 
-ns = {"sbml":"http://www.sbml.org/sbml/level2/version4", "cd":"http://www.sbml.org/2001/ns/celldesigner"}
+# ns = {"sbml":"http://www.sbml.org/sbml/level2/version4", "cd":"http://www.sbml.org/2001/ns/celldesigner"}
 
 dic_cd2sbgnml = {
     "PROTEIN": Macromolecule,
@@ -62,11 +62,11 @@ dic_cd2sbgnml = {
 
 def read_cd(*filenames):
     net = Network()
-    compartments = set([])
-    entities = set([])
-    processes = []
-    modulations = []
-    los = set([])
+    compartments = set()
+    entities = set()
+    processes = set()
+    modulations = set()
+    los = set()
     toskip = 0
     for filename in filenames:
         tree = etree.parse(filename)
@@ -80,7 +80,7 @@ def read_cd(*filenames):
             cd_class = cdspecies.xpath(".//celldesigner:class", namespaces = ns)[0].text
             if cd_class == "PHENOTYPE":
                 process = _make_phenotype_from_cd(cdspecies, tree, ns, compartments)
-                processes.append(process)
+                processes.add(process)
             else:
                 entity = _make_entity_from_cd(cdspecies, tree, ns, compartments)
                 entities.add(entity)
@@ -92,7 +92,7 @@ def read_cd(*filenames):
                 break
         for cdproc in tree.xpath("//sbml:reaction", namespaces = ns): #making processes
             process = _make_process_from_cd(cdproc, tree, ns, entities, compartments)
-            processes.append(process)
+            processes.add(process)
         for cdproc in tree.xpath("//sbml:reaction", namespaces = ns): # making los
             for cdmod in cdproc.xpath(".//celldesigner:modification", namespaces = ns):
                 mtype = cdmod.get("type")
@@ -111,7 +111,7 @@ def read_cd(*filenames):
                 target = _make_process_from_cd(cdproc, tree, ns, entities, compartments)
                 existent_target = get_object(target, processes)
                 modulation.target = existent_target
-                modulations.append(modulation)
+                modulations.add(modulation)
             for cdmod in cdproc.xpath(".//celldesigner:modification", namespaces = ns):
                 if not toskip: # when boolean, two next modulations should be skipped
                     modulation = _make_modulation_from_cd(cdmod, tree, ns, entities, compartments, los, processes)
@@ -122,11 +122,11 @@ def read_cd(*filenames):
                         toskip = len(chids)
                 else:
                     toskip -= 1
-    net.compartments = compartments
-    net.entities = entities
-    net.processes = processes
-    net.modulations = modulations
-    net.los = los
+    net.compartments = list(compartments)
+    net.entities = list(entities)
+    net.processes = list(processes)
+    net.modulations = list(modulations)
+    net.los = list(los)
     return net
 
 def _get_cdentity_by_id(tree, ns, id):

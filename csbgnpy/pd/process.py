@@ -32,15 +32,17 @@ class StoichiometricProcess(Process):
         self.products = products if products is not None else []
 
     def add_reactant(self, reactant):
-        self.reactants.append(reactant)
+        if reactant not in self.reactants:
+            self.reactants.append(reactant)
 
     def add_product(self, product):
-        self.products.append(product)
+        if product not in self.products:
+            self.products.append(product)
 
     def __eq__(self, other):
         return self.__class__ == other.__class__ and \
-                frozenset(self.reactants) == frozenset(other.reactants) and \
-                frozenset(self.products) == frozenset(other.products)
+                set(self.reactants) == set(other.reactants) and \
+                set(self.products) == set(other.products)
 
     def __hash__(self):
         return hash((self.__class__, frozenset(self.reactants), frozenset(self.products)))

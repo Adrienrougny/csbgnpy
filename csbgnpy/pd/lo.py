@@ -2,24 +2,18 @@
 
 class LogicalOperator(object):
     def __init__(self, children = None, id = None):
-        if children is None:
-            self.children = set()
-        else:
-            self.children = children
-        self.id = id
+        self.children = children if children else []
 
     def add_child(self, child):
-        self.children.add(child)
+        if child not in self.children:
+            self.children.append(child)
 
     def __hash__(self):
-        hashcode = hash(self.__class__)
-        for child in self.children:
-            hashcode += hash(child)
-        return hashcode
+        return hash((self.__class__, frozenset(self.children)))
 
     def __eq__(self, other):
         return self.__class__ == other.__class__ and \
-        self.children == other.children
+        set(self.children) == set(other.children)
 
 class AndOperator(LogicalOperator):
     pass

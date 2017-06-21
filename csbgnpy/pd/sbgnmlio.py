@@ -92,11 +92,11 @@ def read_sbgnml(*filenames):
             if arc.get_class().name in [attribute.name for attribute in list(ModulationEnum)]:
                 mod = _make_modulation_from_arc(arc, sbgnmap, entities, compartments, los, processes)
                 modulations.add(mod)
-    net.entities = entities
-    net.processes = processes
-    net.modulations = modulations
-    net.compartments = compartments
-    net.los = los
+    net.entities = list(entities)
+    net.processes = list(processes)
+    net.modulations = list(modulations)
+    net.compartments = list(compartments)
+    net.los = list(los)
     return net
 
 def _make_ui_from_glyph(glyph):
