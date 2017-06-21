@@ -6,14 +6,8 @@ class Network(object):
             self.entities = entities
         else:
             self.entities = set()
-        if processes is not None:
-            self.processes = processes
-        else:
-            self.processes = set()
-        if modulations is not None:
-            self.modulations = modulations
-        else:
-            self.modulations = set()
+        self.processes = processes if processes is not None else []
+        self.modulations = modulations if modulations is not None else []
         if compartments is not None:
             self.compartments = compartments
         else:
@@ -24,13 +18,13 @@ class Network(object):
             self.los = set()
 
     def add_process(self, proc):
-        self.processes.add(proc)
+        self.processes.append(proc)
 
     def add_entity(self, entity):
         self.entities.add(entity)
 
     def add_modulation(self, mod):
-        self.modulations.add(mod)
+        self.modulations.append(mod)
 
     def add_compartment(self, comp):
         self.compartments.add(comp)
@@ -39,31 +33,31 @@ class Network(object):
         self.lo(op)
 
     def remove_process(self, process):
-        self.processes.remove(process)
         for modulation in self.modulations:
             if modulation.target == process:
                 self.remove_modulation(modulation)
+        self.processes.remove(process)
 
     def remove_entity(self, entity):
-        self.entities.remove(entity)
         for process in self.processes:
             if entity in process.reactants or entity in process.products:
                 self.remove_process(process)
         for modulation in self.modulations:
             if modulation.source == entity:
                 self.remove_modulation(modulation)
+        self.entities.remove(entity)
 
     def remove_compartment(self, compartment):
         self.compartments.remove(compartment)
 
     def remove_lo(self, op):
-        self.los.remove(op)
         for child in self.children:
             if isinstance(child, LogicalOperator):
                 self.remove_lo(child)
         for modulation in self.modulations:
             if modulation.source == op:
-                self.remove(modulation)
+                self.remove_modulation(modulation)
+        self.los.remove(op)
 
     def remove_modulation(self, modulation):
         self.modulations.remove(modulation)
@@ -73,8 +67,8 @@ class Network(object):
     def union(self, other):
         new = Network()
         new.entities = self.entities.union(other.entities)
-        new.processes = self.processes.union(other.processes)
-        new.modulations = self.modulations.union(other.modulations)
+        new.processes = list(set(self.processes).union(other.processes))
+        new.modulations = list(set(self.modulations).union(other.modulations))
         new.los = self.los.union(other.los)
         new.compartments = self.compartments.union(other.compartments)
         return new
@@ -82,8 +76,8 @@ class Network(object):
     def intersection(self, other):
         new = Network()
         new.entities = self.entities.intersection(other.entities)
-        new.processes = self.processes.intersection(other.processes)
-        new.modulations = self.modulations.intersection(other.modulations)
+        new.processes = list(set(self.processes).intersection(other.processes))
+        new.modulations = list(set(self.modulations).intersection(other.modulations))
         new.los = self.los.intersection(other.los)
         new.compartments = self.compartments.intersection(other.compartments)
         return new
@@ -91,7 +85,8 @@ class Network(object):
     def __eq__(self, other):
         return isinstance(other, Network) and \
                 self.entities == other.entities and \
-                self.processes == other.processes and \
+                frozenset(self.processes) == frozenset(other.processes) and \
                 self.compartments == other.compartments and \
                 self.los == other.los and \
-                self.modulations == other.modulations
+                frozenset(self.modulations) == frozenset(other.modulations)
+
