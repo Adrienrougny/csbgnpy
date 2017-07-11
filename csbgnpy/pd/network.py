@@ -60,22 +60,39 @@ class Network(object):
         if isinstance(modulation.source, LogicalOperator):
             self.remove_lo(modulation.source)
 
+    def get_entity(self, val, by_object = True, by_id = False, by_label = False, by_hash = False):
+        for e in self.entities:
+            if by_object:
+                if e == val:
+                    return e
+            if by_id:
+                if e.id == val:
+                    return e
+            if by_label:
+                if hasattr(e, "label"):
+                    if e.label == val:
+                        return e
+            if by_hash:
+                if hash(e) == val:
+                    return e
+        return None
+
     def union(self, other):
         new = Network()
-        new.entities = list(set(self.entities.union(other.entities)))
-        new.processes = list(set(self.processes).union(other.processes))
-        new.modulations = list(set(self.modulations).union(other.modulations))
-        new.los = list(set(self.los.union(other.los)))
-        new.compartments = list(set(self.compartments.union(other.compartments)))
+        new.entities = list(set(self.entities).union(set(other.entities)))
+        new.processes = list(set(self.processes).union(set(other.processes)))
+        new.modulations = list(set(self.modulations).union(set(other.modulations)))
+        new.los = list(set(self.los).union(set(other.los)))
+        new.compartments = list(set(self.compartments).union(set(other.compartments)))
         return new
 
     def intersection(self, other):
         new = Network()
-        new.entities = list(set(self.entities.intersection(other.entities)))
-        new.processes = list(set(self.processes).intersection(other.processes))
-        new.modulations = list(set(self.modulations).intersection(other.modulations))
-        new.los = list(set(self.los.intersection(other.los)))
-        new.compartments = list(set(self.compartments.intersection(other.compartments)))
+        new.entities = list(set(self.entities).intersection(set(other.entities)))
+        new.processes = list(set(self.processes).intersection(set(other.processes)))
+        new.modulations = list(set(self.modulations).intersection(set(other.modulations)))
+        new.los = list(set(self.los).intersection(set(other.los)))
+        new.compartments = list(set(self.compartments).intersection(set(other.compartments)))
         return new
 
     def __eq__(self, other):
