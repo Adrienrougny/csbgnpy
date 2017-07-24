@@ -60,7 +60,7 @@ class Network(object):
         if isinstance(modulation.source, LogicalOperator):
             self.remove_lo(modulation.source)
 
-    def get_entity(self, val, by_object = True, by_id = False, by_label = False, by_hash = False):
+    def get_entity(self, val, by_object = False, by_id = False, by_label = False, by_hash = False):
         for e in self.entities:
             if by_object:
                 if e == val:
