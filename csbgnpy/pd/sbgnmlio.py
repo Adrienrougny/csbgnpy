@@ -259,7 +259,7 @@ def _make_glyph_from_entity(entity, dids):
             gsv.set_state(libsbgn.stateType(sv.val, var))
             gsv.set_bbox(bbox)
             g.add_glyph(gsv)
-    if hasattr(entity, "svs"):
+    if hasattr(entity, "uis"):
         for ui in entity.uis:
             gui = libsbgn.glyph()
             gui.set_id(ui.id)
