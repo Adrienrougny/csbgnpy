@@ -47,15 +47,6 @@ class ModulationEnum(Enum):
 	UNKNOWN_INFLUENCE  = Modulation
 	NECESSARY_STIMULATION  = NecessaryStimulation
 
-def _get_glyph_by_id_or_port_id(sbgnmap, id):
-    for glyph in sbgnmap.get_glyph():
-        if glyph.get_id() == id:
-            return glyph
-        for port in glyph.get_port():
-            if port.get_id() == id:
-                return glyph
-    raise GlyphLookupError(id)
-
 def atan2pi(y, x):
     a = atan2(y, x)
     if a < 0:
@@ -139,7 +130,7 @@ def _make_entity_from_glyph(glyph, sbgnmap, compartments):
         entity.label = glyph.get_label().get_text()
     comp_id = glyph.get_compartmentRef()
     if comp_id is not None:
-        comp_glyph = _get_glyph_by_id_or_port_id(sbgnmap, comp_id)
+        comp_glyph = get_glyph_by_id_or_port_id(sbgnmap, comp_id)
         comp = _make_compartment_from_glyph(comp_glyph)
         existent_comp = get_object(comp, compartments)
         entity.compartment = existent_comp
@@ -170,7 +161,7 @@ def _make_lo_from_glyph(glyph, sbgnmap, entities, compartments, los):
     for arc in sbgnmap.get_arc():
         if arc.get_class().name == "LOGIC_ARC" and arc.get_target() in [port.get_id() for port in glyph.get_port()]:
             source_id = arc.get_source()
-            source_glyph = _get_glyph_by_id_or_port_id(sbgnmap, source_id)
+            source_glyph = get_glyph_by_id_or_port_id(sbgnmap, source_id)
             if source_glyph.get_class().name in [attribute.name for attribute in list(EntityEnum)]:
                 source = _make_entity_from_glyph(source_glyph, sbgnmap, compartments)
                 existent_source = get_object(source, entities)
@@ -191,15 +182,15 @@ def _make_process_from_glyph(glyph, sbgnmap, entities, compartments):
     if glyph.get_label() is not None:
         proc.label = glyph.get_label().get_text()
     for arc in sbgnmap.get_arc():
-        if arc.get_class().name == "CONSUMPTION" and _get_glyph_by_id_or_port_id(sbgnmap, arc.get_target()) == glyph:
+        if arc.get_class().name == "CONSUMPTION" and get_glyph_by_id_or_port_id(sbgnmap, arc.get_target()) == glyph:
             source_id = arc.get_source()
-            source_glyph = _get_glyph_by_id_or_port_id(sbgnmap, source_id)
+            source_glyph = get_glyph_by_id_or_port_id(sbgnmap, source_id)
             source = _make_entity_from_glyph(source_glyph, sbgnmap, compartments)
             existent_source = get_object(source, entities)
             proc.add_reactant(existent_source)
-        elif arc.get_class().name == "PRODUCTION" and _get_glyph_by_id_or_port_id(sbgnmap, arc.get_source()) == glyph:
+        elif arc.get_class().name == "PRODUCTION" and get_glyph_by_id_or_port_id(sbgnmap, arc.get_source()) == glyph:
             target_id = arc.get_target()
-            target_glyph = _get_glyph_by_id_or_port_id(sbgnmap, target_id)
+            target_glyph = get_glyph_by_id_or_port_id(sbgnmap, target_id)
             target = _make_entity_from_glyph(target_glyph, sbgnmap, compartments)
             existent_target = get_object(target, entities)
             proc.add_product(existent_target)
@@ -208,7 +199,7 @@ def _make_process_from_glyph(glyph, sbgnmap, entities, compartments):
 def _make_modulation_from_arc(arc, sbgnmap, entities, compartments, los, processes):
     modulation = ModulationEnum[arc.get_class().name].value()
     source_id = arc.get_source()
-    source_glyph = _get_glyph_by_id_or_port_id(sbgnmap, source_id)
+    source_glyph = get_glyph_by_id_or_port_id(sbgnmap, source_id)
     if source_glyph.get_class().name in [attribute.name for attribute in list(EntityEnum)]:
         source = _make_entity_from_glyph(source_glyph, sbgnmap, compartments)
         existent_source = get_object(source, entities)
@@ -217,7 +208,7 @@ def _make_modulation_from_arc(arc, sbgnmap, entities, compartments, los, process
         existent_source = get_object(source, los)
     modulation.source = existent_source
     target_id = arc.get_target()
-    target_glyph = _get_glyph_by_id_or_port_id(sbgnmap, target_id)
+    target_glyph = get_glyph_by_id_or_port_id(sbgnmap, target_id)
     target = _make_process_from_glyph(target_glyph, sbgnmap, entities, compartments)
     existent_target = get_object(target, processes)
     modulation.target = existent_target
