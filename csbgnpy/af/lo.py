@@ -1,5 +1,3 @@
-# from LogicalOperatorClazz import *
-
 class LogicalOperator(object):
     def __init__(self, children = None, id = None):
         self.children = children if children else []
