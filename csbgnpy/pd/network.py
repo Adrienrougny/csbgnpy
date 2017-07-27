@@ -14,7 +14,7 @@ class Network(object):
 
     def add_entity(self, entity):
         if entity not in self.entities:
-            self.entities.add(entity)
+            self.entities.append(entity)
 
     def add_modulation(self, mod):
         if mod not in self.modulations:
@@ -22,11 +22,11 @@ class Network(object):
 
     def add_compartment(self, comp):
         if comp not in self.compartments:
-            self.compartments.add(comp)
+            self.compartments.append(comp)
 
     def add_lo(self, op):
         if op not in self.los:
-            self.lo(op)
+            self.los.append(op)
 
     def remove_process(self, process):
         for modulation in self.modulations:
