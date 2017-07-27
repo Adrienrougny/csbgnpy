@@ -45,6 +45,9 @@ class Network(object):
 
     def remove_compartment(self, compartment):
         self.compartments.remove(compartment)
+        for entity in self.entities:
+            if hasattr(entity, "compartment") and entity.compartment == compartment:
+                entity.compartment = None
 
     def remove_lo(self, op):
         for child in self.children:
