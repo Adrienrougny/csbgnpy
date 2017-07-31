@@ -13,6 +13,9 @@ class LogicalOperator(object):
         return self.__class__ == other.__class__ and \
         set(self.children) == set(other.children)
 
+    def __repr__(self):
+        return "{}".format(self.__class__.__name__)
+
 class AndOperator(LogicalOperator):
     pass
 

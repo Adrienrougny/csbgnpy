@@ -15,6 +15,9 @@ class Activity(object):
     def __hash__(self):
         return hash((self.__class__, self.label, self.compartment))
 
+    def __repr__(self):
+        return "{}[{} {{}} @ {}]".format(self.__class__.__name__, self.label, self.compartment)
+
 class BiologicalActivity(Activity):
     def __init__(self, label = None, compartment = None, uis = None, id = None):
         super().__init__(label, compartment, id)
@@ -28,10 +31,13 @@ class BiologicalActivity(Activity):
         return self.__class__ == other.__class__ and \
                 self.label == other.label and \
                 self.compartment == other.compartment and \
-                self.uis = other.uis
+                self.uis == other.uis
 
     def __hash__(self):
         return hash((self.__class__, self.label, self.compartment, frozenset(self.uis)))
+
+    def __repr(self):
+        return "{}[{} {{{}}} @ {}]".format(self.__class__.__name__, self.label, self.uis, self.compartment)
 
 class Phenotype(Activity):
     pass

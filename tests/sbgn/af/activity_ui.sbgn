@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<sbgn xmlns="http://sbgn.org/libsbgn/0.2">
+    <map language="activity flow">
+        <glyph id="glyph1" class="biological activity">
+            <label text="A"/>
+            <bbox y="90.0" x="126.0" h="60.0" w="108.0"/>
+            <glyph id="glyph1a" class="unit of information">
+                <label text="B"/>
+                <entity name="macromolecule"/>
+                <bbox y="82.0" x="142.0" h="16.0" w="22.0"/>
+            </glyph>
+        </glyph>
+    </map>
+</sbgn>

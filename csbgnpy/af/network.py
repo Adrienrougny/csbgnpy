@@ -12,7 +12,7 @@ class Network(object):
             self.activities.append(act)
 
     def add_modulation(self, mod):
-        if mod not is self.modulations:
+        if mod not in self.modulations:
             self.modulations.append(mod)
 
     def add_compartment(self, comp):

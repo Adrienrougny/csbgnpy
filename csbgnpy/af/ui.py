@@ -26,6 +26,9 @@ class UnitOfInformationActivity(UnitOfInformation):
     def __hash__(self):
         return hash((self.__class__, self.label, self.type))
 
+    def __repr__(self):
+        return "{}[{}:{}]".format(self.__class__.__name__, self.type.name, self.label)
+
 class UnitOfInformationCompartment(UnitOfInformation):
     def __init__(self, prefix = None, label = None, id = None):
         super().__init__(id)
