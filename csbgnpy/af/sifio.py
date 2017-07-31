@@ -8,30 +8,16 @@ from csbgnpy.af.lo import *
 from csbgnpy.af.ui import *
 from csbgnpy.af.network import *
 
-class ActivityEnum(Enum):
-    BIOLOGICAL_ACTIVITY = BiologicalActivity
-    PHENOTYPE = Phenotype
-
-class LogicalOperatorEnum(Enum):
-    OR = OrOperator
-    AND = AndOperator
-    NOT = NotOperator
-
-class ModulationEnum(Enum):
-    INFLUENCE  = Modulation
-    POSITIVE_INFLUENCE  = Stimulation
-    NEGATIVE_INFLUENCE  = Inhibition
-    UNKNOWN_INFLUENCE  = Modulation
-    NECESSARY_STIMULATION  = NecessaryStimulation
-
 def read(*filenames):
     net = Network()
     activities = set()
     modulations = set()
     for filename in filenames:
         f = open(filename)
-        for line in filename:
+        for line in f:
             l = line[:-1].split("\t")
+            if len(l) != 3:
+                l = line[:-1].split(" ")
             source = BiologicalActivity()
             source.label = l[0]
             activities.add(source)
@@ -43,7 +29,7 @@ def read(*filenames):
             elif l[1] == "1":
                 mod = Stimulation()
             mod.source = source
-            mod.target = taget
+            mod.target = target
             modulations.add(mod)
     net.activities = list(activities)
     net.modulations = list(modulations)
