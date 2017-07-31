@@ -329,7 +329,7 @@ def _renew_ids(net):
     for i, op in enumerate(net.los):
         _renew_id_of_lo(op, i)
 
-def make_dot_layout(net, prog = "dot", nodesep = 0.8, xoffset = 10, yoffset = 10):
+def make_dot_layout(net, prog = "dot", ranksep = 1.2, nodesep = 0.8, xoffset = 10, yoffset = 10):
     import pygraphviz as pg
     class LayoutEnum(Enum):
         ACTIVITY = {'h': 60.0,'w': 108.0}
@@ -340,7 +340,7 @@ def make_dot_layout(net, prog = "dot", nodesep = 0.8, xoffset = 10, yoffset = 10
         Y_OFFSET = yoffset
     scaling = 1 / 72
     layout = {}
-    G = pg.AGraph(nodesep = nodesep)
+    G = pg.AGraph(nodesep = nodesep, ranksep = ranksep)
     dids = {}
     i = 0
     for act in net.activities:
