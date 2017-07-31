@@ -137,12 +137,12 @@ def write(net, filename, renew_ids = True, layout = None):
             renew_ids = True
             break
         ids.add(act.id)
-    for comp in self.compartments:
+    for comp in net.compartments:
         if comp.id is None or comp.id in ids:
             renew_ids = True
             break
         ids.add(comp.id)
-    for op in self.los:
+    for op in net.los:
         if op.id is None or op.id in ids:
             renew_ids = True
             break
@@ -335,7 +335,7 @@ def make_layout(net):
         ACTIVITY_UI = {'w': 22, 'h': 16}
     scaling = 1 / 72
     layout = {}
-    G = pg.AGraph()
+    G = pg.AGraph(nodesep = 0.5)
     dids = {}
     i = 0
     for act in net.activities:
