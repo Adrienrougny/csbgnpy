@@ -7,14 +7,14 @@
             <glyph id="glyph3a" class="unit of information">
                 <label text="β-arrestin1"/>
                 <entity name="macromolecule"/>
-                <bbox y="-15843.5" x="718.5" h="32767.0" w="69.0"/>
+                <bbox y="532.0" x="718.5" h="16.0" w="69.0"/>
             </glyph>
         </glyph>
         <glyph id="glyph10" class="biological activity">
             <label text="β-arrestin2&#xA;binding"/>
             <bbox y="540.0" x="576.0" h="60.0" w="108.0"/>
             <glyph id="glyph10a" class="unit of information">
-                <label text="β-arrestin1"/>
+                <label text="β-arrestin2"/>
                 <entity name="macromolecule"/>
                 <bbox y="532.0" x="568.5" h="16.0" w="69.0"/>
             </glyph>
@@ -30,7 +30,7 @@
             <glyph id="glyph4a" class="unit of information">
                 <label text="P@2_HR/&#xA;β-arrestin 2"/>
                 <entity name="complex"/>
-                <bbox y="838.5" x="735.5" h="3.0" w="15.0"/>
+                <bbox y="825.5" x="707.0" h="29.0" w="72.0"/>
             </glyph>
         </glyph>
         <glyph id="glyph17" orientation="vertical" class="and">
@@ -148,7 +148,7 @@
             <glyph id="glyph6a" class="unit of information">
                 <label text="HR"/>
                 <entity name="macromolecule"/>
-                <bbox y="352.0" x="418.0" h="16.0" w="30.0"/>
+                <bbox y="-16023.5" x="418.0" h="32767.0" w="30.0"/>
             </glyph>
         </glyph>
         <arc target="glyph18.1" source="glyph4" id="arc1" class="logic arc">
