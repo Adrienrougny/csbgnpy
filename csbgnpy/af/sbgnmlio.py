@@ -349,8 +349,6 @@ def make_layout(net):
         if y > ymax:
             ymax = y
 
-    G.draw("/home/rougny/POUBELLE/aaa.png")
-
     for act in net.activities:
         layout[act] = {'y': round(ymax - (float(G.get_node(dids[act]).attr["pos"].split(',')[1]) + LayoutEnum["ACTIVITY"].value['h'] / 2)), \
                 'x': round(float(G.get_node(dids[act]).attr["pos"].split(',')[0]) - LayoutEnum["ACTIVITY"].value['w'] / 2), \
