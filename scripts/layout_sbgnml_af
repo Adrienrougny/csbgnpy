@@ -1,0 +1,20 @@
+#!/bin/python
+
+import argparse
+import csbgnpy.af.sbgnmlio
+
+usage = "%(prog)s OUTPUT INPUT(s)"
+parser = argparse.ArgumentParser(usage = usage)
+parser.add_argument("--no-renew-ids", dest = "renew_ids", action = "store_false", default = True)
+parser.add_argument("--prog", dest = "prog", default = "dot")
+parser.add_argument("--nodesep", dest = "nodesep", default = 0.8)
+parser.add_argument("--xoffset", dest = "xoffset", default = 10)
+parser.add_argument("--yoffset", dest = "yoffset", default = 10)
+parser.add_argument("output", help="OUTPUT FILE")
+parser.add_argument("inputs", type=argparse.FileType('r'), help = "INPUT FILE", nargs='+')
+
+args = parser.parse_args()
+
+net = csbgnpy.af.sbgnmlio.read(*args.inputs)
+layout = csbgnpy.af.sbgnmlio.make_dot_layout(net, args.prog, args.nodesep, args.xoffset, args.yoffset)
+csbgnpy.af.sbgnmlio.write(net, args.output, args.renew_ids, layout)
