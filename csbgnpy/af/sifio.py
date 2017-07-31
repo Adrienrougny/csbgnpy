@@ -21,6 +21,7 @@ def read(*filenames):
             source = BiologicalActivity()
             source.label = l[0]
             activities.add(source)
+            print(source)
             target = BiologicalActivity()
             target.label = l[2]
             activities.add(target)
@@ -30,7 +31,9 @@ def read(*filenames):
                 mod = Stimulation()
             mod.source = source
             mod.target = target
+            print(target)
             modulations.add(mod)
+            print(mod)
     net.activities = list(activities)
     net.modulations = list(modulations)
     return net

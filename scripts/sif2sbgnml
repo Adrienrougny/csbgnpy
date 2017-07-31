@@ -1,0 +1,21 @@
+#!/bin/python
+import argparse
+import csbgnpy.af.sifio
+import csbgnpy.af.sbgnmlio
+import csbgnpy.af.sbgnmlio
+
+usage = "%(prog)s OUTPUT INPUT(s)"
+parser = argparse.ArgumentParser(usage = usage)
+parser.add_argument("--prog", dest = "prog", default = "dot")
+parser.add_argument("--ranksep", dest = "ranksep", default = 1.2)
+parser.add_argument("--nodesep", dest = "nodesep", default = 0.8)
+parser.add_argument("--xoffset", dest = "xoffset", default = 10)
+parser.add_argument("--yoffset", dest = "yoffset", default = 10)
+parser.add_argument("output", help="OUTPUT FILE")
+parser.add_argument("inputs", help = "INPUT FILE", nargs='+')
+
+args = parser.parse_args()
+
+net = csbgnpy.af.sifio.read(*args.inputs)
+layout = csbgnpy.af.sbgnmlio.make_dot_layout(net = net, prog = args.prog, ranksep = args.ranksep, nodesep = args.nodesep, xoffset = args.xoffset, yoffset = args.yoffset)
+csbgnpy.af.sbgnmlio.write(net, args.output, layout = layout)
