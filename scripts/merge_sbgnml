@@ -1,8 +1,8 @@
 #!/bin/python
 
 import argparse
-from csbgnpy.pd.sbgnmlio import read_sbgnml
-from csbgnpy.pd.sbgnmlio import write_sbgnml
+from csbgnpy.pd.sbgnmlio import read
+from csbgnpy.pd.sbgnmlio import write
 
 usage = "usage: %merge_sbgnml OUTPUT INPUT(s)"
 parser = argparse.ArgumentParser(usage = usage)
@@ -12,5 +12,5 @@ parser.add_argument("inputs", type=argparse.FileType('r'), help = "INPUT FILE", 
 
 args = parser.parse_args()
 
-net = read_sbgnml(*args.inputs)
-write_sbgnml(net, args.output, args.renew_ids)
+net = read(*args.inputs)
+write(net, args.output, args.renew_ids)

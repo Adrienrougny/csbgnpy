@@ -12,55 +12,54 @@ from csbgnpy.pd.network import *
 
 # ns = {"sbml":"http://www.sbml.org/sbml/level2/version4", "cd":"http://www.sbml.org/2001/ns/celldesigner"}
 
-dic_cd2sbgnml = {
-    "PROTEIN": Macromolecule,
-    "GENE": Macromolecule,
-    "RNA": Macromolecule,
-    "ANTISENSE_RNA": Macromolecule,
-    "ION": SimpleChemical,
-    "SIMPLE_MOLECULE": SimpleChemical,
-    "DRUG": UnspecifiedEntity,
-    "UNKNOWN": UnspecifiedEntity,
-    "COMPLEX": Complex,
-    "DEGRADED": EmptySet,
-    "PHENOTYPE": Phenotype,
-    "phosphorylated": "P",
-    "acetylated": "Ac",
-    "ubiquitinated": "Ub",
-    "methylated": "Me",
-    "hydroxylated": "OH",
-    "glycosylated": "G",
-    "myristoylated": "My",
-    "palmytoylated": "Pa",
-    "prenylated": "Pr",
-    "protonated": "H",
-    "sulfated": "S",
-    "unknown": "",
-    "don't care": "?",
-    "empty": None,
-    "STATE_TRANSITION": GenericProcess,
-    "TRANSLATION": GenericProcess,
-    "TRANSCRIPTION": GenericProcess,
-    "KNOWN_TRANSITION_OMITTED": OmittedProcess,
-    "UNKNOWN_TRANSITION": UncertainProcess,
-    "TRANSPORT": GenericProcess,
-    "HETERODIMER_ASSOCIATION": Association,
-    "DISSOCIATION": Dissociation,
-    "TRUNCATION": GenericProcess,
-    "CATALYSIS": Catalysis,
-    "UNKNOWN_CATALYSIS": Catalysis,
-    "INHIBITION": Inhibition,
-    "UNKNOWN_INHIBITION": Inhibition,
-    "PHYSICAL_STIMULATION": Stimulation,
-    "POSITIVE_INFLUENCE": Stimulation,
-    "MODULATION": Modulation,
-    "TRIGGER": NecessaryStimulation,
-    "AND": AndOperator,
-    "OR": OrOperator,
-    "NOT": NotOperator
-}
+class TranslationEnum(Enum):
+    "PROTEIN" = Macromolecule
+    "GENE" = Macromolecule
+    "RNA" = Macromolecule
+    "ANTISENSE_RNA" = Macromolecule
+    "ION" = SimpleChemical
+    "SIMPLE_MOLECULE" = SimpleChemical
+    "DRUG" = UnspecifiedEntity
+    "UNKNOWN" = UnspecifiedEntity
+    "COMPLEX" = Complex
+    "DEGRADED" = EmptySet
+    "PHENOTYPE" = Phenotype
+    "phosphorylated" = "P"
+    "acetylated" = "Ac"
+    "ubiquitinated" = "Ub"
+    "methylated" = "Me"
+    "hydroxylated" = "OH"
+    "glycosylated" = "G"
+    "myristoylated" = "My"
+    "palmytoylated" = "Pa"
+    "prenylated" = "Pr"
+    "protonated" = "H"
+    "sulfated" = "S"
+    "unknown" = ""
+    "don't care" = "?"
+    "empty" = None
+    "STATE_TRANSITION" = GenericProcess
+    "TRANSLATION" = GenericProcess
+    "TRANSCRIPTION" = GenericProcess
+    "KNOWN_TRANSITION_OMITTED" = OmittedProcess
+    "UNKNOWN_TRANSITION" = UncertainProcess
+    "TRANSPORT" = GenericProcess
+    "HETERODIMER_ASSOCIATION" = Association
+    "DISSOCIATION" = Dissociation
+    "TRUNCATION" = GenericProcess
+    "CATALYSIS" = Catalysis
+    "UNKNOWN_CATALYSIS" = Catalysis
+    "INHIBITION" = Inhibition
+    "UNKNOWN_INHIBITION" = Inhibition
+    "PHYSICAL_STIMULATION" = Stimulation
+    "POSITIVE_INFLUENCE" = Stimulation
+    "MODULATION" = Modulation
+    "TRIGGER" = NecessaryStimulation
+    "AND" = AndOperator
+    "OR" = OrOperator
+    "NOT" = NotOperator
 
-def read_cd(*filenames):
+def read(*filenames):
     net = Network()
     compartments = set()
     entities = set()
@@ -162,7 +161,7 @@ def _make_phenotype_from_cd(cdspecies, tree, ns, compartments):
 def _make_entity_from_cd(cdspecies, tree, ns, compartments):
     cd_class = cdspecies.xpath(".//celldesigner:class", namespaces = ns)[0].text
     if cd_class != "PHENOTYPE":
-        entity = dic_cd2sbgnml[cd_class]()
+        entity = TranslationEnum[cd_class]()
         entity.id = cdspecies.get("id")
         if hasattr(entity, "label"):
             entity.label = cdspecies.get("name")
@@ -196,7 +195,7 @@ def _make_entity_from_cd(cdspecies, tree, ns, compartments):
                 sv = StateVariable()
                 lval = cdspecies.xpath(".//celldesigner:modification[@residue='{0}']".format(svar[0]), namespaces = ns)
                 if lval:
-                    sv.val = dic_cd2sbgnml[lval[0].get("state")]
+                    sv.val = TranslationEnum[lval[0].get("state")]
                 else:
                     sv.val = None
                 if svar[2]:
@@ -213,7 +212,7 @@ def _make_entity_from_cd(cdspecies, tree, ns, compartments):
 
 def _make_process_from_cd(cdproc, tree, ns, entities, compartments):
     cd_class = cdproc.xpath(".//celldesigner:reactionType", namespaces = ns)[0].text
-    process = dic_cd2sbgnml[cd_class]()
+    process = TranslationEnum[cd_class]()
     process.id = cdproc.get("id")
     if cd_class == "TRANSCRIPTION" or cd_class == "TRANSLATION":
         found = False
@@ -241,7 +240,7 @@ def _make_process_from_cd(cdproc, tree, ns, entities, compartments):
     return process
 
 def _make_lo_from_cd(cdmod, tree, ns, entities, compartments):
-    lo = dic_cd2sbgnml[cdmod.get("type").split('_')[-1]]()
+    lo = TranslationEnum[cdmod.get("type").split('_')[-1]]()
     chids = cdmod.get("modifiers").split(',')
     lo.id = '_'.join(chids)
     for chid in chids:
@@ -254,12 +253,12 @@ def _make_lo_from_cd(cdmod, tree, ns, entities, compartments):
 def _make_modulation_from_cd(cdmod, tree, ns, entities, compartments, los, processes):
     mtype = cdmod.get("type")
     if mtype.startswith("BOOLEAN"):
-        modulation = dic_cd2sbgnml[cdmod.get("modificationType")]()
+        modulation = TranslationEnum[cdmod.get("modificationType")]()
         op = _make_lo_from_cd(cdmod, tree, ns, entities, compartments)
         existent_op = get_object(op, los)
         modulation.source = op
     else:
-        modulation = dic_cd2sbgnml[cdmod.get("type")]()
+        modulation = TranslationEnum[cdmod.get("type")]()
         eid = cdmod.get("modifiers")
         cdentity = _get_cdentity_by_id(tree, ns, eid)
         entity = _make_entity_from_cd(cdentity, tree, ns, compartments)

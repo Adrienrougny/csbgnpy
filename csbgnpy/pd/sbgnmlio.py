@@ -11,41 +11,7 @@ from csbgnpy.pd.lo import *
 from csbgnpy.pd.sv import *
 from csbgnpy.pd.ui import *
 from csbgnpy.pd.network import *
-import csbgnpy.utils
-
-class EntityEnum(Enum):
-    UNSPECIFIED_ENTITY = UnspecifiedEntity
-    SIMPLE_CHEMICAL = SimpleChemical
-    MACROMOLECULE = Macromolecule
-    NUCLEIC_ACID_FEATURE = NucleicAcidFeature
-    SIMPLE_CHEMICAL_MULTIMER = SimpleChemicalMultimer
-    MACROMOLECULE_MULTIMER = MacromoleculeMultimer
-    NUCLEIC_ACID_FEATURE_MULTIMER = NucleicAcidFeatureMultimer
-    COMPLEX = Complex
-    COMPLEX_MULTIMER = ComplexMultimer
-    SOURCE_AND_SINK = EmptySet
-    PERTURBING_AGENT = PerturbingAgent
-
-class ProcessEnum(Enum):
-    PROCESS = GenericProcess
-    OMITTED_PROCESS = OmittedProcess
-    UNCERTAIN_PROCESS  = UncertainProcess
-    ASSOCIATION = Association
-    DISSOCIATION  = Dissociation
-    PHENOTYPE = Phenotype
-
-class LogicalOperatorEnum(Enum):
-    OR = OrOperator
-    AND = AndOperator
-    NOT = NotOperator
-
-class ModulationEnum(Enum):
-	CATALYSIS  = Catalysis
-	MODULATION  = Modulation
-	STIMULATION  = Stimulation
-	INHIBITION  = Inhibition
-	UNKNOWN_INFLUENCE  = Modulation
-	NECESSARY_STIMULATION  = NecessaryStimulation
+from io_utils import *
 
 def atan2pi(y, x):
     a = atan2(y, x)
@@ -53,7 +19,7 @@ def atan2pi(y, x):
         a = a + 2 * pi
     return a
 
-def read_sbgnml(*filenames):
+def read(*filenames):
     net = Network()
     compartments = set()
     entities = set()
@@ -413,7 +379,7 @@ def _renew_ids(net):
     for i, op in enumerate(net.los):
         _renew_id_of_lo(op, i)
 
-def write_sbgnml(net, filename, renew_ids = True):
+def write(net, filename, renew_ids = True):
     sbgn = libsbgn.sbgn()
     sbgnmap = libsbgn.map()
     language = libsbgn.Language.PD
