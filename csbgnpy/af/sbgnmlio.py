@@ -131,13 +131,30 @@ def _make_modulation_from_arc(arc, sbgnmap, activities, compartments, los):
     return modulation
 
 def write(net, filename, renew_ids = True, layout = None):
+    ids = set()
+    for act in net.activities:
+        if act.id is None or act.id in ids:
+            renew_ids = True
+            break
+        ids.add(act.id)
+    for comp in self.compartments:
+        if comp.id is None or comp.id in ids:
+            renew_ids = True
+            break
+        ids.add(comp.id)
+    for op in self.los:
+        if op.id is None or op.id in ids:
+            renew_ids = True
+            break
+        ids.add(op.id)
+    if renew_ids:
+        _renew_ids(net)
     sbgn = libsbgn.sbgn()
     sbgnmap = libsbgn.map()
     language = libsbgn.Language.AF
     sbgnmap.set_language(language)
     sbgn.set_map(sbgnmap)
     dids = {}
-    dports = {}
     if renew_ids:
         _renew_ids(net)
     for comp in net.compartments:
