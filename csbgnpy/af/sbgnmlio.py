@@ -267,10 +267,10 @@ def _make_arc_from_modulation(modulation, dids, layout):
     arc.set_target(dids[modulation.target])
     if layout:
         if isinstance(modulation.source, Activity):
-            start = libsbgn.startType(layout[modulation]["start"]['x'], layout[modulation]["start"]['y'])
+            start = libsbgn.startType(layout[modulation][0]['x'], layout[modulation][0]['y'])
         else:
             start = libsbgn.startType(layout[modulation.source]['x'] + layout[modulation.source]['w'] / 2, layout[modulation.source]['y'] - layout[modulation.source]['h'])
-        end = libsbgn.endType(layout[modulation]["end"]['x'], layout[modulation]["end"]['y'])
+        end = libsbgn.endType(layout[modulation][-1]['x'], layout[modulation][-1]['y'])
     else:
         start = libsbgn.startType(0, 0)
         end = libsbgn.endType(0, 0)
@@ -291,10 +291,13 @@ def _make_arcs_from_lo(op, dids, layout):
         arc.set_target("{}.top".format(dids[op]))
         if layout:
             if isinstance(child, Activity):
-                start = libsbgn.startType(layout[(child, op)]["start"]['x'], layout[(child, op)]["start"]['y'])
+                start = libsbgn.startType(layout[(child, op)][0]['x'], layout[(child, op)][0]['y'])
             else:
                 start = libsbgn.startType(layout[child]['x'] + layout[child]['w'] / 2, layout[child]['y'] - layout[child]['h'])
             end = libsbgn.startType(layout[op]['x'] + layout[op]['w'] / 2, layout[op]['y'])
+            # for point in layout[(child, op)][1:-1]:
+                # p = libsbgn.point(x = point['x'], y = point['y'])
+                # arc.add_next(p)
         else:
             start = libsbgn.startType(0, 0)
             end = libsbgn.endType(0, 0)
@@ -333,9 +336,11 @@ def make_layout(net):
         LOGICAL_OPERATOR =  {'h': 42, 'w': 42}
         ACTIVITY_UI_OFFSET = {'y': 1 / 2, 'x': 1 / 5}
         ACTIVITY_UI = {'w': 22, 'h': 16}
+        X_OFFSET = 10
+        Y_OFFSET = 10
     scaling = 1 / 72
     layout = {}
-    G = pg.AGraph(nodesep = 0.5)
+    G = pg.AGraph(nodesep = 0.8)
     dids = {}
     i = 0
     for act in net.activities:
@@ -360,37 +365,40 @@ def make_layout(net):
                 obj = key
                 break
         if isinstance(obj, Activity):
-            y = round(float(node.attr["pos"].split(',')[1]) + LayoutEnum["ACTIVITY"].value['h'] / 2)
+            y = round(float(node.attr["pos"].split(',')[1]) + LayoutEnum["ACTIVITY"].value['h'] / 2 + LayoutEnum["Y_OFFSET"].value)
         else:
-            y = round(float(node.attr["pos"].split(',')[1]) + LayoutEnum["LOGICAL_OPERATOR"].value['h'] / 2)
+            y = round(float(node.attr["pos"].split(',')[1]) + LayoutEnum["LOGICAL_OPERATOR"].value['h'] / 2 + LayoutEnum["Y_OFFSET"].value)
         if y > ymax:
             ymax = y
 
     for act in net.activities:
-        layout[act] = {'y': round(ymax - (float(G.get_node(dids[act]).attr["pos"].split(',')[1]) + LayoutEnum["ACTIVITY"].value['h'] / 2)), \
-                'x': round(float(G.get_node(dids[act]).attr["pos"].split(',')[0]) - LayoutEnum["ACTIVITY"].value['w'] / 2), \
+        layout[act] = {'y': round(ymax - (float(G.get_node(dids[act]).attr["pos"].split(',')[1]) + LayoutEnum["ACTIVITY"].value['h'] / 2) + LayoutEnum["Y_OFFSET"].value), \
+                'x': round(float(G.get_node(dids[act]).attr["pos"].split(',')[0]) - LayoutEnum["ACTIVITY"].value['w'] / 2 + LayoutEnum["X_OFFSET"].value), \
                 'h': LayoutEnum["ACTIVITY"].value['h'], \
                 'w': LayoutEnum["ACTIVITY"].value['w']}
         if hasattr(act, "uis"):
             for ui in act.uis:
-                layout[ui] = {'y': round(layout[act]['y'] - LayoutEnum["ACTIVITY_UI_OFFSET"].value['y'] * LayoutEnum["ACTIVITY_UI"].value['h']), \
-                        'x': round(layout[act]['x'] - LayoutEnum["ACTIVITY_UI_OFFSET"].value['x'] * LayoutEnum["ACTIVITY_UI"].value['w']), \
+                layout[ui] = {'y': round(layout[act]['y'] - LayoutEnum["ACTIVITY_UI_OFFSET"].value['y'] * LayoutEnum["ACTIVITY_UI"].value['h'] + LayoutEnum["Y_OFFSET"].value), \
+                        'x': round(layout[act]['x'] - LayoutEnum["ACTIVITY_UI_OFFSET"].value['x'] * LayoutEnum["ACTIVITY_UI"].value['w'] + LayoutEnum["X_OFFSET"].value), \
                         'h': LayoutEnum["ACTIVITY_UI"].value['h'], \
                         'w': LayoutEnum["ACTIVITY_UI"].value['w']}
     for op in net.los:
-        layout[op] = {'y': round(ymax - (float(G.get_node(dids[op]).attr["pos"].split(',')[1]) + LayoutEnum["LOGICAL_OPERATOR"].value['h'] / 2)), \
-                'x': round(float(G.get_node(dids[op]).attr["pos"].split(',')[0]) - LayoutEnum["LOGICAL_OPERATOR"].value['w'] / 2), \
+        layout[op] = {'y': round(ymax - (float(G.get_node(dids[op]).attr["pos"].split(',')[1]) + LayoutEnum["LOGICAL_OPERATOR"].value['h'] / 2) + LayoutEnum["Y_OFFSET"].value), \
+                'x': round(float(G.get_node(dids[op]).attr["pos"].split(',')[0]) - LayoutEnum["LOGICAL_OPERATOR"].value['w'] / 2 + LayoutEnum["X_OFFSET"].value), \
                 'h': LayoutEnum["LOGICAL_OPERATOR"].value['h'], \
                 'w': LayoutEnum["LOGICAL_OPERATOR"].value['w']}
         for child in op.children:
-            start = G.get_edge(dids[child], dids[op]).attr["pos"].split(' ')[0].split(',')
-            end = G.get_edge(dids[child], dids[op]).attr["pos"].split(' ')[-1].split(',')
-            layout[(child, op)] = {"start": {'x': round(float(start[0])), 'y': round(ymax - float(start[1]))}, \
-                    "end": {'x': round(float(end[0])), 'y': round(ymax - float(end[1]))}}
+            points = [{'x': round(float(coords.split(',')[0]) + LayoutEnum["X_OFFSET"].value), 'y': round(ymax - float(coords.split(',')[1]) + LayoutEnum["Y_OFFSET"].value)} for coords in G.get_edge(dids[child], dids[op]).attr["pos"].split(' ')]
+            # start = G.get_edge(dids[child], dids[op]).attr["pos"].split(' ')[0].split(',')
+            # end = G.get_edge(dids[child], dids[op]).attr["pos"].split(' ')[-1].split(',')
+            # layout[(child, op)] = {"start": {'x': round(float(start[0])), 'y': round(ymax - float(start[1]))}, \
+            layout[(child, op)] = points
     for modulation in net.modulations:
-        start = G.get_edge(dids[modulation.source], dids[modulation.target]).attr["pos"].split(' ')[0].split(',')
-        end = G.get_edge(dids[modulation.source], dids[modulation.target]).attr["pos"].split(' ')[-1].split(',')
-        layout[modulation] = {"start": {'x': round(float(start[0])), 'y': round(ymax - float(start[1]))}, \
-                "end": {'x': round(float(end[0])), 'y': round(ymax - float(end[1]))}}
+        points = [{'x': round(float(coords.split(',')[0]) + LayoutEnum["X_OFFSET"].value), 'y': round(ymax - float(coords.split(',')[1]) + LayoutEnum["Y_OFFSET"].value)} for coords in G.get_edge(dids[modulation.source], dids[modulation.target]).attr["pos"].split(' ')]
+        layout[modulation] = points
+        # start = G.get_edge(dids[modulation.source], dids[modulation.target]).attr["pos"].split(' ')[0].split(',')
+        # end = G.get_edge(dids[modulation.source], dids[modulation.target]).attr["pos"].split(' ')[-1].split(',')
+        # layout[modulation] = {"start": {'x': round(float(start[0])), 'y': round(ymax - float(start[1]))}, \
+                # "end": {'x': round(float(end[0])), 'y': round(ymax - float(end[1]))}}
     return layout
 
