@@ -26,6 +26,15 @@ def mean(c):
 def quote_string(s):
     return '"{0}"'.format(s)
 
+def normalize_string(s):
+    s = s.replace("*","_star")
+    s = s.replace("+","_plus")
+    s = s.replace("/","_")
+    s = s.replace(" ","_")
+    s = s.replace("-","_")
+    s = s.lower()
+    return s
+
 def get_object(obj, coll):
     for obj2 in coll:
         if obj2 == obj:
