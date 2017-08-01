@@ -35,12 +35,18 @@ class Network(object):
         self.processes.remove(process)
 
     def remove_entity(self, entity):
+        toremove = set()
         for process in self.processes:
             if entity in process.reactants or entity in process.products:
-                self.remove_process(process)
+                toremove.add(process)
+        for process in toremove:
+            self.remove_process(process)
+        toremove = set()
         for modulation in self.modulations:
             if modulation.source == entity:
-                self.remove_modulation(modulation)
+                toremove.add(modulation)
+        for modulation in toremove:
+            self.remove_modulation(modulation)
         self.entities.remove(entity)
 
     def remove_compartment(self, compartment):
@@ -50,12 +56,18 @@ class Network(object):
                 entity.compartment = None
 
     def remove_lo(self, op):
+        toremove = set()
         for child in self.children:
             if isinstance(child, LogicalOperator):
-                self.remove_lo(child)
+                toremove.add(child)
+        for child in toremove:
+            self.remove_lo(child)
+        toremove = set()
         for modulation in self.modulations:
             if modulation.source == op:
-                self.remove_modulation(modulation)
+                toremove.add(modulation)
+        for modulation in toremove:
+            self.remove_modulation(modulation)
         self.los.remove(op)
 
     def remove_modulation(self, modulation):
