@@ -1,4 +1,5 @@
 from csbgnpy.af.lo import LogicalOperator
+from errors import *
 
 class Network(object):
     def __init__(self, activities = None, modulations = None, compartments = None, los = None):
@@ -48,3 +49,19 @@ class Network(object):
             if modulation.source == op:
                 self.remove_modulation(modulation)
         self.los.remove(op)
+
+    def get_activity(self, val, by_object = False, by_id = False, by_label = False, by_hash = False):
+        for a in self.activities:
+            if by_object:
+                if a == val:
+                    return a
+            if by_id:
+                if a.id == val:
+                    return a
+            if by_label:
+                if a.label == val:
+                    return a
+            if by_hash:
+                if hash(a) == val:
+                    return a
+        raise ActivityLookupError(a)
