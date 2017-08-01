@@ -25,9 +25,12 @@ class Network(object):
             self.los.append(op)
 
     def remove_activity(self, act):
+        toremove = set()
         for modulation in self.modulations:
             if modulation.target == act or modulation.source == act:
-                self.remove_modulation(modulation)
+                toremove.add(modulation)
+        for modulation in toremove:
+            self.remove_modulation(modulation)
         self.activities.remove(act)
 
     def remove_modulation(self, modulation):
@@ -42,12 +45,18 @@ class Network(object):
                 act.compartment = None
 
     def remove_lo(op):
+        toremove = set()
         for child in self.children:
             if isinstance(child, LogicalOperator):
-                self.remove_lo(child)
+                toremove.add(child)
+        for child in toremove:
+            self.remove_lo(child)
+        toremove = set()
         for modulation in self.modulations:
             if modulation.source == op:
-                self.remove_modulation(modulation)
+                toremove.add(modulation)
+        for modulation in toremove:
+            self.remove_modulation(modulation)
         self.los.remove(op)
 
     def get_activity(self, val, by_object = False, by_id = False, by_label = False, by_hash = False):
