@@ -68,6 +68,7 @@ def read(*filenames):
     modulations = set()
     los = set()
     toskip = 0
+    aliases = {}
     for filename in filenames:
         tree = etree.parse(filename)
         ns = tree.getroot().nsmap
@@ -122,11 +123,18 @@ def read(*filenames):
                         toskip = len(chids)
                 else:
                     toskip -= 1
+        # TODO: should be forwarded to Entities objects instead (aliases
+        # attribute)
+        for node in tree.xpath("//celldesigner:speciesAlias", namespaces=ns):
+            aliases[node.get("id")] = node.get("species")
+        for node in tree.xpath("//celldesigner:complexSpeciesAlias", namespaces=ns):
+            aliases[node.get("id")] = node.get("species")
     net.compartments = list(compartments)
     net.entities = list(entities)
     net.processes = list(processes)
     net.modulations = list(modulations)
     net.los = list(los)
+    net.aliases = aliases
     return net
 
 def _get_cdentity_by_id(tree, ns, id):
