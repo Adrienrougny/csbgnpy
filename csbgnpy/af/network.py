@@ -1,5 +1,5 @@
 from csbgnpy.af.lo import LogicalOperator
-from errors import *
+from csbgnpy.af.errors import *
 
 class Network(object):
     def __init__(self, activities = None, modulations = None, compartments = None, los = None):
@@ -27,7 +27,7 @@ class Network(object):
     def remove_activity(self, act):
         for modulation in self.modulations:
             if modulation.target == act or modulation.source == act:
-                self.remove_modulation(act)
+                self.remove_modulation(modulation)
         self.activities.remove(act)
 
     def remove_modulation(self, modulation):
