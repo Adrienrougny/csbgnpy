@@ -1,3 +1,9 @@
+from enum import Enum
+from csbgnpy.pd.entity import *
+from csbgnpy.pd.process import *
+from csbgnpy.pd.modulation import *
+from csbgnpy.pd.lo import *
+
 class EntityEnum(Enum):
     UNSPECIFIED_ENTITY = UnspecifiedEntity
     SIMPLE_CHEMICAL = SimpleChemical

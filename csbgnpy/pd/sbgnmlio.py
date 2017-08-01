@@ -11,7 +11,7 @@ from csbgnpy.pd.lo import *
 from csbgnpy.pd.sv import *
 from csbgnpy.pd.ui import *
 from csbgnpy.pd.network import *
-from io_utils import *
+from csbgnpy.pd.io_utils import *
 
 def atan2pi(y, x):
     a = atan2(y, x)
