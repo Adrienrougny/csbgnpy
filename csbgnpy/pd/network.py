@@ -75,7 +75,7 @@ class Network(object):
         if isinstance(modulation.source, LogicalOperator):
             self.remove_lo(modulation.source)
 
-    def get_compartment(val, by_compartment = False, by_id = False, by_label = False, by_hash = False):
+    def get_compartment(self, val, by_compartment = False, by_id = False, by_label = False, by_hash = False):
         for c in self.compartments:
             if by_object:
                 if c == val:
