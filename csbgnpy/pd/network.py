@@ -21,7 +21,7 @@ class Network(object):
     def add_entity(self, entity):
         if entity not in self.entities:
             self.entities.append(entity)
-            if hasattr(entity, compartment):
+            if hasattr(entity, "compartment"):
                 self.add_compartment(entity.compartment)
 
     def add_modulation(self, mod):
