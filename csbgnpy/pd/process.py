@@ -1,3 +1,5 @@
+from copy import deepcopy
+
 """Stoech !"""
 class Process(object):
 

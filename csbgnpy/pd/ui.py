@@ -1,3 +1,5 @@
+from copy import deepcopy
+
 class UnitOfInformation(object):
     def __init__(self, prefix = None, label = None, id = None):
         self.prefix = prefix

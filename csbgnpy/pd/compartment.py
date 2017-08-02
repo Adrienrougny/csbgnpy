@@ -1,3 +1,5 @@
+from copy import deepcopy
+
 class Compartment(object):
     def __init__(self, label = None, id = None):
         self.label = label

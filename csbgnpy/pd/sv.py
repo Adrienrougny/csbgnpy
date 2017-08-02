@@ -1,3 +1,5 @@
+from copy import deepcopy
+
 class UndefinedVar(object):
     def __init__(self, num = None):
         self.num = num

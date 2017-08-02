@@ -1,3 +1,5 @@
+from copy import deepcopy
+
 class Modulation(object):
     def __init__(self, source = None, target = None, id = None):
         self.source = source

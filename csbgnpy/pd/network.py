@@ -1,5 +1,6 @@
-import copy
+from copy import deepcopy
 from csbgnpy.pd.lo import LogicalOperator
+from csbgnpy.pd.entity import Entity
 
 class Network(object):
     def __init__(self, entities = None, processes = None, modulations = None, compartments = None, los = None):
@@ -132,25 +133,25 @@ class Network(object):
     def union(self, other):
         new = Network()
         for e in self.entities:
-            new.add_entity(copy.deepcopy(e))
+            new.add_entity(deepcopy(e))
         for p in self.processes:
-            new.add_process(copy.deepcopy(p))
+            new.add_process(deepcopy(p))
         for m in self.modulations:
-            new.add_modulation(copy.deepcopy(m))
+            new.add_modulation(deepcopy(m))
         for c in self.compartments:
-            new.add_compartment(copy.deepcopy(m))
+            new.add_compartment(deepcopy(m))
         for o in self.los:
-            new.add_lo(copy.deepcopy(o))
+            new.add_lo(deepcopy(o))
         for e in other.entities:
-            new.add_entity(copy.deepcopy(e))
+            new.add_entity(deepcopy(e))
         for p in other.processes:
-            new.add_process(copy.deepcopy(p))
+            new.add_process(deepcopy(p))
         for m in other.modulations:
-            new.add_modulation(copy.deepcopy(m))
+            new.add_modulation(deepcopy(m))
         for c in other.compartments:
-            new.add_compartment(copy.deepcopy(m))
+            new.add_compartment(deepcopy(m))
         for o in other.los:
-            new.add_lo(copy.deepcopy(o))
+            new.add_lo(deepcopy(o))
         # new.entities = list(set(self.entities).union(set(other.entities)))
         # new.processes = list(set(self.processes).union(set(other.processes)))
         # new.modulations = list(set(self.modulations).union(set(other.modulations)))
@@ -162,19 +163,19 @@ class Network(object):
         new = Network()
         for e in self.entities:
             if e in other.entities:
-                new.add_entity(copy.deepcopy(e)
+                new.add_entity(deepcopy(e))
         for p in self.processes:
             if p in other.processes:
-                new.add_process(copy.deepcopy(p)
+                new.add_process(deepcopy(p))
         for m in self.modulations:
             if m in other.modulations:
-                new.add_modulation(copy.deepcopy(m)
+                new.add_modulation(deepcopy(m))
         for c in self.compartment:
             if c in other.compartments:
-                new.add_compartment(copy.deepcopy(c)
+                new.add_compartment(deepcopy(c))
         for o in self.los:
             if o in other.los:
-                new.add_compartment(copy.deepcopy(c)
+                new.add_compartment(deepcopy(c))
         return new
         # new.entities = list(set(self.entities).intersection(set(other.entities)))
         # new.processes = list(set(self.processes).intersection(set(other.processes)))
@@ -187,7 +188,7 @@ class Network(object):
         new = Network()
         for m in self.modulations:
             if m not in other.modulations:
-                new.add_modulation(copy.deepcopy(m))
+                new.add_modulation(deepcopy(m))
         # new.entities = list(set(self.entities).difference(set(other.entities)))
         # new.processes = list(set(self.processes).difference(set(other.processes)))
         # new.modulations = list(set(self.modulations).difference(set(other.modulations)))

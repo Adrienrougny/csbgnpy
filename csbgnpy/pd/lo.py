@@ -1,3 +1,4 @@
+from copy import deepcopy
 # from LogicalOperatorClazz import *
 
 class LogicalOperator(object):

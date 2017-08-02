@@ -1,3 +1,5 @@
+from copy import deepcopy
+
 class Entity(object):
     def __init__(self, id = None):
         self.id = id
