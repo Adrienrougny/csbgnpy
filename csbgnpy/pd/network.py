@@ -139,7 +139,7 @@ class Network(object):
         for m in self.modulations:
             new.add_modulation(deepcopy(m))
         for c in self.compartments:
-            new.add_compartment(deepcopy(m))
+            new.add_compartment(deepcopy(c))
         for o in self.los:
             new.add_lo(deepcopy(o))
         for e in other.entities:
@@ -149,7 +149,7 @@ class Network(object):
         for m in other.modulations:
             new.add_modulation(deepcopy(m))
         for c in other.compartments:
-            new.add_compartment(deepcopy(m))
+            new.add_compartment(deepcopy(c))
         for o in other.los:
             new.add_lo(deepcopy(o))
         # new.entities = list(set(self.entities).union(set(other.entities)))
