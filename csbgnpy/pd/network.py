@@ -1,3 +1,4 @@
+import copy
 from csbgnpy.pd.lo import LogicalOperator
 
 class Network(object):
@@ -11,14 +12,27 @@ class Network(object):
     def add_process(self, proc):
         if proc not in self.processes:
             self.processes.append(proc)
+            for reactant in self.reactants:
+                self.add_entity(reactant)
+            for product in self.products:
+                self.add_entity(product)
 
     def add_entity(self, entity):
         if entity not in self.entities:
             self.entities.append(entity)
+            if hasattr(entity, compartment):
+                self.add_compartment(entity.compartment)
 
     def add_modulation(self, mod):
         if mod not in self.modulations:
             self.modulations.append(mod)
+        source = mod.source
+        target = mod.target
+        if isinstance(source, Entity):
+            self.add_entity(source)
+        elif isinstance(source, LogicalOperator):
+            self.add_lo(source)
+        self.add_process(target)
 
     def add_compartment(self, comp):
         if comp not in self.compartments:
@@ -27,6 +41,11 @@ class Network(object):
     def add_lo(self, op):
         if op not in self.los:
             self.los.append(op)
+            for child in op.children:
+                if isinstance(child, Entity):
+                    self.add_entity(child)
+                elif isinstance(child, LogicalOperator):
+                    self.add_lo(source)
 
     def remove_process(self, process):
         for modulation in self.modulations:
@@ -112,29 +131,68 @@ class Network(object):
 
     def union(self, other):
         new = Network()
-        new.entities = list(set(self.entities).union(set(other.entities)))
-        new.processes = list(set(self.processes).union(set(other.processes)))
-        new.modulations = list(set(self.modulations).union(set(other.modulations)))
-        new.los = list(set(self.los).union(set(other.los)))
-        new.compartments = list(set(self.compartments).union(set(other.compartments)))
+        for e in self.entities:
+            new.add_entity(copy.deepcopy(e))
+        for p in self.processes:
+            new.add_process(copy.deepcopy(p))
+        for m in self.modulations:
+            new.add_modulation(copy.deepcopy(m))
+        for c in self.compartments:
+            new.add_compartment(copy.deepcopy(m))
+        for o in self.los:
+            new.add_lo(copy.deepcopy(o))
+        for e in other.entities:
+            new.add_entity(copy.deepcopy(e))
+        for p in other.processes:
+            new.add_process(copy.deepcopy(p))
+        for m in other.modulations:
+            new.add_modulation(copy.deepcopy(m))
+        for c in other.compartments:
+            new.add_compartment(copy.deepcopy(m))
+        for o in other.los:
+            new.add_lo(copy.deepcopy(o))
+        # new.entities = list(set(self.entities).union(set(other.entities)))
+        # new.processes = list(set(self.processes).union(set(other.processes)))
+        # new.modulations = list(set(self.modulations).union(set(other.modulations)))
+        # new.los = list(set(self.los).union(set(other.los)))
+        # new.compartments = list(set(self.compartments).union(set(other.compartments)))
         return new
 
     def intersection(self, other):
         new = Network()
-        new.entities = list(set(self.entities).intersection(set(other.entities)))
-        new.processes = list(set(self.processes).intersection(set(other.processes)))
-        new.modulations = list(set(self.modulations).intersection(set(other.modulations)))
-        new.los = list(set(self.los).intersection(set(other.los)))
-        new.compartments = list(set(self.compartments).intersection(set(other.compartments)))
+        for e in self.entities:
+            if e in other.entities:
+                new.add_entity(copy.deepcopy(e)
+        for p in self.processes:
+            if p in other.processes:
+                new.add_process(copy.deepcopy(p)
+        for m in self.modulations:
+            if m in other.modulations:
+                new.add_modulation(copy.deepcopy(m)
+        for c in self.compartment:
+            if c in other.compartments:
+                new.add_compartment(copy.deepcopy(c)
+        for o in self.los:
+            if o in other.los:
+                new.add_compartment(copy.deepcopy(c)
+        return new
+        # new.entities = list(set(self.entities).intersection(set(other.entities)))
+        # new.processes = list(set(self.processes).intersection(set(other.processes)))
+        # new.modulations = list(set(self.modulations).intersection(set(other.modulations)))
+        # new.los = list(set(self.los).intersection(set(other.los)))
+        # new.compartments = list(set(self.compartments).intersection(set(other.compartments)))
         return new
 
     def difference(self, other):
         new = Network()
-        new.entities = list(set(self.entities).difference(set(other.entities)))
-        new.processes = list(set(self.processes).difference(set(other.processes)))
-        new.modulations = list(set(self.modulations).difference(set(other.modulations)))
-        new.los = list(set(self.los).difference(set(other.los)))
-        new.compartments = list(set(self.compartments).difference(set(other.compartments)))
+        for m in self.modulations:
+            if m not in other.modulations:
+                new.add_modulation(copy.deepcopy(m))
+        # new.entities = list(set(self.entities).difference(set(other.entities)))
+        # new.processes = list(set(self.processes).difference(set(other.processes)))
+        # new.modulations = list(set(self.modulations).difference(set(other.modulations)))
+        # new.los = list(set(self.los).difference(set(other.los)))
+        # new.compartments = list(set(self.compartments).difference(set(other.compartments)))
         return new
 
     def __eq__(self, other):
@@ -145,3 +203,10 @@ class Network(object):
                 set(self.los) == set(other.los) and \
                 set(self.modulations) == set(other.modulations)
 
+    def __deepcopy__(self, memo):
+        cls = self.__class__
+        result = cls.__new__(cls)
+        memo[id(self)] = result
+        for k, v in self.__dict__.items():
+            setattr(result, k, deepcopy(v, memo))
+        return result
