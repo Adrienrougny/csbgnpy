@@ -75,7 +75,7 @@ class Network(object):
         if isinstance(modulation.source, LogicalOperator):
             self.remove_lo(modulation.source)
 
-    def get_entity(self, val, by_object = False, by_id = False, by_label = False, by_hash = False):
+    def get_entity(self, val, by_entity = False, by_id = False, by_label = False, by_hash = False):
         for e in self.entities:
             if by_object:
                 if e == val:
@@ -108,6 +108,15 @@ class Network(object):
         new.modulations = list(set(self.modulations).intersection(set(other.modulations)))
         new.los = list(set(self.los).intersection(set(other.los)))
         new.compartments = list(set(self.compartments).intersection(set(other.compartments)))
+        return new
+
+    def difference(self, other):
+        new = Network()
+        new.entities = list(set(self.entities).difference(set(other.entities)))
+        new.processes = list(set(self.processes).difference(set(other.processes)))
+        new.modulations = list(set(self.modulations).difference(set(other.modulations)))
+        new.los = list(set(self.los).difference(set(other.los)))
+        new.compartments = list(set(self.compartments).difference(set(other.compartments)))
         return new
 
     def __eq__(self, other):
