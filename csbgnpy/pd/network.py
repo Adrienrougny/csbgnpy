@@ -13,9 +13,9 @@ class Network(object):
     def add_process(self, proc):
         if proc not in self.processes:
             self.processes.append(proc)
-            for reactant in self.reactants:
+            for reactant in proc.reactants:
                 self.add_entity(reactant)
-            for product in self.products:
+            for product in proc.products:
                 self.add_entity(product)
 
     def add_entity(self, entity):
