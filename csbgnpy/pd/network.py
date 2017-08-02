@@ -77,7 +77,7 @@ class Network(object):
 
     def get_compartment(self, val, by_compartment = False, by_id = False, by_label = False, by_hash = False):
         for c in self.compartments:
-            if by_object:
+            if by_compartment:
                 if c == val:
                     return c
             if by_id:
@@ -95,7 +95,7 @@ class Network(object):
 
     def get_entity(self, val, by_entity = False, by_id = False, by_label = False, by_hash = False):
         for e in self.entities:
-            if by_object:
+            if by_entity:
                 if e == val:
                     return e
             if by_id:
