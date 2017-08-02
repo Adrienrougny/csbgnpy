@@ -194,7 +194,7 @@ class Network(object):
                 new.add_process(p)
         for e in self.entities:
             if e not in other.entities:
-                new.add_entities(e)
+                new.add_entity(e)
         for c in self.compartments:
             if c not in other.compartments:
                 new.add_compartment(c)
