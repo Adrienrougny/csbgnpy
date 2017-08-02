@@ -82,7 +82,7 @@ def _make_sv_from_glyph(glyph, i):
     return sv
 
 def _make_compartment_from_glyph(glyph):
-    comp = csbgnpy.pd.Compartment()
+    comp = Compartment()
     comp.id = glyph.get_id()
     if glyph.get_label() is not None:
         comp.label = glyph.get_label().get_text()

@@ -182,7 +182,6 @@ class Network(object):
         # new.modulations = list(set(self.modulations).intersection(set(other.modulations)))
         # new.los = list(set(self.los).intersection(set(other.los)))
         # new.compartments = list(set(self.compartments).intersection(set(other.compartments)))
-        return new
 
     def difference(self, other):
         new = Network()
