@@ -35,7 +35,7 @@ class StatefulEntity(Entity):
 
     def get_ui(self, val, by_ui = False, by_id = False, by_hash = False):
         for ui in self.uis:
-            if by_object:
+            if by_ui:
                 if ui == val:
                     return ui
             if by_id:
@@ -48,7 +48,7 @@ class StatefulEntity(Entity):
 
     def get_sv(self, val, by_sv = False, by_id = False, by_hash = False):
         for sv in self.svs:
-            if by_object:
+            if by_sv:
                 if sv == val:
                     return sv
             if by_id:
