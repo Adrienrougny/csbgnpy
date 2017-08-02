@@ -170,7 +170,7 @@ class Network(object):
         for m in self.modulations:
             if m in other.modulations:
                 new.add_modulation(deepcopy(m))
-        for c in self.compartment:
+        for c in self.compartments:
             if c in other.compartments:
                 new.add_compartment(deepcopy(c))
         for o in self.los:
