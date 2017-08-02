@@ -22,6 +22,13 @@ TranslationDic = {
     "DRUG": UnspecifiedEntity,
     "UNKNOWN": UnspecifiedEntity,
     "COMPLEX": Complex,
+    "PROTEIN_HOMODIMER": MacromoleculeMultimer,
+    "GENE_HOMODIMER": MacromoleculeMultimer,
+    "RNA_HOMODIMER": MacromoleculeMultimer,
+    "ANTISENSE_RNA_HOMODIMER": MacromoleculeMultimer,
+    "ION_HOMODIMER": SimpleChemicalMultimer,
+    "SIMPLE_MOLECULE_HOMODIMER": SimpleChemicalMultimer,
+    "COMPLEX_HOMODIMER": ComplexMultimer,
     "DEGRADED": EmptySet,
     "PHENOTYPE": Phenotype,
     "phosphorylated": "P",
@@ -169,6 +176,9 @@ def _make_phenotype_from_cd(cdspecies, tree, ns, compartments):
 
 def _make_entity_from_cd(cdspecies, tree, ns, compartments):
     cd_class = cdspecies.xpath(".//celldesigner:class", namespaces = ns)[0].text
+    homodimer = len(cdspecies.xpath(".//celldesigner:homodimer", namespaces = ns)) > 0
+    if homodimer:
+        cd_class = cd_class + "_HOMODIMER"
     if cd_class != "PHENOTYPE":
         entity = TranslationDic[cd_class]()
         entity.id = cdspecies.get("id")
