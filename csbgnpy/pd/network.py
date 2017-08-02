@@ -27,13 +27,13 @@ class Network(object):
     def add_modulation(self, mod):
         if mod not in self.modulations:
             self.modulations.append(mod)
-        source = mod.source
-        target = mod.target
-        if isinstance(source, Entity):
-            self.add_entity(source)
-        elif isinstance(source, LogicalOperator):
-            self.add_lo(source)
-        self.add_process(target)
+            source = mod.source
+            target = mod.target
+            if isinstance(source, Entity):
+                self.add_entity(source)
+            elif isinstance(source, LogicalOperator):
+                self.add_lo(source)
+            self.add_process(target)
 
     def add_compartment(self, comp):
         if comp not in self.compartments:
@@ -46,7 +46,7 @@ class Network(object):
                 if isinstance(child, Entity):
                     self.add_entity(child)
                 elif isinstance(child, LogicalOperator):
-                    self.add_lo(source)
+                    self.add_lo(child)
 
     def remove_process(self, process):
         for modulation in self.modulations:
@@ -189,6 +189,15 @@ class Network(object):
         for m in self.modulations:
             if m not in other.modulations:
                 new.add_modulation(deepcopy(m))
+        for p in self.processes:
+            if p not in other.processes:
+                new.add_process(p)
+        for e in self.entities:
+            if e not in other.entities:
+                new.add_entities(e)
+        for c in self.compartments:
+            if c not in other.compartments:
+                new.add_compartment(c)
         # new.entities = list(set(self.entities).difference(set(other.entities)))
         # new.processes = list(set(self.processes).difference(set(other.processes)))
         # new.modulations = list(set(self.modulations).difference(set(other.modulations)))
