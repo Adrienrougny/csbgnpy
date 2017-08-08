@@ -78,7 +78,7 @@ def read(*filenames):
         ns.pop(None)
         for cdcomp in tree.xpath("//sbml:compartment", namespaces = ns): # making compartment
             comp = _make_compartment_from_cd(cdcomp, ns)
-            compartments.add(comp)
+            net.add_compartment(comp)
         for cdspecies in tree.xpath("//sbml:species", namespaces = ns): #making entities and phenotypes
             cd_class = cdspecies.xpath(".//celldesigner:class", namespaces = ns)[0].text
             if cd_class == "PHENOTYPE":
@@ -212,7 +212,7 @@ def _make_entity_from_cd(cdspecies, tree, ns):
                 sv.id = entity.id + "_" + svar[0]
                 entity.add_sv(sv)
         for cdsubspecies in [cd.getparent().getparent() for cd in tree.xpath(".//celldesigner:complexSpecies[text()='{0}']".format(cdspecies.get("id")), namespaces = ns)]:
-            subentity = _make_entity_from_cd(cdsubspecies, tree, ns, compartments)
+            subentity = _make_entity_from_cd(cdsubspecies, tree, ns)
             entity.add_component(subentity)
         return entity
 
@@ -266,6 +266,6 @@ def _make_modulation_from_cd(cdmod, tree, ns):
         entity = _make_entity_from_cd(cdentity, tree, ns)
         modulation.source = entity
     cdprocess = cdmod.getparent().getparent().getparent().getparent()
-    process = _make_process_from_cd(cdprocess, tree, ns, entities, compartments)
+    process = _make_process_from_cd(cdprocess, tree, ns)
     modulation.target = process
     return modulation
