@@ -69,11 +69,6 @@ TranslationDic = {
 
 def read(*filenames):
     net = Network()
-    compartments = set()
-    entities = set()
-    processes = set()
-    modulations = set()
-    los = set()
     toskip = 0
     aliases = {}
     for filename in filenames:
@@ -87,43 +82,41 @@ def read(*filenames):
         for cdspecies in tree.xpath("//sbml:species", namespaces = ns): #making entities and phenotypes
             cd_class = cdspecies.xpath(".//celldesigner:class", namespaces = ns)[0].text
             if cd_class == "PHENOTYPE":
-                process = _make_phenotype_from_cd(cdspecies, tree, ns, compartments)
-                processes.add(process)
+                process = _make_phenotype_from_cd(cdspecies, tree, ns)
+                net.add_process(process)
             else:
-                entity = _make_entity_from_cd(cdspecies, tree, ns, compartments)
-                entities.add(entity)
+                entity = _make_entity_from_cd(cdspecies, tree, ns)
+                net.add_entity(entity)
         for cdproc in tree.xpath("//sbml:reaction", namespaces = ns): # making additional emtyset
             cd_class = cdproc.xpath(".//celldesigner:reactionType", namespaces = ns)[0].text
             if cd_class == "TRANSCRIPTION" or cd_class == "TRANSLATION":
                 es = EmptySet("emptyset")
-                entities.add(es)
+                net.add_entity(es)
                 break
         for cdproc in tree.xpath("//sbml:reaction", namespaces = ns): #making processes
-            process = _make_process_from_cd(cdproc, tree, ns, entities, compartments)
-            processes.add(process)
+            process = _make_process_from_cd(cdproc, tree, ns)
+            net.add_process(process)
         for cdproc in tree.xpath("//sbml:reaction", namespaces = ns): # making los
             for cdmod in cdproc.xpath(".//celldesigner:modification", namespaces = ns):
                 mtype = cdmod.get("type")
                 if mtype.startswith("BOOLEAN"):
-                    lo = _make_lo_from_cd(cdmod, tree, ns, entities, compartments)
-                    los.add(lo)
+                    lo = _make_lo_from_cd(cdmod, tree, ns)
+                    net.add_lo(lo)
         for cdproc in tree.xpath("//sbml:reaction", namespaces = ns): # making modulations
             cd_class = cdproc.xpath(".//celldesigner:reactionType", namespaces = ns)[0].text
             if cd_class == "TRANSCRIPTION" or cd_class == "TRANSLATION": # making special modulation in case of translation or transcription
                 modulation = NecessaryStimulation()
                 sourceid = cdproc.xpath("./sbml:listOfReactants", namespaces = ns)[0].xpath("./sbml:speciesReference", namespaces = ns)[0].get("species")
                 cdsource = _get_cdentity_by_id(tree, ns, sourceid)
-                source = _make_entity_from_cd(cdsource, tree, ns, compartments)
-                existent_source = get_object(source, entities)
-                modulation.source = existent_source
-                target = _make_process_from_cd(cdproc, tree, ns, entities, compartments)
-                existent_target = get_object(target, processes)
-                modulation.target = existent_target
-                modulations.add(modulation)
+                source = _make_entity_from_cd(cdsource, tree, ns)
+                modulation.source = source
+                target = _make_process_from_cd(cdproc, tree, ns)
+                modulation.target = target
+                net.add_modulation(modulation)
             for cdmod in cdproc.xpath(".//celldesigner:modification", namespaces = ns):
                 if not toskip: # when boolean, two next modulations should be skipped
-                    modulation = _make_modulation_from_cd(cdmod, tree, ns, entities, compartments, los, processes)
-                    modulations.add(modulation)
+                    modulation = _make_modulation_from_cd(cdmod, tree, ns)
+                    net.add_modulation(modulation)
                     mtype = cdmod.get("type")
                     if mtype.startswith("BOOLEAN"):
                         chids = cdmod.get("modifiers").split(',')
@@ -136,11 +129,6 @@ def read(*filenames):
             aliases[node.get("id")] = node.get("species")
         for node in tree.xpath("//celldesigner:complexSpeciesAlias", namespaces=ns):
             aliases[node.get("id")] = node.get("species")
-    net.compartments = list(compartments)
-    net.entities = list(entities)
-    net.processes = list(processes)
-    net.modulations = list(modulations)
-    net.los = list(los)
     net.aliases = aliases
     return net
 
@@ -168,13 +156,13 @@ def _make_compartment_from_cd(cdcomp, ns):
     comp.label = cdcomp.get("name")
     return comp
 
-def _make_phenotype_from_cd(cdspecies, tree, ns, compartments):
+def _make_phenotype_from_cd(cdspecies, tree, ns):
     process = Phenotype()
     process.id = cdspecies.get("id")
     process.label = cdspecies.get("name")
     return process
 
-def _make_entity_from_cd(cdspecies, tree, ns, compartments):
+def _make_entity_from_cd(cdspecies, tree, ns):
     cd_class = cdspecies.xpath(".//celldesigner:class", namespaces = ns)[0].text
     homodimer = len(cdspecies.xpath(".//celldesigner:homodimer", namespaces = ns)) > 0
     if homodimer:
@@ -201,8 +189,7 @@ def _make_entity_from_cd(cdspecies, tree, ns, compartments):
             if cid:
                 cdcompartment = _get_cdcompartment_by_id(tree, ns, cid)
                 compartment = _make_compartment_from_cd(cdcompartment, ns)
-                existent_compartment = get_object(compartment, compartments)
-                entity.compartment = existent_compartment
+                entity.compartment = compartment
         # making svs
         if cd_class == "PROTEIN":
             prid = cdspecies.xpath(".//celldesigner:proteinReference", namespaces = ns)[0].text
@@ -229,7 +216,7 @@ def _make_entity_from_cd(cdspecies, tree, ns, compartments):
             entity.add_component(subentity)
         return entity
 
-def _make_process_from_cd(cdproc, tree, ns, entities, compartments):
+def _make_process_from_cd(cdproc, tree, ns):
     cd_class = cdproc.xpath(".//celldesigner:reactionType", namespaces = ns)[0].text
     process = TranslationDic[cd_class]()
     process.id = cdproc.get("id")
@@ -247,46 +234,38 @@ def _make_process_from_cd(cdproc, tree, ns, entities, compartments):
         for cdreac in cdproc.xpath("./sbml:listOfReactants", namespaces = ns)[0].xpath("./sbml:speciesReference", namespaces = ns):
             reacid = cdreac.get("species")
             cdreac = _get_cdentity_by_id(tree, ns, reacid)
-            reactant = _make_entity_from_cd(cdreac, tree, ns, compartments)
-            existent_reactant = get_object(reactant, entities)
-            process.add_reactant(existent_reactant)
+            reactant = _make_entity_from_cd(cdreac, tree, ns)
+            process.add_reactant(reactant)
     for cdprod in cdproc.xpath("./sbml:listOfProducts", namespaces = ns)[0].xpath("./sbml:speciesReference", namespaces = ns):
         prodid = cdprod.get("species")
         cdprod = _get_cdentity_by_id(tree, ns, prodid)
-        product = _make_entity_from_cd(cdprod, tree, ns, compartments)
-        existent_product = get_object(product, entities)
-        process.add_product(existent_product)
+        product = _make_entity_from_cd(cdprod, tree, ns)
+        process.add_product(product)
     return process
 
-def _make_lo_from_cd(cdmod, tree, ns, entities, compartments):
+def _make_lo_from_cd(cdmod, tree, ns):
     lo = TranslationDic[cdmod.get("type").split('_')[-1]]()
     chids = cdmod.get("modifiers").split(',')
     lo.id = '_'.join(chids)
     for chid in chids:
         cdentity = _get_cdentity_by_id(tree, ns, chid)
-        entity = _make_entity_from_cd(cdentity, tree, ns, compartments)
-        existent_entity = get_object(entity, entities)
-        lo.add_child(existent_entity)
+        entity = _make_entity_from_cd(cdentity, tree, ns)
+        lo.add_child(entity)
     return lo
 
-def _make_modulation_from_cd(cdmod, tree, ns, entities, compartments, los, processes):
+def _make_modulation_from_cd(cdmod, tree, ns):
     mtype = cdmod.get("type")
     if mtype.startswith("BOOLEAN"):
         modulation = TranslationDic[cdmod.get("modificationType")]()
-        op = _make_lo_from_cd(cdmod, tree, ns, entities, compartments)
-        existent_op = get_object(op, los)
+        op = _make_lo_from_cd(cdmod, tree, ns)
         modulation.source = op
     else:
         modulation = TranslationDic[cdmod.get("type")]()
         eid = cdmod.get("modifiers")
         cdentity = _get_cdentity_by_id(tree, ns, eid)
-        entity = _make_entity_from_cd(cdentity, tree, ns, compartments)
-        existent_entity = get_object(entity, entities)
-        modulation.source = existent_entity
+        entity = _make_entity_from_cd(cdentity, tree, ns)
+        modulation.source = entity
     cdprocess = cdmod.getparent().getparent().getparent().getparent()
     process = _make_process_from_cd(cdprocess, tree, ns, entities, compartments)
-    existent_process = get_object(process, processes)
-    modulation.target = existent_process
+    modulation.target = process
     return modulation
-
-

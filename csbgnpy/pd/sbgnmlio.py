@@ -21,39 +21,29 @@ def atan2pi(y, x):
 
 def read(*filenames):
     net = Network()
-    compartments = set()
-    entities = set()
-    processes = set()
-    modulations = set()
-    los = set()
     for filename in filenames:
         sbgn = libsbgn.parse(filename, silence=True)
         sbgnmap = sbgn.get_map()
         for glyph in sbgnmap.get_glyph(): # making compartments
             if glyph.get_class().name == "COMPARTMENT":
                 comp = _make_compartment_from_glyph(glyph)
-                compartments.add(comp)
+                net.add_compartment(comp)
         for glyph in sbgnmap.get_glyph(): # making entities
             if glyph.get_class().name in [attribute.name for attribute in list(EntityEnum)]:
-                entity = _make_entity_from_glyph(glyph, sbgnmap, compartments)
-                entities.add(entity)
+                entity = _make_entity_from_glyph(glyph, sbgnmap)
+                net.add_entity(entity)
         for glyph in sbgnmap.get_glyph(): # making processes
             if glyph.get_class().name in [attribute.name for attribute in list(ProcessEnum)]:
-                proc = _make_process_from_glyph(glyph, sbgnmap, entities, compartments)
-                processes.add(proc)
+                proc = _make_process_from_glyph(glyph, sbgnmap)
+                net.add_process(proc)
         for glyph in sbgnmap.get_glyph(): # making logical operator nodes
             if glyph.get_class().name in [attribute.name for attribute in list(LogicalOperatorEnum)]:
-                op  = _make_lo_from_glyph(glyph, sbgnmap, entities, compartments, los)
-                los.add(op)
+                op  = _make_lo_from_glyph(glyph, sbgnmap)
+                net.add_lo(op)
         for arc in sbgnmap.get_arc(): # making modulations
             if arc.get_class().name in [attribute.name for attribute in list(ModulationEnum)]:
-                mod = _make_modulation_from_arc(arc, sbgnmap, entities, compartments, los, processes)
-                modulations.add(mod)
-    net.entities = list(entities)
-    net.processes = list(processes)
-    net.modulations = list(modulations)
-    net.compartments = list(compartments)
-    net.los = list(los)
+                mod = _make_modulation_from_arc(arc, sbgnmap)
+                net.add_modulation(mod)
     return net
 
 def _make_ui_from_glyph(glyph):
@@ -88,7 +78,7 @@ def _make_compartment_from_glyph(glyph):
         comp.label = glyph.get_label().get_text()
     return comp
 
-def _make_entity_from_glyph(glyph, sbgnmap, compartments):
+def _make_entity_from_glyph(glyph, sbgnmap):
     entity = EntityEnum[glyph.get_class().name].value()
     entity.id = glyph.get_id()
     lsvs = []
@@ -98,11 +88,10 @@ def _make_entity_from_glyph(glyph, sbgnmap, compartments):
     if comp_id is not None:
         comp_glyph = get_glyph_by_id_or_port_id(sbgnmap, comp_id)
         comp = _make_compartment_from_glyph(comp_glyph)
-        existent_comp = get_object(comp, compartments)
-        entity.compartment = existent_comp
+        entity.compartment = comp 
     for subglyph in glyph.get_glyph():
         if subglyph.get_class().name in [attribute.name for attribute in list(EntityEnum)]:
-            subentity = _make_entity_from_glyph(subglyph, sbgnmap, compartments)
+            subentity = _make_entity_from_glyph(subglyph, sbgnmap)
             entity.add_component(subentity)
         elif subglyph.get_class().name == "UNIT_OF_INFORMATION":
             ui = _make_ui_from_glyph(subglyph)
@@ -121,7 +110,7 @@ def _make_entity_from_glyph(glyph, sbgnmap, compartments):
             entity.add_sv(sv)
     return entity
 
-def _make_lo_from_glyph(glyph, sbgnmap, entities, compartments, los):
+def _make_lo_from_glyph(glyph, sbgnmap):
     op = LogicalOperatorEnum[glyph.get_class().name].value()
     op.id = glyph.get_id()
     for arc in sbgnmap.get_arc():
@@ -129,20 +118,15 @@ def _make_lo_from_glyph(glyph, sbgnmap, entities, compartments, los):
             source_id = arc.get_source()
             source_glyph = get_glyph_by_id_or_port_id(sbgnmap, source_id)
             if source_glyph.get_class().name in [attribute.name for attribute in list(EntityEnum)]:
-                source = _make_entity_from_glyph(source_glyph, sbgnmap, compartments)
-                existent_source = get_object(source, entities)
-                op.add_child(existent_source)
+                source = _make_entity_from_glyph(source_glyph, sbgnmap)
+                op.add_child(source)
             elif source_glyph.get_class().name in [attribute.name for attribute in list(LogicalOperatorEnum)]:
-                source = _make_lo_from_glyph(source_glyph, sbgnmap, entities, compartments, los)
-                existent_source = get_object(source, los)
-                if existent_source is not None:
-                    op.add_child(existent_source)
-                else:
-                    op.add_child(source)
+                source = _make_lo_from_glyph(source_glyph, sbgnmap)
+                op.add_child(source)
     return op
 
 """Still have to take into account stoech !"""
-def _make_process_from_glyph(glyph, sbgnmap, entities, compartments):
+def _make_process_from_glyph(glyph, sbgnmap):
     proc = ProcessEnum[glyph.get_class().name].value()
     proc.id = glyph.get_id()
     if glyph.get_label() is not None:
@@ -151,33 +135,28 @@ def _make_process_from_glyph(glyph, sbgnmap, entities, compartments):
         if arc.get_class().name == "CONSUMPTION" and get_glyph_by_id_or_port_id(sbgnmap, arc.get_target()) == glyph:
             source_id = arc.get_source()
             source_glyph = get_glyph_by_id_or_port_id(sbgnmap, source_id)
-            source = _make_entity_from_glyph(source_glyph, sbgnmap, compartments)
-            existent_source = get_object(source, entities)
-            proc.add_reactant(existent_source)
+            source = _make_entity_from_glyph(source_glyph, sbgnmap)
+            proc.add_reactant(source)
         elif arc.get_class().name == "PRODUCTION" and get_glyph_by_id_or_port_id(sbgnmap, arc.get_source()) == glyph:
             target_id = arc.get_target()
             target_glyph = get_glyph_by_id_or_port_id(sbgnmap, target_id)
-            target = _make_entity_from_glyph(target_glyph, sbgnmap, compartments)
-            existent_target = get_object(target, entities)
-            proc.add_product(existent_target)
+            target = _make_entity_from_glyph(target_glyph, sbgnmap)
+            proc.add_product(target)
     return proc
 
-def _make_modulation_from_arc(arc, sbgnmap, entities, compartments, los, processes):
+def _make_modulation_from_arc(arc, sbgnmap):
     modulation = ModulationEnum[arc.get_class().name].value()
     source_id = arc.get_source()
     source_glyph = get_glyph_by_id_or_port_id(sbgnmap, source_id)
     if source_glyph.get_class().name in [attribute.name for attribute in list(EntityEnum)]:
-        source = _make_entity_from_glyph(source_glyph, sbgnmap, compartments)
-        existent_source = get_object(source, entities)
+        source = _make_entity_from_glyph(source_glyph, sbgnmap)
     elif source_glyph.get_class().name in [attribute.name for attribute in list(LogicalOperatorEnum)]:
-        source = _make_lo_from_glyph(source_glyph, sbgnmap, entities, compartments, los)
-        existent_source = get_object(source, los)
-    modulation.source = existent_source
+        source = _make_lo_from_glyph(source_glyph, sbgnmap)
+    modulation.source = source
     target_id = arc.get_target()
     target_glyph = get_glyph_by_id_or_port_id(sbgnmap, target_id)
-    target = _make_process_from_glyph(target_glyph, sbgnmap, entities, compartments)
-    existent_target = get_object(target, processes)
-    modulation.target = existent_target
+    target = _make_process_from_glyph(target_glyph, sbgnmap)
+    modulation.target = target
     return modulation
 
 def _make_glyph_from_compartment(comp):
