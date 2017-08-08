@@ -1,6 +1,7 @@
 from copy import deepcopy
 from csbgnpy.pd.lo import LogicalOperator
 from csbgnpy.pd.entity import Entity
+from csbgnpy.utils import get_object
 
 class Network(object):
     def __init__(self, entities = None, processes = None, modulations = None, compartments = None, los = None):
@@ -12,28 +13,58 @@ class Network(object):
 
     def add_process(self, proc):
         if proc not in self.processes:
-            self.processes.append(proc)
+            reactants = []
             for reactant in proc.reactants:
-                self.add_entity(reactant)
+                existent_reactant = self.get_entity(reactant, by_entity = True)
+                if existent_reactant:
+                    reactants.append(existent_reactant)
+                else:
+                    self.add_entity(reactant)
+                    reactants.append(reactant)
+            proc.reactants = reactants
+            products = []
             for product in proc.products:
-                self.add_entity(product)
+                existent_product = self.get_entity(product, by_entity = True)
+                if existent_product:
+                    products.append(existent_product)
+                else:
+                    products.append(product)
+                    self.add_entity(product)
+            proc.products = products
+            self.processes.append(proc)
 
     def add_entity(self, entity):
         if entity not in self.entities:
             self.entities.append(entity)
             if hasattr(entity, "compartment"):
-                self.add_compartment(entity.compartment)
+                existent_compartment = self.get_compartment(entity.compartment, by_compartment  = True)
+                if existent_compartment:
+                    entity.compartment = existent_compartment
+                else:
+                    self.add_compartment(entity.compartment)
 
     def add_modulation(self, mod):
         if mod not in self.modulations:
-            self.modulations.append(mod)
             source = mod.source
             target = mod.target
             if isinstance(source, Entity):
-                self.add_entity(source)
-            elif isinstance(source, LogicalOperator):
-                self.add_lo(source)
-            self.add_process(target)
+                existent_source = self.get_entity(source, by_entity = True)
+                if existent_source:
+                    mod.source = existent_source
+                else:
+                    self.add_entity(source)
+            elif  isinstance(source, LogicalOperator):
+                existent_source = self.get_lo(source, by_lo = True)
+                if existent_source:
+                    mod.source = existent_source
+                else:
+                    self.add_lo(source)
+            existent_target = self.get_process(target, by_process = True)
+            if existent_target:
+                mod.target = existent_target
+            else:
+                self.add_process(target)
+            self.modulations.append(mod)
 
     def add_compartment(self, comp):
         if comp not in self.compartments:
@@ -41,12 +72,22 @@ class Network(object):
 
     def add_lo(self, op):
         if op not in self.los:
-            self.los.append(op)
             for child in op.children:
                 if isinstance(child, Entity):
-                    self.add_entity(child)
+                    existent_child = self.get_entity(child, by_entity = True)
+                    if existent_child:
+                        op.children.remove(child)
+                        op.children.append(child)
+                    else:
+                        self.add_entity(child)
                 elif isinstance(child, LogicalOperator):
-                    self.add_lo(child)
+                    existent_child = get_lo(child, by_lo = True)
+                    if existent_child:
+                        op.children.remove(child)
+                        op.children.append(child)
+                    else:
+                        self.add_lo(child)
+            self.los.append(op)
 
     def remove_process(self, process):
         for modulation in self.modulations:
@@ -112,6 +153,48 @@ class Network(object):
                     return c
         return None
 
+    def get_lo(self, val, by_lo = False, by_id = False, by_hash = False):
+        for o in self.los:
+            if by_lo:
+                if o == val:
+                    return o
+            if by_id:
+                if o.id == val:
+                    return o
+            if by_hash:
+                if hash(o) == val:
+                    return o
+        return None
+
+    def get_modulation(self, val, by_modulation = False, by_id = False, by_hash = False):
+        for m in self.modulations:
+            if by_modulation:
+                if m == val:
+                    return m
+            if by_id:
+                if m.id == val:
+                    return m
+            if by_hash:
+                if hash(m) == val:
+                    return m
+        return None
+
+    def get_process(self, val, by_process = False, by_id = False, by_label = False, by_hash = False):
+        for p in self.processes:
+            if by_process:
+                if p == val:
+                    return p
+            if by_id:
+                if p.id == val:
+                    return p
+            if by_label:
+                if hasattr(p, "label"):
+                    if p.label == val:
+                        return p
+            if by_hash:
+                if hash(p) == val:
+                    return p
+        return None
 
     def get_entity(self, val, by_entity = False, by_id = False, by_label = False, by_hash = False):
         for e in self.entities:
@@ -190,13 +273,17 @@ class Network(object):
                 new.add_modulation(deepcopy(m))
         for p in self.processes:
             if p not in other.processes:
-                new.add_process(p)
+                # for e in p.reactants:
+                    # if hasattr(e, "label") and e.label == "p16INK4a":
+                        # print("aaa")
+                newp = deepcopy(p)
+                new.add_process(deepcopy(p))
         for e in self.entities:
             if e not in other.entities:
-                new.add_entity(e)
+                new.add_entity(deepcopy(e))
         for c in self.compartments:
             if c not in other.compartments:
-                new.add_compartment(c)
+                new.add_compartment(deepcopy(c))
         # new.entities = list(set(self.entities).difference(set(other.entities)))
         # new.processes = list(set(self.processes).difference(set(other.processes)))
         # new.modulations = list(set(self.modulations).difference(set(other.modulations)))

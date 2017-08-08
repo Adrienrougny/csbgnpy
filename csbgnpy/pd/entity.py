@@ -24,6 +24,9 @@ class Entity(object):
             setattr(result, k, deepcopy(v, memo))
         return result
 
+    def __lt__(self, other):
+        return self.__repr__() < other.__repr__()
+
 class EmptySet(Entity):
     pass
 

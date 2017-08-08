@@ -51,11 +51,11 @@ class StoichiometricProcess(Process):
 
     def __eq__(self, other):
         return self.__class__ == other.__class__ and \
-                set(self.reactants) == set(other.reactants) and \
-                set(self.products) == set(other.products)
+                sorted(self.reactants) == sorted(other.reactants) and \
+                sorted(self.products) == sorted(other.products)
 
     def __hash__(self):
-        return hash((self.__class__, frozenset(self.reactants), frozenset(self.products)))
+        return hash((self.__class__, tuple(sorted(self.reactants)), tuple(sorted(self.products))))
 
 class GenericProcess(StoichiometricProcess):
     pass
