@@ -221,14 +221,7 @@ def _make_process_from_cd(cdproc, tree, ns):
     process = TranslationDic[cd_class]()
     process.id = cdproc.get("id")
     if cd_class == "TRANSCRIPTION" or cd_class == "TRANSLATION":
-        found = False
-        for entity in entities:
-            if isinstance(entity, EmptySet):
-                found = True
-                break
-        if not found:
-            raise Exception("EmptySet not found")
-        es = entity
+        es = EmptySet()
         process.add_reactant(es)
     else:
         for cdreac in cdproc.xpath("./sbml:listOfReactants", namespaces = ns)[0].xpath("./sbml:speciesReference", namespaces = ns):
