@@ -25,4 +25,7 @@ class OrOperator(LogicalOperator):
 class NotOperator(LogicalOperator):
     pass
 
+class DelayOperator(LogicalOperator):
+    pass
+
 
