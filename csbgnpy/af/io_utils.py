@@ -16,7 +16,7 @@ class LogicalOperatorEnum(Enum):
     OR = OrOperator
     AND = AndOperator
     NOT = NotOperator
-    DELAY = DelayOPerator
+    DELAY = DelayOperator
 
 class ModulationEnum(Enum):
     INFLUENCE  = Modulation
