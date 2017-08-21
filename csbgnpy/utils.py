@@ -56,3 +56,23 @@ def get_glyph_by_id_or_port_id(sbgnmap, id):
             if port.get_id() == id:
                 return glyph
     raise GlyphLookupError(id)
+
+class Atom(object):
+    def __init__(self, name = None, args = None):
+        self.name = name
+        if args is None:
+            self.args = []
+        else:
+            self.args = args
+
+    def __str__(self):
+        return "{0}({1})".format(self.name, ','.join([str(arg) for arg in self.args]))
+
+class Constant(object):
+    def __init__(self, value = None):
+        self.value = value
+
+    def __str__(self):
+        return self.value
+
+
