@@ -1,3 +1,5 @@
+from csbgnpy.utils import escape_string
+
 class Activity(object):
     def __init__(self, label = None, compartment = None, id = None):
         self.label = label
@@ -16,7 +18,7 @@ class Activity(object):
         return hash((self.__class__, self.label, self.compartment))
 
     def __repr__(self):
-        return "{}[{} {{}} @ {}]".format(self.__class__.__name__, self.label, self.compartment)
+        return "{}[{} {{}} @ {}]".format(self.__class__.__name__, escape_string(self.label), self.compartment)
 
 class BiologicalActivity(Activity):
     def __init__(self, label = None, compartment = None, uis = None, id = None):

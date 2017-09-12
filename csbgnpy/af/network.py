@@ -21,7 +21,7 @@ class Network(object):
             self.compartments.append(comp)
 
     def add_lo(self, op):
-        if lo not in self.los:
+        if op not in self.los:
             self.los.append(op)
 
     def remove_activity(self, act):
@@ -74,3 +74,10 @@ class Network(object):
                 if hash(a) == val:
                     return a
         raise ActivityLookupError(a)
+
+    def __eq__(self, other):
+        return self.__class__ == other.__class__ and \
+                set(self.activities) == set(other.activities) and \
+                set(self.compartments) == set(other.compartments) and \
+                set(self.los) == set(other.los) and \
+                set(self.modulations) == set(other.modulations)
