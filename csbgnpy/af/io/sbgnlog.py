@@ -43,42 +43,42 @@ class TranslationEnum(Enum):
     """
 
 def write(net, filename):
-    sbgnlog = _make_atoms_from_network(net)
+    sbgnlog = network_to_atoms(net)
     f = open(filename, 'w')
     f.write('\n'.join(sorted([str(atom) for atom in sbgnlog])))
     f.close()
 
-def _make_atoms_from_network(net):
+def network_to_atoms(net):
     s = set()
     for activity in net.activities:
-        s |= _make_atoms_from_activity(activity)
+        s |= _activity_to_atoms(activity)
     for comp in net.compartments:
-        s |= _make_atoms_from_compartment(comp)
+        s |= _compartment_to_atoms(comp)
     for op in net.los:
-        s |= _make_atoms_from_lo(op)
+        s |= _lo_to_atoms(op)
     for mod in net.modulations:
-        s |= _make_atoms_from_modulation(mod)
+        s |= _modulation_to_atoms(mod)
     return s
 
-def _make_constant_from_ui(ui):
+def _ui_to_constant(ui):
     const = TranslationEnum[ui.type.name].value
     if ui.label:
         const += '_'
         const += normalize_string(ui.label)
     return Constant(const)
 
-def _make_constant_from_activity(activity):
+def _activity_to_constant(activity):
     const = "a_{}".format(TranslationEnum[ActivityEnum(activity.__class__).name].value)
     if hasattr(activity, "uis") and len(activity.uis) > 0:
         const += '_'
-        const += '_'.join([str(_make_constant_from_ui(ui)) for ui in activity.uis])
+        const += '_'.join([str(_ui_to_constant(ui)) for ui in activity.uis])
     const += "_{}".format(normalize_string(activity.label))
     if hasattr(activity, "compartment"):
         if activity.compartment:
-            const += "_{0}".format(_make_constant_from_compartment(activity.compartment))
+            const += "_{0}".format(_compartment_to_constant(activity.compartment))
     return Constant(const)
 
-def _make_constant_from_compartment(compartment):
+def _compartment_to_constant(compartment):
     const = "c_"
     if not comp.label:
         const += TranslationEnum["NULL_COMPARTMENT"].value
@@ -86,24 +86,24 @@ def _make_constant_from_compartment(compartment):
         const += comp.label
     return Constant(normalize_string(const))
 
-def _make_constant_from_label(label):
+def _label_to_constant(label):
     if label is None:
         label = ""
     return Constant(quote_string(label))
 
-def _make_constant_from_lo(op):
+def _lo_to_constant(op):
     const = "lo_{}".format(TranslationEnum[LogicalOperatorEnum(op.__class__).name].value)
     for child in op.children:
         if isinstance(child, LogicalOperator):
-            const += "_{0}".format(_make_constant_from_lo(child))
+            const += "_{0}".format(_lo_to_constant(child))
         else:
-            const += "_{0}".format(_make_constant_from_activity(child))
+            const += "_{0}".format(_activity_to_constant(child))
     return Constant(const)
 
-def _make_atoms_from_activity(activity):
+def _activity_to_atoms(activity):
     s = set()
     activity_name = TranslationEnum[ActivityEnum(activity.__class__).name].value
-    activity_const = _make_constant_from_activity(activity)
+    activity_const = _activity_to_constant(activity)
     activity_atom = Atom(activity_name, [activity_const])
     s.add(activity_atom)
     if hasattr(activity, "uis"):
@@ -117,54 +117,54 @@ def _make_atoms_from_activity(activity):
             ui_atom = Atom(ui_name, [activity_const, ui_type_const, ui_label_const])
             s.add(ui_atom)
     labeled_name = TranslationEnum["LABELED"].value
-    label_const = _make_constant_from_label(escape_string(activity.label))
+    label_const = _label_to_constant(escape_string(activity.label))
     labeled_atom = Atom(labeled_name, [activity_const, label_const])
     s.add(labeled_atom)
     if hasattr(activity, "compartment"):
         if activity.compartment:
             localized_name = TranslationEnum["LOCALIZED"].value
-            compartment_const = _make_constant_from_compartment(activity.compartment)
+            compartment_const = _compartment_to_constant(activity.compartment)
             localized_atom = Atom(localized_name, [activity_const, compartment_const])
             s.add(localized_atom)
     return s
 
-def _make_atoms_from_compartment(comp):
+def _compartment_to_atoms(comp):
     s = set()
     comp_name = TranslationEnum["COMPARTMENT"].value
-    comp_const = _make_constant_from_compartment(comp)
+    comp_const = _compartment_to_constant(comp)
     comp_atom = Atom(comp_name, [comp_const])
     s.add(comp_atom)
     labeled_name = TranslationEnum["LABELED"].value
-    label_const = _make_constant_from_label(escape_string(comp.label))
+    label_const = _label_to_constant(escape_string(comp.label))
     labeled_atom = Atom(labeled_name, [comp_const, label_const])
     s.add(labeled_atom)
     return s
 
-def _make_atoms_from_lo(op):
+def _lo_to_atoms(op):
     s = set()
     op_name = TranslationEnum[LogicalOperatorEnum(op.__class__).name].value
-    op_const = _make_constant_from_lo(op)
+    op_const = _lo_to_constant(op)
     op_atom = Atom(op_name, [op_const])
     s.add(op_atom)
     for child in op.children:
         if isinstance(child, LogicalOperator):
-            child_const = _make_constant_from_lo(child)
+            child_const = _lo_to_constant(child)
         else:
-            child_const = _make_constant_from_activity(child)
+            child_const = _activity_to_constant(child)
         input_name = TranslationEnum["INPUT"].value
         input_atom = Atom(input_name, [child_const, op_const])
         s.add(input_atom)
     return s
 
-def _make_atoms_from_modulation(mod):
+def _modulation_to_atoms(mod):
     s = set()
     source = mod.source
     mod_name = TranslationEnum[ModulationEnum(mod.__class__).name].value
     if isinstance(source, LogicalOperator):
-        source_const = _make_constant_from_lo(source)
+        source_const = _lo_to_constant(source)
     else:
-        source_const = _make_constant_from_activity(source)
-    target_const = _make_constant_from_activity(mod.target)
+        source_const = _activity_to_constant(source)
+    target_const = _activity_to_constant(mod.target)
     mod_atom = Atom(mod_name, [source_const, target_const])
     s.add(mod_atom)
     return s
@@ -179,26 +179,26 @@ def read(*filenames):
                 line = line[:-1]
             atom = parse_atom(line)
             atoms.add(atom)
-    net = make_network_from_atoms(atoms)
+    net = network_to_atoms(atoms)
     return net
 
-def make_network_from_atoms(atoms):
+def network_to_atoms(atoms):
     net = Network()
     for atom in atoms:
         if atom.name == TranslationEnum["COMPARTMENT"].value:
             comp_atoms = _get_compartment_atoms_by_const(atom.arguments[0])
-            comp = _make_compartment_from_atoms(comp_atoms, atoms)
+            comp = _atoms_to_compartment(comp_atoms, atoms)
             net.add_compartment(comp)
         elif atom.name in [TranslationEnum[c.name].value for c in ActivityEnum]:
             act_atoms = _get_activity_atoms_by_const(atom.arguments[0], atoms)
-            a = _make_activity_from_atoms(act_atoms, atoms)
+            a = _atoms_to_activity(act_atoms, atoms)
             net.add_activity(a)
         elif atom.name in [TranslationEnum[c.name].value for c in LogicalOperatorEnum]:
             lo_atoms = _get_lo_atoms_by_const(atom.arguments[0], atoms)
-            op = _make_lo_from_atoms(lo_atoms, atoms)
+            op = _atoms_to_lo(lo_atoms, atoms)
             net.add_lo(op)
         elif atom.name in [TranslationEnum[c.name].value for c in ModulationEnum]:
-            mod = _make_modulation_from_atom(atom, atoms)
+            mod = _atom_to_modulation(atom, atoms)
             net.add_modulation(mod)
     return net
 
@@ -223,14 +223,14 @@ def _get_lo_atoms_by_const(const, atoms):
             selatoms.add(atom)
     return selatoms
 
-def _make_compartment_from_atoms(comp_atoms):
+def _atoms_to_compartment(comp_atoms):
     c = Compartment()
     for atom in atoms:
         if atom.name == TranslationEnum["LABELED"].value:
             c.label = deescape_string(str(atom.arguments[1]))
     return c
 
-def _make_activity_from_atoms(act_atoms, atoms):
+def _atoms_to_activity(act_atoms, atoms):
     for atom in act_atoms:
         if atom.name in [TranslationEnum[c.name].value for c in ActivityEnum]:
             a = ActivityEnum[TranslationEnum(atom.name).name].value()
@@ -239,15 +239,15 @@ def _make_activity_from_atoms(act_atoms, atoms):
         if atom.name == TranslationEnum["LABELED"].value:
             a.label = deescape_string(str(atom.arguments[1]))
         if atom.name == TranslationEnum["UNIT_OF_INFORMATION"].value:
-            ui = _make_ui_from_atom(atom)
+            ui = _atom_to_ui(atom)
             a.uis.append(ui)
         if atom.name == TranslationEnum["LOCALIZED"].value:
             comp_atoms = _get_compartment_atoms_by_const(atom.arguments[1], atoms)
-            comp = _make_compartments_from_atoms(comp_atoms)
+            comp = _atoms_to_compartments(comp_atoms)
             a.compartment = comp
     return a
 
-def _make_lo_from_atoms(lo_atoms, atoms):
+def _atoms_to_lo(lo_atoms, atoms):
     for atom in lo_atoms:
         if atom.name in [TranslationEnum[c.name].value for c in LogicalOperatorEnum]:
             op = LogicalOperatorEnum[TranslationEnum(atom.name).name].value()
@@ -259,34 +259,34 @@ def _make_lo_from_atoms(lo_atoms, atoms):
             for atom2 in atoms:
                 if atom2.name in [TranslationEnum[c.name].value for c in ActivityEnum] and atom2.arguments[0] == child_const:
                     child_atoms = _get_activity_atoms_by_const(child_const, atoms)
-                    child = _make_activity_from_atoms(child_atoms, atoms)
+                    child = _atoms_to_activity(child_atoms, atoms)
                     break
             if not child:
                 child_atoms = _get_lo_atoms_by_const(child_const, atoms)
-                child = _make_lo_from_atoms(child_atoms, atoms)
+                child = _atoms_to_lo(child_atoms, atoms)
             op.add_child(child)
     return op
 
-def _make_modulation_from_atom(mod_atom, atoms):
+def _atom_to_modulation(mod_atom, atoms):
     mod = ModulationEnum[TranslationEnum(mod_atom.name).name].value()
     source_const = mod_atom.arguments[0]
     source = None
     for atom in atoms:
         if atom.name in [TranslationEnum[c.name].value for c in ActivityEnum] and atom.arguments[0] == source_const:
             source_atoms = _get_activity_atoms_by_const(source_const, atoms)
-            source = _make_activity_from_atoms(source_atoms, atoms)
+            source = _atoms_to_activity(source_atoms, atoms)
             break
     if not source:
         source_atoms = _get_lo_atoms_by_const(source_const, atoms)
-        source = _make_lo_from_atoms(source_atoms, atoms)
+        source = _atoms_to_lo(source_atoms, atoms)
     mod.source = source
     target_const = mod_atom.arguments[1]
     target_atoms = _get_activity_atoms_by_const(target_const, atoms)
-    target = _make_activity_from_atoms(target_atoms, atoms)
+    target = _atoms_to_activity(target_atoms, atoms)
     mod.target = target
     return mod
 
-def _make_ui_from_atom(ui_atom):
+def _atom_to_ui(ui_atom):
     ui = UnitOfInformationActivity()
     ui.type = UnitOfInformationActivityType[TranslationEnum(str(ui_atom.arguments[1])).name]
     ui.label = deescape_string(str(ui_atom.arguments[2]))
