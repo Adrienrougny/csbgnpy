@@ -96,19 +96,19 @@ class StatelessSubEntity(SubEntity):
     def __repr__(self):
         return "%s[%s]" % (self.__class__.__name__, self.label)
 
-class SubUnspecifiedEntity(StatelessEntity):
+class SubUnspecifiedEntity(StatelessSubEntity):
     pass
 
-class SubSimpleChemical(StatefulEntity):
+class SubSimpleChemical(StatefulSubEntity):
     pass
 
-class SubMacromolecule(StatefulEntity):
+class SubMacromolecule(StatefulSubEntity):
     pass
 
-class SubNucleicAcidFeature(StatefulEntity):
+class SubNucleicAcidFeature(StatefulSubEntity):
     pass
 
-class SubComplex(StatefulEntity):
+class SubComplex(StatefulSubEntity):
     def __init__(self, label = None, svs = None, uis = None, components = None, id = None):
         super().__init__(label, svs, uis, id)
         self.components = components if components is not None else []

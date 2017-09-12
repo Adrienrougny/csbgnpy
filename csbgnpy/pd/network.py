@@ -36,7 +36,7 @@ class Network(object):
     def add_entity(self, entity):
         if entity not in self.entities:
             self.entities.append(entity)
-            if hasattr(entity, "compartment"):
+            if hasattr(entity, "compartment") and entity.compartment:
                 existent_compartment = self.get_compartment(entity.compartment, by_compartment  = True)
                 if existent_compartment:
                     entity.compartment = existent_compartment

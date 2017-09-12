@@ -9,7 +9,7 @@ from csbgnpy.pd.lo import *
 from csbgnpy.pd.sv import *
 from csbgnpy.pd.ui import *
 from csbgnpy.pd.network import *
-from csbgnpy.pd.io_utils import *
+from csbgnpy.pd.io.utils import *
 
 class TranslationEnum(Enum):
     AND = "and"
@@ -53,6 +53,15 @@ class TranslationEnum(Enum):
     UNSET = "unset"
     UNSPECIFIED_ENTITY = "unspecifiedEntity"
     VOID = "void"
+    SUB_UNSPECIFIED_ENTITY = "subUnspecifiedEntity"
+    SUB_SIMPLE_CHEMICAL = "subSimpleChemical"
+    SUB_MACROMOLECULE = "subMacromolecule"
+    SUB_NUCLEIC_ACID_FEATURE = "subNucleicAcidFeature"
+    SUB_SIMPLE_CHEMICAL_MULTIMER = "subSimpleChemicalMultimer"
+    SUB_MACROMOLECULE_MULTIMER = "subMacromoleculeMultimer"
+    SUB_NUCLEIC_ACID_FEATURE_MULTIMER = "subNucleicAcidFeatureMultimer"
+    SUB_COMPLEX = "subComplex"
+    SUB_COMPLEX_MULTIMER = "subComplexMultimer"
 
     """TO DO :
     - compartments with no label ? Is that possible ?
@@ -84,19 +93,19 @@ def _ui_to_constant(ui):
     if ui.prefix is None:
         const = TranslationEnum["VOID"].value
     else:
-        const = normalize_string(ui.pre)
+        const = normalize_string(ui.prefix)
     const += normalize_string(ui.label)
     return Constant(const)
 
 def _sv_to_constant(sv):
-    if sv.value is None:
+    if sv.val is None:
         const = TranslationEnum["UNSET"].value
     else:
-        const = normalize_string(sv.value)
-    if isinstance(sv.variable, UndefinedVar):
-        const += "_{0}({1})".format(TranslationEnum["UNDEFINED"].value, sv.variable.num)
+        const = normalize_string(sv.val)
+    if isinstance(sv.var, UndefinedVar):
+        const += "_{0}_{1}".format(TranslationEnum["UNDEFINED"].value, sv.var.num)
     else:
-        const += "_{0}".format(normalize_string(sv.variable))
+        const += "_{0}".format(normalize_string(sv.var))
     return Constant(const)
 
 def _entity_to_constant(entity):
@@ -110,7 +119,8 @@ def _entity_to_constant(entity):
     if hasattr(entity, "components") and len(entity.components) > 0:
         const += '_'
         const += '_'.join([str(_subentity_to_constant(subentity)) for subentity in entity.components])
-    const += "_{}".format(normalize_string(entity.label))
+    if hasattr(entity, "label"):
+        const += "_{}".format(normalize_string(entity.label) if entity.label else entity.label)
     if hasattr(entity, "compartment"):
         if entity.compartment:
             const += "_{0}".format(_compartment_to_constant(entity.compartment))
@@ -130,7 +140,7 @@ def _subentity_to_constant(subentity):
     const += "_{}".format(normalize_string(subentity.label))
     return Constant(const)
 
-def _compartment_to_constant(compartment):
+def _compartment_to_constant(comp):
     const = "c_"
     if not comp.label:
         const += TranslationEnum["NULL_COMPARTMENT"].value
@@ -172,11 +182,11 @@ def _process_to_constant(proc):
             const_reacs.append(const_reac)
     if hasattr(proc, "products"):
         for prod in proc.products:
-            if isinstance(reac, EmptySet):
+            if isinstance(prod, EmptySet):
                 card_const = 1
                 const_prod = "{}_{}".format(card_const, _empty_set_to_constant(prod))
             else:
-                card_const = proc.prodtants.count(prod)
+                card_const = proc.products.count(prod)
                 const_prod = "{}_{}".format(card_const, _entity_to_constant(prod))
             const_prods.append(const_prod)
         const += '_'.join([str(const) for const in const_reacs]) + '_' + '_'.join([str(const) for const in const_prods])
@@ -191,24 +201,24 @@ def _entity_to_atoms(entity):
     if hasattr(entity, "uis"):
         for ui in entity.uis:
             ui_name = TranslationEnum["UNIT_OF_INFORMATION"].value
-            if ui.pre is None:
+            if ui.prefix is None:
                 ui_pre_const = TranslationEnum["VOID"].value
             else:
-                ui_pre_const = quote_string(ui.pre)
+                ui_pre_const = quote_string(ui.prefix)
             ui_label_const = quote_string(ui.label)
             ui_atom = Atom(ui_name, [entity_const, ui_pre_const, ui_label_const])
             s.add(ui_atom)
     if hasattr(entity, "svs"):
         for sv in entity.svs:
             sv_name = TranslationEnum["STATE_VARIABLE"].value
-            if sv.value is None:
+            if sv.val is None:
                 sv_value_const = TranslationEnum["UNSET"].value
             else:
-                sv_value_const = quote_string(sv.value)
-            if isinstance(sv.variable, UndefinedVar):
-                sv_variable_const = "{0}({1})".format(TranslationEnum["UNDEFINED"].value, sv.variable.num)
+                sv_value_const = quote_string(sv.val)
+            if isinstance(sv.var, UndefinedVar):
+                sv_variable_const = "{0}({1})".format(TranslationEnum["UNDEFINED"].value, sv.var.num)
             else:
-                sv_variable_const = quote_string(sv.variable)
+                sv_variable_const = quote_string(sv.var)
             sv_atom = Atom(sv_name, [entity_const, sv_value_const, sv_variable_const])
             s.add(sv_atom)
     if hasattr(entity, "components"):
@@ -233,31 +243,31 @@ def _entity_to_atoms(entity):
 
 def _subentity_to_atoms(subentity):
     s = set()
-    subentity_name = TranslationEnum[SubEntityEnum(subentity.__class__)].name.value
+    subentity_name = TranslationEnum[SubEntityEnum(subentity.__class__).name].value
     subentity_const = _subentity_to_constant(subentity)
     subentity_atom = Atom(subentity_name, [subentity_const])
     s.add(subentity_atom)
     if hasattr(subentity, "uis"):
         for ui in subentity.uis:
             ui_name = TranslationEnum["UNIT_OF_INFORMATION"].value
-            if ui.pre is None:
+            if ui.prefix is None:
                 ui_pre_const = TranslationEnum["VOID"].value
             else:
-                ui_pre_const = quote_string(ui.pre)
+                ui_pre_const = quote_string(ui.prefix)
             ui_label_const = quote_string(ui.label)
             ui_atom = Atom(ui_name, [subentity_const, ui_pre_const, ui_label_const])
             s.add(ui_atom)
     if hasattr(subentity, "svs"):
         for sv in subentity.svs:
             sv_name = TranslationEnum["STATE_VARIABLE"].value
-            if sv.value is None:
+            if sv.val is None:
                 sv_value_const = TranslationEnum["UNSET"].value
             else:
-                sv_value_const = quote_string(sv.value)
-            if isinstance(sv.variable, UndefinedVar):
-                sv_variable_const = "{0}({1})".format(TranslationEnum["UNDEFINED"].value, sv.variable.num)
+                sv_value_const = quote_string(sv.val)
+            if isinstance(sv.var, UndefinedVar):
+                sv_variable_const = "{0}({1})".format(TranslationEnum["UNDEFINED"].value, sv.var.num)
             else:
-                sv_variable_const = quote_string(sv.variable)
+                sv_variable_const = quote_string(sv.var)
             sv_atom = Atom(sv_name, [subentity_const, sv_value_const, sv_variable_const])
             s.add(sv_atom)
     if hasattr(subentity, "components"):
@@ -284,7 +294,7 @@ def _compartment_to_atoms(comp):
 
 def _lo_to_atoms(op):
     s = set()
-    op_name = TranslationEnum[LogicalOPeratorEnum(op.__class__).name].value
+    op_name = TranslationEnum[LogicalOperatorEnum(op.__class__).name].value
     op_const = _lo_to_constant(op)
     op_atom = Atom(op_name, [op_const])
     s.add(op_atom)
@@ -363,7 +373,7 @@ def atoms_to_network(atoms):
             net.add_compartment(comp)
         elif atom.name in [TranslationEnum[c.name].value for c in EntityEnum]:
             entity_atoms = _get_entity_atoms_by_const(atom.arguments[0], atoms)
-            entity = _atoms_to_entity(act_atoms, atoms)
+            entity = _atoms_to_entity(entity_atoms, atoms)
             net.add_entity(entity)
         elif atom.name in [TranslationEnum[c.name].value for c in LogicalOperatorEnum]:
             lo_atoms = _get_lo_atoms_by_const(atom.arguments[0], atoms)
@@ -381,14 +391,14 @@ def atoms_to_network(atoms):
 def _get_entity_atoms_by_const(const, atoms):
     selatoms = set()
     for atom in atoms:
-        if const in atom.arguments and (atom.name in [TranslationEnum[c.name].value for c in EntityEnum] or atom.name == TranslationEnum["LABELED"].value or atom.name == TranslationEnum["LOCALIZED"].value or atom.name == TranslationEnum["UNIT_OF_INFORMATION"].value or atom.name == TranslationEnum["STATE_VARIABLE"].value) or atom.name == TranslationEnum["COMPONENT"].value):
+        if atom.arguments[0] == const and (atom.name in [TranslationEnum[c.name].value for c in EntityEnum] or atom.name == TranslationEnum["LABELED"].value or atom.name == TranslationEnum["LOCALIZED"].value or atom.name == TranslationEnum["UNIT_OF_INFORMATION"].value or atom.name == TranslationEnum["STATE_VARIABLE"].value or atom.name == TranslationEnum["COMPONENT"].value):
             selatoms.add(atom)
     return selatoms
 
 def _get_subentity_atoms_by_const(const, atoms):
     selatoms = set()
     for atom in atoms:
-        if const in atom.arguments and (atom.name in [TranslationEnum[c.name].value for c in SubEntityEnum] or atom.name == TranslationEnum["LABELED"].value or atom.name == TranslationEnum["UNIT_OF_INFORMATION"].value or atom.name == TranslationEnum["STATE_VARIABLE"].value) or atom.name == TranslationEnum["COMPONENT"].value):
+        if atom.arguments[0] == const and (atom.name in [TranslationEnum[c.name].value for c in SubEntityEnum] or atom.name == TranslationEnum["LABELED"].value or atom.name == TranslationEnum["UNIT_OF_INFORMATION"].value or atom.name == TranslationEnum["STATE_VARIABLE"].value or atom.name == TranslationEnum["COMPONENT"].value):
             selatoms.add(atom)
     return selatoms
 
@@ -409,7 +419,7 @@ def _get_lo_atoms_by_const(const, atoms):
 def _get_process_atoms_by_const(const, atoms):
     selatoms = set()
     for atom in atoms:
-        if const in atom.arguments and (atom.name in [TranslationEnum[c.name].value for c in ProcessEnum] or atom.name == TranslationEnum["REACTANT"].value or atom.name == TranslationEnum["PRODUCT"].value or atom.name == TranslationEnum["LABELED"].value)):
+        if const in atom.arguments and (atom.name in [TranslationEnum[c.name].value for c in ProcessEnum] or atom.name == TranslationEnum["REACTANT"].value or atom.name == TranslationEnum["PRODUCT"].value or atom.name == TranslationEnum["LABELED"].value):
             selatoms.add(atom)
     return selatoms
 
@@ -427,21 +437,22 @@ def _atoms_to_entity(entity_atoms, atoms):
             break
     for atom in entity_atoms:
         if atom.name == TranslationEnum["LABELED"].value:
-            e.label = deescape_string(str(atom.arguments[1]))
+            if len(str(atom.arguments[1])) != 0:
+                e.label = deescape_string(str(atom.arguments[1]))
         elif atom.name == TranslationEnum["UNIT_OF_INFORMATION"].value:
             ui = _atom_to_ui(atom)
             e.uis.append(ui)
         elif atom.name == TranslationEnum["STATE_VARIABLE"].value:
-            ui = _atom_to_ui(atom)
-            e.uis.append(ui)
+            sv = _atom_to_sv(atom)
+            e.svs.append(sv)
         elif atom.name == TranslationEnum["LOCALIZED"].value:
             comp_atoms = _get_compartment_atoms_by_const(atom.arguments[1], atoms)
             comp = _atoms_to_compartments(comp_atoms)
             e.compartment = comp
         elif atom.name == TranslationEnum["COMPONENT"].value:
             subentity_atoms = _get_subentity_atoms_by_const(atom.arguments[1], atoms)
-            subentity = _atoms_to_subsentity(subsentity_atoms)
-            e.components.append(subsentity)
+            subentity = _atoms_to_subentity(subentity_atoms, atoms)
+            e.components.append(subentity)
     return e
 
 def _atoms_to_subentity(subentity_atoms, atoms):
@@ -451,17 +462,18 @@ def _atoms_to_subentity(subentity_atoms, atoms):
             break
     for atom in subentity_atoms:
         if atom.name == TranslationEnum["LABELED"].value:
-            e.label = deescape_string(str(atom.arguments[1]))
+            if len(str(atom.arguments[1])) != 0:
+                e.label = deescape_string(str(atom.arguments[1]))
         elif atom.name == TranslationEnum["UNIT_OF_INFORMATION"].value:
             ui = _atom_to_ui(atom)
             e.uis.append(ui)
         elif atom.name == TranslationEnum["STATE_VARIABLE"].value:
-            ui = _atom_to_ui(atom)
-            e.uis.append(ui)
+            sv = _atom_to_sv(atom)
+            e.svs.append(sv)
         elif atom.name == TranslationEnum["COMPONENT"].value:
             subsubentity_atoms = _get_subentity_atoms_by_const(atom.arguments[1], atoms)
-            subsubentity = _atoms_to_subsentity(subsentity_atoms)
-            e.components.append(subsubsentity)
+            subsubentity = _atoms_to_subentity(subentity_atoms, atoms)
+            e.components.append(subsubentity)
     return e
 
 def _atoms_to_lo(lo_atoms, atoms):
@@ -487,22 +499,22 @@ def _atoms_to_lo(lo_atoms, atoms):
 def _atoms_to_process(proc_atoms, atoms):
     for atom in proc_atoms:
         if atom.name in [TranslationEnum[c.name].value for c in ProcessEnum]:
-            proc = ProcessOperatorEnum[TranslationEnum(atom.name).name].value()
+            proc = ProcessEnum[TranslationEnum(atom.name).name].value()
             break
-    for atom in lo_atoms:
+    for atom in proc_atoms:
         if atom.name == TranslationEnum["REACTANT"].value:
             reactant_const = atom.arguments[1]
             card_const = atom.arguments[2]
             reactant_atoms = _get_entity_atoms_by_const(reactant_const, atoms)
-            reactant = _atoms_to_entity(reactant_atoms)
-            for i in range(card_const):
+            reactant = _atoms_to_entity(reactant_atoms, atoms)
+            for i in range(int(str(card_const))):
                 proc.add_reactant(reactant)
         elif atom.name == TranslationEnum["PRODUCT"].value:
             product_const = atom.arguments[1]
             card_const = atom.arguments[2]
             product_atoms = _get_entity_atoms_by_const(product_const, atoms)
-            product = _atoms_to_entity(product_atoms)
-            for i in range(card_const):
+            product = _atoms_to_entity(product_atoms, atoms)
+            for i in range(int(str(card_const))):
                 proc.add_product(product)
         elif atom.name == TranslationEnum["LABELED"].value:
             proc.label = deescape(atom.arguments[1])
@@ -531,15 +543,15 @@ def _atom_to_ui(ui_atom):
     ui = UnitOfInformation()
     if ui_atom.arguments[1] != TranslationEnum["VOID"].value:
         ui.prefix = str(ui_atom.arguments[1])
-    ui.label = ui_atom.arguments[2]
+    ui.label = str(ui_atom.arguments[2])
     return ui
 
 def _atom_to_sv(sv_atom):
     sv = StateVariable()
-    if sv_atom.arguments[1] != TranslationEnum["UNSET"].value:
+    if str(sv_atom.arguments[1]) != TranslationEnum["UNSET"].value:
         sv.val = str(sv_atom.arguments[1])
-    if isinstance(sv_atom.arguments[2], FunctionalTerm) and sv_atom.arguments[2].name == TranslationEnum["UNDEFINED"]:
-        sv.var = UndefinedVar(sv_atom.arguments[2].arguments[0])
+    if isinstance(sv_atom.arguments[2], FunctionalTerm) and sv_atom.arguments[2].name == TranslationEnum["UNDEFINED"].value:
+        sv.var = UndefinedVar(int(str(sv_atom.arguments[2].arguments[0])))
     else:
         sv.var = str(sv_atom.arguments[2])
     return sv

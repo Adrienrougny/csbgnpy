@@ -1,5 +1,6 @@
 from enum import Enum
 from csbgnpy.pd.entity import *
+from csbgnpy.pd.subentity import *
 from csbgnpy.pd.process import *
 from csbgnpy.pd.modulation import *
 from csbgnpy.pd.lo import *
@@ -18,15 +19,15 @@ class EntityEnum(Enum):
     PERTURBING_AGENT = PerturbingAgent
 
 class SubEntityEnum(Enum):
-    SUB_UNSPECIFIED_ENTITY = subUnspecifiedEntity
-    SUB_SIMPLE_CHEMICAL = subSimpleChemical
-    SUB_MACROMOLECULE = subMacromolecule
-    SUB_NUCLEIC_ACID_FEATURE = subNucleicAcidFeature
-    SUB_SIMPLE_CHEMICAL_MULTIMER = subSimpleChemicalMultimer
-    SUB_MACROMOLECULE_MULTIMER = subMacromoleculeMultimer
-    SUB_NUCLEIC_ACID_FEATURE_MULTIMER = subNucleicAcidFeatureMultimer
-    SUB_COMPLEX = subComplex
-    SUB_COMPLEX_MULTIMER = subComplexMultimer
+    SUB_UNSPECIFIED_ENTITY = SubUnspecifiedEntity
+    SUB_SIMPLE_CHEMICAL = SubSimpleChemical
+    SUB_MACROMOLECULE = SubMacromolecule
+    SUB_NUCLEIC_ACID_FEATURE = SubNucleicAcidFeature
+    SUB_SIMPLE_CHEMICAL_MULTIMER = SubSimpleChemicalMultimer
+    SUB_MACROMOLECULE_MULTIMER = SubMacromoleculeMultimer
+    SUB_NUCLEIC_ACID_FEATURE_MULTIMER = SubNucleicAcidFeatureMultimer
+    SUB_COMPLEX = SubComplex
+    SUB_COMPLEX_MULTIMER = SubComplexMultimer
 
 class ProcessEnum(Enum):
     PROCESS = GenericProcess

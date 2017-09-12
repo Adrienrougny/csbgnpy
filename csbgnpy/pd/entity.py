@@ -140,6 +140,11 @@ class Complex(StatefulEntity):
     def __hash__(self):
         return hash((self.__class__, self.label, self.compartment, frozenset(self.svs), frozenset(self.uis), frozenset(self.components)))
 
+    def __repr__(self):
+        return "%s[%s {%s,%s,%s} @ %s]" % (self.__class__.__name__, self.label,
+                    self.svs, self.uis, self.components,
+                    self.compartment.label if self.compartment else "None")
+
 class Multimer(StatefulEntity):
     pass
 

@@ -5,13 +5,14 @@ import libsbgnpy.libsbgn as libsbgn
 from csbgnpy.utils import *
 from csbgnpy.pd.compartment import *
 from csbgnpy.pd.entity import *
+from csbgnpy.pd.subentity import *
 from csbgnpy.pd.process import *
 from csbgnpy.pd.modulation import *
 from csbgnpy.pd.lo import *
 from csbgnpy.pd.sv import *
 from csbgnpy.pd.ui import *
 from csbgnpy.pd.network import *
-from csbgnpy.pd.io_utils import *
+from csbgnpy.pd.io.utils import *
 
 def atan2pi(y, x):
     a = atan2(y, x)
@@ -88,10 +89,38 @@ def _make_entity_from_glyph(glyph, sbgnmap):
     if comp_id is not None:
         comp_glyph = get_glyph_by_id_or_port_id(sbgnmap, comp_id)
         comp = _make_compartment_from_glyph(comp_glyph)
-        entity.compartment = comp 
+        entity.compartment = comp
     for subglyph in glyph.get_glyph():
         if subglyph.get_class().name in [attribute.name for attribute in list(EntityEnum)]:
-            subentity = _make_entity_from_glyph(subglyph, sbgnmap)
+            subentity = _make_subentity_from_glyph(subglyph, sbgnmap)
+            entity.add_component(subentity)
+        elif subglyph.get_class().name == "UNIT_OF_INFORMATION":
+            ui = _make_ui_from_glyph(subglyph)
+            entity.add_ui(ui)
+        elif subglyph.get_class().name == "STATE_VARIABLE":
+            lsvs.append(subglyph)
+    if lsvs:
+        i = 1
+        center = (glyph.bbox.x + glyph.bbox.w / 2, glyph.bbox.y + glyph.bbox.h / 2)
+        lsorted = sorted(lsvs, key = lambda g: atan2pi(-(g.bbox.y + g.bbox.h / 2 - center[1]), g.bbox.x + g.bbox.w / 2 - center[0]))
+        # lsorted = sorted(lsvs, key = lambda g: atan2(g.bbox.y - center[1], g.bbox.x - center[0]))
+        for subglyph in lsorted:
+            sv = _make_sv_from_glyph(subglyph, i)
+            if isinstance(sv.var, UndefinedVar):
+                i += 1
+            entity.add_sv(sv)
+    return entity
+
+def _make_subentity_from_glyph(glyph, sbgnmap):
+    entity = SubEntityEnum["SUB_{}".format(glyph.get_class().name)].value()
+    entity.id = glyph.get_id()
+    lsvs = []
+    if glyph.get_label() is not None:
+        entity.label = glyph.get_label().get_text()
+    comp_id = glyph.get_compartmentRef()
+    for subglyph in glyph.get_glyph():
+        if subglyph.get_class().name in [attribute.name for attribute in list(EntityEnum)]:
+            subentity = _make_subentity_from_glyph(subglyph, sbgnmap)
             entity.add_component(subentity)
         elif subglyph.get_class().name == "UNIT_OF_INFORMATION":
             ui = _make_ui_from_glyph(subglyph)
