@@ -94,7 +94,7 @@ class GInteger(Grammar):
         self.name = s
 
 class GString(Grammar):
-    grammar = ('"', WORD('^"'), '"')
+    grammar = ('"', ZERO_OR_MORE(WORD('^"')), '"')
     def grammar_elem_init(self, sessiondata):
         self.name = self[1].string
 
