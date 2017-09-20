@@ -2,7 +2,10 @@ from copy import deepcopy
 
 class Compartment(object):
     def __init__(self, label = None, id = None):
-        self.label = label
+        if label:
+            self.label = label
+        else:
+            self.label = "" #by default, label is empty string
         self.id = id
 
     def __eq__(self, other):
