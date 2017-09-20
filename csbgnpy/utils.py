@@ -36,12 +36,15 @@ def normalize_string(s):
     s = s.replace("/","_")
     s = s.replace(" ","_")
     s = s.replace("-","_")
+    s = s.replace("(","_")
+    s = s.replace(")","_")
     s = s.replace("\n","_")
     s = s.replace("α","a")
     s = s.replace("β","b")
     s = s.replace("γ","c")
     s = s.replace("δ","d")
     s = s.replace("κ","g")
+    s = s.replace("?","interropoint")
     s = s.lower()
     return s
 
