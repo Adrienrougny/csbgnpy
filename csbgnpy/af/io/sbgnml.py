@@ -58,7 +58,8 @@ def _make_compartment_from_glyph(glyph):
     comp = csbgnpy.pd.Compartment()
     comp.id = glyph.get_id()
     if glyph.get_label():
-        comp.label = glyph.get_label().get_text()
+        if glyph.get_label().get_text():
+            comp.label = glyph.get_label().get_text()
     return comp
 
 def _make_activity_from_glyph(glyph, sbgnmap, compartments):
