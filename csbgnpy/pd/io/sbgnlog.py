@@ -33,7 +33,6 @@ class TranslationEnum(Enum):
     NOT = "not"
     NUCLEIC_ACID_FEATURE_MULTIMER = "multimerOfNucleicAcidFeatures"
     NUCLEIC_ACID_FEATURE = "nucleicAcidFeature"
-    NULL_COMPARTMENT = "null_comp"
     OMITTED_PROCESS = "omittedProcess"
     OR = "or"
     PERTURBING_AGENT = "perturbation" # PERTURBATION ?
@@ -64,7 +63,6 @@ class TranslationEnum(Enum):
     SUB_COMPLEX_MULTIMER = "subComplexMultimer"
 
     """TO DO :
-    - compartments with no label ? Is that possible ?
     - put a lexicographic order for logical operator nodes so that any logical function can be uniquely identified by its constant
     same for processes (sets of reactants and products)
     """
@@ -142,10 +140,7 @@ def _subentity_to_constant(subentity):
 
 def _compartment_to_constant(comp):
     const = "c_"
-    if not comp.label:
-        const += TranslationEnum["NULL_COMPARTMENT"].value
-    else:
-        const += comp.label
+    const += comp.label
     return Constant(normalize_string(const))
 
 def _label_to_constant(label):
@@ -162,10 +157,6 @@ def _lo_to_constant(op):
             const += "_{0}".format(_entity_to_constant(child))
     return Constant(const)
 
-def _empty_set_to_constant(es):
-    const = "e_{}".format(TranslationEnum["SOURCE_AND_SINK"].value)
-    return Constant(const)
-
 def _process_to_constant(proc):
     const = "p"
     const_reacs = []
@@ -175,19 +166,17 @@ def _process_to_constant(proc):
         for reac in set(proc.reactants):
             if isinstance(reac, EmptySet):
                 card_const = 1
-                const_reac = "{}_{}".format(card_const, _empty_set_to_constant(reac))
             else:
                 card_const = proc.reactants.count(reac)
-                const_reac = "{}_{}".format(card_const, _entity_to_constant(reac))
+            const_reac = "{}_{}".format(card_const, _entity_to_constant(reac))
             const_reacs.append(const_reac)
     if hasattr(proc, "products"):
         for prod in proc.products:
             if isinstance(prod, EmptySet):
                 card_const = 1
-                const_prod = "{}_{}".format(card_const, _empty_set_to_constant(prod))
             else:
                 card_const = proc.products.count(prod)
-                const_prod = "{}_{}".format(card_const, _entity_to_constant(prod))
+            const_prod = "{}_{}".format(card_const, _entity_to_constant(prod))
             const_prods.append(const_prod)
         const += '_'.join([str(const) for const in const_reacs]) + '_' + '_'.join([str(const) for const in const_prods])
     return const
@@ -229,10 +218,11 @@ def _entity_to_atoms(entity):
             s.add(component_atom)
             ss = _subentity_to_atoms(component)
             s |= ss
-    labeled_name = TranslationEnum["LABELED"].value
-    label_const = _label_to_constant(entity.label)
-    labeled_atom = Atom(labeled_name, [entity_const, label_const])
-    s.add(labeled_atom)
+    if hasattr(entity, "label"):
+        labeled_name = TranslationEnum["LABELED"].value
+        label_const = _label_to_constant(entity.label)
+        labeled_atom = Atom(labeled_name, [entity_const, label_const])
+        s.add(labeled_atom)
     if hasattr(entity, "compartment"):
         if entity.compartment:
             localized_name = TranslationEnum["LOCALIZED"].value
@@ -290,6 +280,10 @@ def _compartment_to_atoms(comp):
     comp_const = _compartment_to_constant(comp)
     comp_atom = Atom(comp_name, [comp_const])
     s.add(comp_atom)
+    labeled_name = TranslationEnum["LABELED"].value
+    label_const = _label_to_constant(comp.label)
+    labeled_atom = Atom(labeled_name, [comp_const, label_const])
+    s.add(labeled_atom)
     return s
 
 def _lo_to_atoms(op):
@@ -331,22 +325,20 @@ def _process_to_atoms(proc):
         reac_name = TranslationEnum["REACTANT"].value
         for reac in set(proc.reactants):
             if isinstance(reac, EmptySet):
-                reac_const = _empty_set_to_constant(reac)
                 card_const = 1
             else:
-                reac_const = _entity_to_constant(reac)
                 card_const = proc.reactants.count(reac)
+            reac_const = _entity_to_constant(reac)
             reac_atom = Atom(reac_name, [proc_const, reac_const, card_const])
             s.add(reac_atom)
     if hasattr(proc, "products"):
         prod_name = TranslationEnum["PRODUCT"].value
         for prod in proc.products:
             if isinstance(prod, EmptySet):
-                prod_const = _empty_set_to_constant(prod)
                 card_const = 1
             else:
-                prod_const = _entity_to_constant(prod)
                 card_const = proc.products.count(prod)
+            prod_const = _entity_to_constant(prod)
             prod_atom = Atom(prod_name, [proc_const, prod_const, card_const])
             s.add(prod_atom)
     return s
@@ -368,8 +360,8 @@ def atoms_to_network(atoms):
     net = Network()
     for atom in atoms:
         if atom.name == TranslationEnum["COMPARTMENT"].value:
-            comp_atoms = _get_compartment_atoms_by_const(atom.arguments[0])
-            comp = _atoms_to_compartment(comp_atoms, atoms)
+            comp_atoms = _get_compartment_atoms_by_const(atom.arguments[0], atoms)
+            comp = _atoms_to_compartment(comp_atoms)
             net.add_compartment(comp)
         elif atom.name in [TranslationEnum[c.name].value for c in EntityEnum]:
             entity_atoms = _get_entity_atoms_by_const(atom.arguments[0], atoms)
@@ -425,7 +417,7 @@ def _get_process_atoms_by_const(const, atoms):
 
 def _atoms_to_compartment(comp_atoms):
     c = Compartment()
-    for atom in atoms:
+    for atom in comp_atoms:
         if atom.name == TranslationEnum["LABELED"].value:
             c.label = deescape_string(str(atom.arguments[1]))
     return c
@@ -447,7 +439,7 @@ def _atoms_to_entity(entity_atoms, atoms):
             e.svs.append(sv)
         elif atom.name == TranslationEnum["LOCALIZED"].value:
             comp_atoms = _get_compartment_atoms_by_const(atom.arguments[1], atoms)
-            comp = _atoms_to_compartments(comp_atoms)
+            comp = _atoms_to_compartment(comp_atoms)
             e.compartment = comp
         elif atom.name == TranslationEnum["COMPONENT"].value:
             subentity_atoms = _get_subentity_atoms_by_const(atom.arguments[1], atoms)
