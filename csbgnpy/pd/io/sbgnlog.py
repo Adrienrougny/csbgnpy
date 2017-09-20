@@ -67,24 +67,24 @@ class TranslationEnum(Enum):
     same for processes (sets of reactants and products)
     """
 
-def write(net, filename):
-    sbgnlog = network_to_atoms(net)
+def write(net, filename, suffix = ""):
+    sbgnlog = network_to_atoms(net, suffix)
     f = open(filename, 'w')
     f.write('\n'.join(sorted([str(atom) for atom in sbgnlog])))
     f.close()
 
-def network_to_atoms(net):
+def network_to_atoms(net, suffix = ''):
     s = set()
     for entity in net.entities:
-        s |= _entity_to_atoms(entity)
+        s |= _entity_to_atoms(entity, suffix)
     for comp in net.compartments:
-        s |= _compartment_to_atoms(comp)
+        s |= _compartment_to_atoms(comp, suffix)
     for op in net.los:
-        s |= _lo_to_atoms(op)
+        s |= _lo_to_atoms(op, suffix)
     for mod in net.modulations:
-        s |= _modulation_to_atoms(mod)
+        s |= _modulation_to_atoms(mod, suffix)
     for proc in net.processes:
-        s |= _process_to_atoms(proc)
+        s |= _process_to_atoms(proc, suffix)
     return s
 
 def _ui_to_constant(ui):
@@ -181,15 +181,15 @@ def _process_to_constant(proc):
         const += '_'.join([str(const) for const in const_reacs]) + '_' + '_'.join([str(const) for const in const_prods])
     return const
 
-def _entity_to_atoms(entity):
+def _entity_to_atoms(entity, suffix = ""):
     s = set()
-    entity_name = TranslationEnum[EntityEnum(entity.__class__).name].value
+    entity_name = TranslationEnum[EntityEnum(entity.__class__).name].value + suffix
     entity_const = _entity_to_constant(entity)
     entity_atom = Atom(entity_name, [entity_const])
     s.add(entity_atom)
     if hasattr(entity, "uis"):
         for ui in entity.uis:
-            ui_name = TranslationEnum["UNIT_OF_INFORMATION"].value
+            ui_name = TranslationEnum["UNIT_OF_INFORMATION"].value + suffix
             if ui.prefix is None:
                 ui_pre_const = TranslationEnum["VOID"].value
             else:
@@ -199,7 +199,7 @@ def _entity_to_atoms(entity):
             s.add(ui_atom)
     if hasattr(entity, "svs"):
         for sv in entity.svs:
-            sv_name = TranslationEnum["STATE_VARIABLE"].value
+            sv_name = TranslationEnum["STATE_VARIABLE"].value + suffix
             if sv.val is None:
                 sv_value_const = TranslationEnum["UNSET"].value
             else:
@@ -212,34 +212,34 @@ def _entity_to_atoms(entity):
             s.add(sv_atom)
     if hasattr(entity, "components"):
         for component in entity.components:
-            component_name = TranslationEnum["COMPONENT"].value
+            component_name = TranslationEnum["COMPONENT"].value + suffix
             component_const = _subentity_to_constant(component)
             component_atom = Atom(component_name, [entity_const, component_const])
             s.add(component_atom)
-            ss = _subentity_to_atoms(component)
+            ss = _subentity_to_atoms(component, suffix)
             s |= ss
     if hasattr(entity, "label"):
-        labeled_name = TranslationEnum["LABELED"].value
+        labeled_name = TranslationEnum["LABELED"].value + suffix
         label_const = _label_to_constant(entity.label)
         labeled_atom = Atom(labeled_name, [entity_const, label_const])
         s.add(labeled_atom)
     if hasattr(entity, "compartment"):
         if entity.compartment:
-            localized_name = TranslationEnum["LOCALIZED"].value
+            localized_name = TranslationEnum["LOCALIZED"].value + suffix
             compartment_const = _compartment_to_constant(entity.compartment)
             localized_atom = Atom(localized_name, [entity_const, compartment_const])
             s.add(localized_atom)
     return s
 
-def _subentity_to_atoms(subentity):
+def _subentity_to_atoms(subentity, suffix = ""):
     s = set()
-    subentity_name = TranslationEnum[SubEntityEnum(subentity.__class__).name].value
+    subentity_name = TranslationEnum[SubEntityEnum(subentity.__class__).name].value + suffix
     subentity_const = _subentity_to_constant(subentity)
     subentity_atom = Atom(subentity_name, [subentity_const])
     s.add(subentity_atom)
     if hasattr(subentity, "uis"):
         for ui in subentity.uis:
-            ui_name = TranslationEnum["UNIT_OF_INFORMATION"].value
+            ui_name = TranslationEnum["UNIT_OF_INFORMATION"].value + suffix
             if ui.prefix is None:
                 ui_pre_const = TranslationEnum["VOID"].value
             else:
@@ -249,7 +249,7 @@ def _subentity_to_atoms(subentity):
             s.add(ui_atom)
     if hasattr(subentity, "svs"):
         for sv in subentity.svs:
-            sv_name = TranslationEnum["STATE_VARIABLE"].value
+            sv_name = TranslationEnum["STATE_VARIABLE"].value + suffix
             if sv.val is None:
                 sv_value_const = TranslationEnum["UNSET"].value
             else:
@@ -262,33 +262,33 @@ def _subentity_to_atoms(subentity):
             s.add(sv_atom)
     if hasattr(subentity, "components"):
         for component in subentity.components:
-            component_name = TranslationEnum["COMPONENT"].value
+            component_name = TranslationEnum["COMPONENT"].value + suffix
             component_const = _subentity_to_constant(component)
             component_atom = Atom(component_name, [subentity_const, component_const])
             s.add(component_atom)
-            ss = _subentity_to_atoms(component)
+            ss = _subentity_to_atoms(component, suffix)
             s |= ss
-    labeled_name = TranslationEnum["LABELED"].value
+    labeled_name = TranslationEnum["LABELED"].value + suffix
     label_const = _label_to_constant(subentity.label)
     labeled_atom = Atom(labeled_name, [subentity_const, label_const])
     s.add(labeled_atom)
     return s
 
-def _compartment_to_atoms(comp):
+def _compartment_to_atoms(comp, suffix = ""):
     s = set()
-    comp_name = TranslationEnum["COMPARTMENT"].value
+    comp_name = TranslationEnum["COMPARTMENT"].value + suffix
     comp_const = _compartment_to_constant(comp)
     comp_atom = Atom(comp_name, [comp_const])
     s.add(comp_atom)
-    labeled_name = TranslationEnum["LABELED"].value
+    labeled_name = TranslationEnum["LABELED"].value + suffix
     label_const = _label_to_constant(comp.label)
     labeled_atom = Atom(labeled_name, [comp_const, label_const])
     s.add(labeled_atom)
     return s
 
-def _lo_to_atoms(op):
+def _lo_to_atoms(op, suffix = ""):
     s = set()
-    op_name = TranslationEnum[LogicalOperatorEnum(op.__class__).name].value
+    op_name = TranslationEnum[LogicalOperatorEnum(op.__class__).name].value + suffix
     op_const = _lo_to_constant(op)
     op_atom = Atom(op_name, [op_const])
     s.add(op_atom)
@@ -302,10 +302,10 @@ def _lo_to_atoms(op):
         s.add(input_atom)
     return s
 
-def _modulation_to_atoms(mod):
+def _modulation_to_atoms(mod, suffix = ""):
     s = set()
     source = mod.source
-    mod_name = TranslationEnum[ModulationEnum(mod.__class__).name].value
+    mod_name = TranslationEnum[ModulationEnum(mod.__class__).name].value + suffix
     if isinstance(source, LogicalOperator):
         source_const = _lo_to_constant(source)
     else:
@@ -315,9 +315,9 @@ def _modulation_to_atoms(mod):
     s.add(mod_atom)
     return s
 
-def _process_to_atoms(proc):
+def _process_to_atoms(proc, suffix = ""):
     s = set()
-    proc_name = TranslationEnum[ProcessEnum(proc.__class__).name].value
+    proc_name = TranslationEnum[ProcessEnum(proc.__class__).name].value + suffix
     proc_const = _process_to_constant(proc)
     proc_atom = Atom(proc_name, [proc_const])
     s.add(proc_atom)
@@ -343,7 +343,7 @@ def _process_to_atoms(proc):
             s.add(prod_atom)
     return s
 
-def read(*filenames):
+def read(*filenames, suffix = ""):
     net = Network()
     atoms = set()
     for filename in filenames:
@@ -353,181 +353,199 @@ def read(*filenames):
                 line = line[:-1]
             atom = parse_atom(line)
             atoms.add(atom)
-    net = atoms_to_network(atoms)
+    net = atoms_to_network(atoms, suffix)
     return net
 
-def atoms_to_network(atoms):
+def atoms_to_network(atoms, suffix = ""):
     net = Network()
     for atom in atoms:
-        if atom.name == TranslationEnum["COMPARTMENT"].value:
-            comp_atoms = _get_compartment_atoms_by_const(atom.arguments[0], atoms)
-            comp = _atoms_to_compartment(comp_atoms)
+        atom_name = rem_suffix(atom.name, suffix)
+        if atom_name == TranslationEnum["COMPARTMENT"].value:
+            comp_atoms = _get_compartment_atoms_by_const(atom.arguments[0], atoms, suffix)
+            comp = _atoms_to_compartment(comp_atoms, suffix)
             net.add_compartment(comp)
-        elif atom.name in [TranslationEnum[c.name].value for c in EntityEnum]:
-            entity_atoms = _get_entity_atoms_by_const(atom.arguments[0], atoms)
-            entity = _atoms_to_entity(entity_atoms, atoms)
+        elif atom_name in [TranslationEnum[c.name].value for c in EntityEnum]:
+            entity_atoms = _get_entity_atoms_by_const(atom.arguments[0], atoms, suffix)
+            entity = _atoms_to_entity(entity_atoms, atoms, suffix)
             net.add_entity(entity)
-        elif atom.name in [TranslationEnum[c.name].value for c in LogicalOperatorEnum]:
-            lo_atoms = _get_lo_atoms_by_const(atom.arguments[0], atoms)
-            op = _atoms_to_lo(lo_atoms, atoms)
+        elif atom_name in [TranslationEnum[c.name].value for c in LogicalOperatorEnum]:
+            lo_atoms = _get_lo_atoms_by_const(atom.arguments[0], atoms, suffix)
+            op = _atoms_to_lo(lo_atoms, atoms, suffix)
             net.add_lo(op)
-        elif atom.name in [TranslationEnum[c.name].value for c in ProcessEnum]:
-            proc_atoms = _get_process_atoms_by_const(atom.arguments[0], atoms)
-            proc = _atoms_to_process(proc_atoms, atoms)
+        elif atom_name in [TranslationEnum[c.name].value for c in ProcessEnum]:
+            proc_atoms = _get_process_atoms_by_const(atom.arguments[0], atoms, suffix)
+            proc = _atoms_to_process(proc_atoms, atoms, suffix)
             net.add_process(proc)
-        elif atom.name in [TranslationEnum[c.name].value for c in ModulationEnum]:
-            mod = _atom_to_modulation(atom, atoms)
+        elif atom_name in [TranslationEnum[c.name].value for c in ModulationEnum]:
+            mod = _atom_to_modulation(atom, atoms, suffix)
             net.add_modulation(mod)
     return net
 
-def _get_entity_atoms_by_const(const, atoms):
+def _get_entity_atoms_by_const(const, atoms, suffix = ""):
     selatoms = set()
     for atom in atoms:
-        if atom.arguments[0] == const and (atom.name in [TranslationEnum[c.name].value for c in EntityEnum] or atom.name == TranslationEnum["LABELED"].value or atom.name == TranslationEnum["LOCALIZED"].value or atom.name == TranslationEnum["UNIT_OF_INFORMATION"].value or atom.name == TranslationEnum["STATE_VARIABLE"].value or atom.name == TranslationEnum["COMPONENT"].value):
+        atom_name = rem_suffix(atom.name, suffix)
+        if atom.arguments[0] == const and (atom_name in [TranslationEnum[c.name].value for c in EntityEnum] or atom_name == TranslationEnum["LABELED"].value or atom_name == TranslationEnum["LOCALIZED"].value or atom_name == TranslationEnum["UNIT_OF_INFORMATION"].value or atom_name == TranslationEnum["STATE_VARIABLE"].value or atom_name == TranslationEnum["COMPONENT"].value):
             selatoms.add(atom)
     return selatoms
 
-def _get_subentity_atoms_by_const(const, atoms):
+def _get_subentity_atoms_by_const(const, atoms, suffix = ""):
     selatoms = set()
     for atom in atoms:
-        if atom.arguments[0] == const and (atom.name in [TranslationEnum[c.name].value for c in SubEntityEnum] or atom.name == TranslationEnum["LABELED"].value or atom.name == TranslationEnum["UNIT_OF_INFORMATION"].value or atom.name == TranslationEnum["STATE_VARIABLE"].value or atom.name == TranslationEnum["COMPONENT"].value):
+        atom_name = rem_suffix(atom.name, suffix)
+        if atom.arguments[0] == const and (atom_name in [TranslationEnum[c.name].value for c in SubEntityEnum] or atom_name == TranslationEnum["LABELED"].value or atom_name == TranslationEnum["UNIT_OF_INFORMATION"].value or atom_name == TranslationEnum["STATE_VARIABLE"].value or atom_name == TranslationEnum["COMPONENT"].value):
             selatoms.add(atom)
     return selatoms
 
-def _get_compartment_atoms_by_const(const, atoms):
+def _get_compartment_atoms_by_const(const, atoms, suffix = ""):
     selatoms = set()
     for atom in atoms:
-        if const in atom.arguments and (atom.name == TranslationEnum["COMPARTMENT"].value or atom.name == TranslationEnum["LABELED"].value or atom.name == TranslationEnum["UNIT_OF_INFORMATION"].value):
+        atom_name = rem_suffix(atom.name, suffix)
+        if const in atom.arguments and (atom_name == TranslationEnum["COMPARTMENT"].value or atom_name == TranslationEnum["LABELED"].value or atom_name == TranslationEnum["UNIT_OF_INFORMATION"].value):
             selatoms.add(atom)
     return selatoms
 
-def _get_lo_atoms_by_const(const, atoms):
+def _get_lo_atoms_by_const(const, atoms, suffix = ""):
     selatoms = set()
     for atom in atoms:
-        if atom.name in [TranslationEnum[c.name].value for c in LogicalOperatorEnum] and atom.arguments[0] == const or atom.name == TranslationEnum["INPUT"].value and atom.arguments[1] == const:
+        atom_name = rem_suffix(atom.name, suffix)
+        if atom_name in [TranslationEnum[c.name].value for c in LogicalOperatorEnum] and atom.arguments[0] == const or atom_name == TranslationEnum["INPUT"].value and atom.arguments[1] == const:
             selatoms.add(atom)
     return selatoms
 
-def _get_process_atoms_by_const(const, atoms):
+def _get_process_atoms_by_const(const, atoms, suffix = ""):
     selatoms = set()
     for atom in atoms:
-        if const in atom.arguments and (atom.name in [TranslationEnum[c.name].value for c in ProcessEnum] or atom.name == TranslationEnum["REACTANT"].value or atom.name == TranslationEnum["PRODUCT"].value or atom.name == TranslationEnum["LABELED"].value):
+        atom_name = rem_suffix(atom.name, suffix)
+        if const in atom.arguments and (atom_name in [TranslationEnum[c.name].value for c in ProcessEnum] or atom_name == TranslationEnum["REACTANT"].value or atom_name == TranslationEnum["PRODUCT"].value or atom_name == TranslationEnum["LABELED"].value):
             selatoms.add(atom)
     return selatoms
 
-def _atoms_to_compartment(comp_atoms):
+def _atoms_to_compartment(comp_atoms, suffix = ""):
     c = Compartment()
     for atom in comp_atoms:
-        if atom.name == TranslationEnum["LABELED"].value:
+        atom_name = rem_suffix(atom.name, suffix)
+        if atom_name == TranslationEnum["LABELED"].value:
             c.label = deescape_string(str(atom.arguments[1]))
     return c
 
-def _atoms_to_entity(entity_atoms, atoms):
+def _atoms_to_entity(entity_atoms, atoms, suffix = ""):
     for atom in entity_atoms:
-        if atom.name in [TranslationEnum[c.name].value for c in EntityEnum]:
-            e = EntityEnum[TranslationEnum(atom.name).name].value()
+        atom_name = rem_suffix(atom.name, suffix)
+        if atom_name in [TranslationEnum[c.name].value for c in EntityEnum]:
+            e = EntityEnum[TranslationEnum(atom_name).name].value()
             break
     for atom in entity_atoms:
-        if atom.name == TranslationEnum["LABELED"].value:
+        atom_name = rem_suffix(atom.name, suffix)
+        if atom_name == TranslationEnum["LABELED"].value:
             if len(str(atom.arguments[1])) != 0:
                 e.label = deescape_string(str(atom.arguments[1]))
-        elif atom.name == TranslationEnum["UNIT_OF_INFORMATION"].value:
+        elif atom_name == TranslationEnum["UNIT_OF_INFORMATION"].value:
             ui = _atom_to_ui(atom)
             e.uis.append(ui)
-        elif atom.name == TranslationEnum["STATE_VARIABLE"].value:
+        elif atom_name == TranslationEnum["STATE_VARIABLE"].value:
             sv = _atom_to_sv(atom)
             e.svs.append(sv)
-        elif atom.name == TranslationEnum["LOCALIZED"].value:
-            comp_atoms = _get_compartment_atoms_by_const(atom.arguments[1], atoms)
-            comp = _atoms_to_compartment(comp_atoms)
+        elif atom_name == TranslationEnum["LOCALIZED"].value:
+            comp_atoms = _get_compartment_atoms_by_const(atom.arguments[1], atoms, suffix)
+            comp = _atoms_to_compartment(comp_atoms, suffix)
             e.compartment = comp
-        elif atom.name == TranslationEnum["COMPONENT"].value:
-            subentity_atoms = _get_subentity_atoms_by_const(atom.arguments[1], atoms)
-            subentity = _atoms_to_subentity(subentity_atoms, atoms)
+        elif atom_name == TranslationEnum["COMPONENT"].value:
+            subentity_atoms = _get_subentity_atoms_by_const(atom.arguments[1], atoms, suffix)
+            subentity = _atoms_to_subentity(subentity_atoms, atoms, suffix)
             e.components.append(subentity)
     return e
 
-def _atoms_to_subentity(subentity_atoms, atoms):
+def _atoms_to_subentity(subentity_atoms, atoms, suffix = ""):
     for atom in subentity_atoms:
-        if atom.name in [TranslationEnum[c.name].value for c in SubEntityEnum]:
-            e = SubEntityEnum[TranslationEnum(atom.name).name].value()
+        atom_name = rem_suffix(atom.name, suffix)
+        if atom_name in [TranslationEnum[c.name].value for c in SubEntityEnum]:
+            e = SubEntityEnum[TranslationEnum(atom_name).name].value()
             break
     for atom in subentity_atoms:
-        if atom.name == TranslationEnum["LABELED"].value:
+        atom_name = rem_suffix(atom.name, suffix)
+        if atom_name == TranslationEnum["LABELED"].value:
             if len(str(atom.arguments[1])) != 0:
                 e.label = deescape_string(str(atom.arguments[1]))
-        elif atom.name == TranslationEnum["UNIT_OF_INFORMATION"].value:
+        elif atom_name == TranslationEnum["UNIT_OF_INFORMATION"].value:
             ui = _atom_to_ui(atom)
             e.uis.append(ui)
-        elif atom.name == TranslationEnum["STATE_VARIABLE"].value:
+        elif atom_name == TranslationEnum["STATE_VARIABLE"].value:
             sv = _atom_to_sv(atom)
             e.svs.append(sv)
-        elif atom.name == TranslationEnum["COMPONENT"].value:
-            subsubentity_atoms = _get_subentity_atoms_by_const(atom.arguments[1], atoms)
-            subsubentity = _atoms_to_subentity(subentity_atoms, atoms)
+        elif atom_name == TranslationEnum["COMPONENT"].value:
+            subsubentity_atoms = _get_subentity_atoms_by_const(atom.arguments[1], atoms, suffix)
+            subsubentity = _atoms_to_subentity(subentity_atoms, atoms, suffix)
             e.components.append(subsubentity)
     return e
 
-def _atoms_to_lo(lo_atoms, atoms):
+def _atoms_to_lo(lo_atoms, atoms, suffix = ""):
     for atom in lo_atoms:
-        if atom.name in [TranslationEnum[c.name].value for c in LogicalOperatorEnum]:
-            op = LogicalOperatorEnum[TranslationEnum(atom.name).name].value()
+        atom_name = rem_suffix(atom.name, suffix)
+        if atom_name in [TranslationEnum[c.name].value for c in LogicalOperatorEnum]:
+            op = LogicalOperatorEnum[TranslationEnum(atom_name).name].value()
             break
     for atom in lo_atoms:
-        if atom.name == TranslationEnum["INPUT"].value:
+        atom_name = rem_suffix(atom.name, suffix)
+        if atom_name == TranslationEnum["INPUT"].value:
             child_const = atom.arguments[0]
             child = None
             for atom2 in atoms:
-                if atom2.name in [TranslationEnum[c.name].value for c in EntityEnum] and atom2.arguments[0] == child_const:
-                    child_atoms = _get_entity_atoms_by_const(child_const, atoms)
-                    child = _atoms_to_entity(child_atoms, atoms)
+                atom2_name = rem_suffix(atom2.name, suffix)
+                if atom2_name in [TranslationEnum[c.name].value for c in EntityEnum] and atom2.arguments[0] == child_const:
+                    child_atoms = _get_entity_atoms_by_const(child_const, atoms, suffix)
+                    child = _atoms_to_entity(child_atoms, atoms, suffix)
                     break
             if not child:
-                child_atoms = _get_lo_atoms_by_const(child_const, atoms)
-                child = _atoms_to_lo(child_atoms, atoms)
+                child_atoms = _get_lo_atoms_by_const(child_const, atoms, suffix)
+                child = _atoms_to_lo(child_atoms, atoms, suffix)
             op.add_child(child)
     return op
 
-def _atoms_to_process(proc_atoms, atoms):
+def _atoms_to_process(proc_atoms, atoms, suffix = ""):
     for atom in proc_atoms:
-        if atom.name in [TranslationEnum[c.name].value for c in ProcessEnum]:
-            proc = ProcessEnum[TranslationEnum(atom.name).name].value()
+        atom_name = rem_suffix(atom.name, suffix)
+        if atom_name in [TranslationEnum[c.name].value for c in ProcessEnum]:
+            proc = ProcessEnum[TranslationEnum(atom_name).name].value()
             break
     for atom in proc_atoms:
-        if atom.name == TranslationEnum["REACTANT"].value:
+        atom_name = rem_suffix(atom.name, suffix)
+        if atom_name == TranslationEnum["REACTANT"].value:
             reactant_const = atom.arguments[1]
             card_const = atom.arguments[2]
-            reactant_atoms = _get_entity_atoms_by_const(reactant_const, atoms)
-            reactant = _atoms_to_entity(reactant_atoms, atoms)
+            reactant_atoms = _get_entity_atoms_by_const(reactant_const, atoms, suffix)
+            reactant = _atoms_to_entity(reactant_atoms, atoms, suffix)
             for i in range(int(str(card_const))):
                 proc.add_reactant(reactant)
-        elif atom.name == TranslationEnum["PRODUCT"].value:
+        elif atom_name == TranslationEnum["PRODUCT"].value:
             product_const = atom.arguments[1]
             card_const = atom.arguments[2]
-            product_atoms = _get_entity_atoms_by_const(product_const, atoms)
-            product = _atoms_to_entity(product_atoms, atoms)
+            product_atoms = _get_entity_atoms_by_const(product_const, atoms, suffix)
+            product = _atoms_to_entity(product_atoms, atoms, suffix)
             for i in range(int(str(card_const))):
                 proc.add_product(product)
-        elif atom.name == TranslationEnum["LABELED"].value:
+        elif atom_name == TranslationEnum["LABELED"].value:
             proc.label = deescape(atom.arguments[1])
     return proc
 
-def _atom_to_modulation(mod_atom, atoms):
-    mod = ModulationEnum[TranslationEnum(mod_atom.name).name].value()
+def _atom_to_modulation(mod_atom, atoms, suffix = ""):
+    atom_name = rem_suffix(mod_atom.name, suffix)
+    mod = ModulationEnum[TranslationEnum(atom_name).name].value()
     source_const = mod_atom.arguments[0]
     source = None
     for atom in atoms:
-        if atom.name in [TranslationEnum[c.name].value for c in EntityEnum] and atom.arguments[0] == source_const:
-            source_atoms = _get_entity_atoms_by_const(source_const, atoms)
-            source = _atoms_to_entity(source_atoms, atoms)
+        atom_name = rem_suffix(atom.name, suffix)
+        if atom_name in [TranslationEnum[c.name].value for c in EntityEnum] and atom.arguments[0] == source_const:
+            source_atoms = _get_entity_atoms_by_const(source_const, atoms, suffix)
+            source = _atoms_to_entity(source_atoms, atoms, suffix)
             break
     if not source:
-        source_atoms = _get_lo_atoms_by_const(source_const, atoms)
-        source = _atoms_to_lo(source_atoms, atoms)
+        source_atoms = _get_lo_atoms_by_const(source_const, atoms, suffix)
+        source = _atoms_to_lo(source_atoms, atoms, suffix)
     mod.source = source
     target_const = mod_atom.arguments[1]
-    target_atoms = _get_process_atoms_by_const(target_const, atoms)
-    target = _atoms_to_process(target_atoms, atoms)
+    target_atoms = _get_process_atoms_by_const(target_const, atoms, suffix)
+    target = _atoms_to_process(target_atoms, atoms, suffix)
     mod.target = target
     return mod
 
