@@ -174,10 +174,10 @@ def read(*filenames):
                 line = line[:-1]
             atom = parse_atom(line)
             atoms.add(atom)
-    net = network_to_atoms(atoms)
+    net = atoms_to_network(atoms)
     return net
 
-def network_to_atoms(atoms):
+def atoms_to_network(atoms):
     net = Network()
     for atom in atoms:
         if atom.name == TranslationEnum["COMPARTMENT"].value:
