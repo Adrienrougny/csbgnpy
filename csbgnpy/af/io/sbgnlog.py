@@ -25,7 +25,6 @@ class TranslationEnum(Enum):
     LOCALIZED = "localized"
     INPUT = "input"
     UNIT_OF_INFORMATION = "unitOfInformation"
-    NULL_COMPARTMENT = "null_comp"
     UNDEFINED = "undefined"
     UNSET = "unset"
     VOID = "void"
@@ -37,7 +36,6 @@ class TranslationEnum(Enum):
     SIMPLE_CHEMICAL = "simplechemical"
 
     """TO DO :
-    - compartments with no label ? Is that possible ?
     - put a lexicographic order for logical operator nodes so that any logical function can be uniquely identified by its constant
     same for processes (sets of reactants and products)
     """
@@ -80,10 +78,7 @@ def _activity_to_constant(activity):
 
 def _compartment_to_constant(compartment):
     const = "c_"
-    if not comp.label:
-        const += TranslationEnum["NULL_COMPARTMENT"].value
-    else:
-        const += comp.label
+    const += comp.label
     return Constant(normalize_string(const))
 
 def _label_to_constant(label):
