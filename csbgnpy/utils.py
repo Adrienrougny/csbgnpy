@@ -48,6 +48,12 @@ def normalize_string(s):
     s = s.lower()
     return s
 
+def rem_suffix(s, suffix = None):
+    if suffix and len(suffix) > 0 and s.endswith(suffix):
+        return s[:-len(suffix)]
+    else:
+        return s
+
 def escape_string(s):
     s = s.replace("\n", "\\n")
     return s
