@@ -1,6 +1,9 @@
 class Compartment(object):
     def __init__(self, label = None, id = None):
-        self.label = label
+        if label:
+            self.label = label
+        else:
+            self.label = ""
         self.id = id
 
     def __eq__(self, other):
