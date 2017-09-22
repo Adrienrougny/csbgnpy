@@ -19,7 +19,6 @@ class LogicalOperatorEnum(Enum):
     DELAY = DelayOperator
 
 class ModulationEnum(Enum):
-    INFLUENCE  = Modulation
     POSITIVE_INFLUENCE  = Stimulation
     NEGATIVE_INFLUENCE  = Inhibition
     UNKNOWN_INFLUENCE  = Modulation

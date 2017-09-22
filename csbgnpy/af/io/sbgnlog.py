@@ -7,6 +7,10 @@ from csbgnpy.af.ui import *
 from csbgnpy.af.network import *
 from csbgnpy.af.io.utils import *
 
+import logicpy.parse
+from logicpy.term import *
+from logicpy.atom import *
+
 class TranslationEnum(Enum):
     BIOLOGICAL_ACTIVITY = "biologicalActivity"
     PHENOTYPE = "phenotype"
@@ -14,10 +18,9 @@ class TranslationEnum(Enum):
     AND = "and"
     NOT = "not"
     DELAY = "delay"
-    INFLUENCE = "modulates"
     POSITIVE_INFLUENCE = "stimulates"
     NEGATIVE_INFLUENCE = "inhibits"
-    UNKNOWN_INFLUENCE = "modulates"
+    UNKNOWN_INFLUENCE = "unknownModulates"
     NECESSARY_STIMULATION = "necessarilyStimulates"
     COMPARTMENT = "compartment"
     LABEL = "label"
@@ -76,7 +79,7 @@ def _activity_to_constant(activity):
             const += "_{0}".format(_compartment_to_constant(activity.compartment))
     return Constant(const)
 
-def _compartment_to_constant(compartment):
+def _compartment_to_constant(comp):
     const = "c_"
     const += comp.label
     return Constant(normalize_string(const))
@@ -172,7 +175,7 @@ def read(*filenames, suffix = ""):
         for line in f:
             if line[-1] == "\n":
                 line = line[:-1]
-            atom = parse_atom(line)
+            atom = logicpy.parse.parse_atom(line)
             atoms.add(atom)
     net = atoms_to_network(atoms, suffix)
     return net
@@ -182,8 +185,8 @@ def atoms_to_network(atoms, suffix = ""):
     for atom in atoms:
         atom_name = rem_suffix(atom.name, suffix)
         if atom_name == TranslationEnum["COMPARTMENT"].value:
-            comp_atoms = _get_compartment_atoms_by_const(atom.arguments[0], suffix)
-            comp = _atoms_to_compartment(comp_atoms, atoms, suffix)
+            comp_atoms = _get_compartment_atoms_by_const(atom.arguments[0], atoms, suffix)
+            comp = _atoms_to_compartment(comp_atoms, suffix)
             net.add_compartment(comp)
         elif atom_name in [TranslationEnum[c.name].value for c in ActivityEnum]:
             act_atoms = _get_activity_atoms_by_const(atom.arguments[0], atoms, suffix)
@@ -224,9 +227,9 @@ def _get_lo_atoms_by_const(const, atoms, suffix = ""):
 
 def _atoms_to_compartment(comp_atoms, suffix = ""):
     c = Compartment()
-    for atom in atoms:
+    for atom in comp_atoms:
         atom_name = rem_suffix(atom.name, suffix)
-        if atom_ame == TranslationEnum["LABELED"].value:
+        if atom_name == TranslationEnum["LABELED"].value:
             c.label = deescape_string(str(atom.arguments[1]))
     return c
 

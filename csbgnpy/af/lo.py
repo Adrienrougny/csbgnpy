@@ -1,6 +1,7 @@
 class LogicalOperator(object):
     def __init__(self, children = None, id = None):
         self.children = children if children else []
+        self.id = id
 
     def add_child(self, child):
         if child not in self.children:

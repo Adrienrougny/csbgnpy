@@ -33,7 +33,7 @@ class EmptySet(Entity):
 class StatefulEntity(Entity):
     def __init__(self, label = None, compartment = None, svs = None, uis = None, id = None):
         super().__init__(id)
-        self.label = label
+        self.label = label if label else ""
         self.compartment = compartment
         self.svs = svs if svs else []
         self.uis = uis if uis else []
@@ -90,7 +90,7 @@ class StatefulEntity(Entity):
 class StatelessEntity(Entity):
     def __init__(self, label = None, compartment = None, id = None):
         super().__init__(id)
-        self.label = label
+        self.label = label if label else ""
         self.compartment = compartment
 
     def __eq__(self, other):
@@ -159,7 +159,7 @@ class NucleicAcidFeatureMultimer(Multimer):
 
 class ComplexMultimer(Complex, Multimer):
     def __init__(self, label = None, compartment = None, svs = None, uis = None, components = None, id = None):
-        super().__init__(label, compartment, svs, uis, component, id)
+        super().__init__(label, compartment, svs, uis, components, id)
 
     #maybe not useful:
     def __hash__(self):

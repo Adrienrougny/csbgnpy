@@ -84,8 +84,9 @@ def _make_entity_from_glyph(glyph, sbgnmap):
     entity = EntityEnum[glyph.get_class().name].value()
     entity.id = glyph.get_id()
     lsvs = []
-    if glyph.get_label() is not None:
-        entity.label = glyph.get_label().get_text()
+    if glyph.get_label():
+        if glyph.get_label().get_text():
+            entity.label = glyph.get_label().get_text()
     comp_id = glyph.get_compartmentRef()
     if comp_id is not None:
         comp_glyph = get_glyph_by_id_or_port_id(sbgnmap, comp_id)

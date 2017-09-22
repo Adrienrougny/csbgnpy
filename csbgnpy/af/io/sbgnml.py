@@ -66,7 +66,8 @@ def _make_activity_from_glyph(glyph, sbgnmap, compartments):
     activity = ActivityEnum[glyph.get_class().name].value()
     activity.id = glyph.get_id()
     if glyph.get_label():
-        activity.label = glyph.get_label().get_text()
+        if glyph.label().get_text():
+            activity.label = glyph.get_label().get_text()
     comp_id = glyph.get_compartmentRef()
     if comp_id is not None:
         comp_glyph = get_glyph_by_id_or_port_id(sbgnmap, comp_id)
@@ -244,7 +245,7 @@ def _make_glyph_from_lo(op, layout):
 
 def _make_arc_from_modulation(modulation, dids, layout):
     arc = libsbgn.arc()
-    arc.set_id("mod_{0}_{1}".format(dids[modulation.source], dids[modulation.target]))
+    arc.set_id("mod_{}_{}_{}".format(modulation.__class__.__name__, dids[modulation.source], dids[modulation.target]))
     arc.set_class(libsbgn.ArcClass[ModulationEnum(modulation.__class__).name])
     if isinstance(modulation.source, Activity):
         arc.set_source(dids[modulation.source])

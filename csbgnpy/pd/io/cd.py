@@ -3,6 +3,7 @@ from lxml import etree
 from csbgnpy.utils import *
 from csbgnpy.pd.compartment import *
 from csbgnpy.pd.entity import *
+from csbgnpy.pd.subentity import *
 from csbgnpy.pd.process import *
 from csbgnpy.pd.modulation import *
 from csbgnpy.pd.lo import *
@@ -29,6 +30,22 @@ TranslationDic = {
     "ION_HOMODIMER": SimpleChemicalMultimer,
     "SIMPLE_MOLECULE_HOMODIMER": SimpleChemicalMultimer,
     "COMPLEX_HOMODIMER": ComplexMultimer,
+    "SUB_PROTEIN": SubMacromolecule,
+    "SUB_GENE": SubMacromolecule,
+    "SUB_RNA": SubMacromolecule,
+    "SUB_ANTISENSE_RNA": SubMacromolecule,
+    "SUB_ION": SubSimpleChemical,
+    "SUB_SIMPLE_MOLECULE": SubSimpleChemical,
+    "SUB_DRUG": SubUnspecifiedEntity,
+    "SUB_UNKNOWN": SubUnspecifiedEntity,
+    "SUB_COMPLEX": SubComplex,
+    "SUB_PROTEIN_HOMODIMER": SubMacromoleculeMultimer,
+    "SUB_GENE_HOMODIMER": SubMacromoleculeMultimer,
+    "SUB_RNA_HOMODIMER": SubMacromoleculeMultimer,
+    "SUB_ANTISENSE_RNA_HOMODIMER": SubMacromoleculeMultimer,
+    "SUB_ION_HOMODIMER": SubSimpleChemicalMultimer,
+    "SUB_SIMPLE_MOLECULE_HOMODIMER": SubSimpleChemicalMultimer,
+    "SUB_COMPLEX_HOMODIMER": SubComplexMultimer,
     "DEGRADED": EmptySet,
     "PHENOTYPE": Phenotype,
     "phosphorylated": "P",
@@ -153,7 +170,9 @@ def _get_cdprocess_by_id(tree, ns, id):
 def _make_compartment_from_cd(cdcomp, ns):
     comp = Compartment()
     comp.id = cdcomp.get("id")
-    comp.label = cdcomp.get("name")
+    comp_label = cdcomp.get("name")
+    if comp_label:
+        comp.label = comp_label
     return comp
 
 def _make_phenotype_from_cd(cdspecies, tree, ns):
@@ -212,9 +231,64 @@ def _make_entity_from_cd(cdspecies, tree, ns):
                 sv.id = entity.id + "_" + svar[0]
                 entity.add_sv(sv)
         for cdsubspecies in [cd.getparent().getparent() for cd in tree.xpath(".//celldesigner:complexSpecies[text()='{0}']".format(cdspecies.get("id")), namespaces = ns)]:
+            subentity = _make_subentity_from_cd(cdsubspecies, tree, ns)
+            entity.add_component(subentity)
+        return entity
+
+def _make_subentity_from_cd(cdspecies, tree, ns):
+    cd_class = cdspecies.xpath(".//celldesigner:class", namespaces = ns)[0].text
+    homodimer = len(cdspecies.xpath(".//celldesigner:homodimer", namespaces = ns)) > 0
+    if homodimer:
+        cd_class = cd_class + "_HOMODIMER"
+    if cd_class != "PHENOTYPE":
+        entity = TranslationDic["SUB_" + cd_class]()
+        entity.id = cdspecies.get("id")
+        if hasattr(entity, "label"):
+            entity.label = cdspecies.get("name")
+        if cd_class == "GENE":
+            ui = UnitOfInformation()
+            ui.prefix = "ct"
+            ui.label = "gene"
+            ui.id = entity.id + "_" + "ui"
+            entity.add_ui(ui)
+        elif cd_class == "RNA" or cd_class == "ANTISENSE_RNA":
+            ui = UnitOfInformation()
+            ui.prefix = "mt"
+            ui.label = "rna"
+            ui.id = entity.id + "_" + "ui"
+            entity.add_ui(ui)
+        if hasattr(entity, "compartment"):
+            cid = cdspecies.get("compartment")
+            if cid:
+                cdcompartment = _get_cdcompartment_by_id(tree, ns, cid)
+                compartment = _make_compartment_from_cd(cdcompartment, ns)
+                entity.compartment = compartment
+        # making svs
+        if cd_class == "PROTEIN":
+            prid = cdspecies.xpath(".//celldesigner:proteinReference", namespaces = ns)[0].text
+            cdprot = tree.xpath("//celldesigner:protein[@id='{0}']".format(prid), namespaces = ns)[0]
+            svars = [(mod.get("id"), mod.get("angle"), mod.get("name")) for mod in cdprot.xpath(".//celldesigner:modificationResidue", namespaces = ns)]
+            svarssorted = sorted(svars, key = lambda var: var[1])
+            i = 1
+            for svar in svarssorted:
+                sv = StateVariable()
+                lval = cdspecies.xpath(".//celldesigner:modification[@residue='{0}']".format(svar[0]), namespaces = ns)
+                if lval:
+                    sv.val = TranslationDic[lval[0].get("state")]
+                else:
+                    sv.val = None
+                if svar[2]:
+                    sv.var = svar[2]
+                else:
+                    sv.var = UndefinedVar(i)
+                    i += 1
+                sv.id = entity.id + "_" + svar[0]
+                entity.add_sv(sv)
+        for cdsubspecies in [cd.getparent().getparent() for cd in tree.xpath(".//celldesigner:complexSpecies[text()='{0}']".format(cdspecies.get("id")), namespaces = ns)]:
             subentity = _make_entity_from_cd(cdsubspecies, tree, ns)
             entity.add_component(subentity)
         return entity
+
 
 def _make_process_from_cd(cdproc, tree, ns):
     cd_class = cdproc.xpath(".//celldesigner:reactionType", namespaces = ns)[0].text

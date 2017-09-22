@@ -2,7 +2,7 @@ from csbgnpy.utils import escape_string
 
 class Activity(object):
     def __init__(self, label = None, compartment = None, id = None):
-        self.label = label
+        self.label = label if label else ""
         self.compartment = compartment
         self.id = id
 

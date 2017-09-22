@@ -13,24 +13,27 @@ class Network(object):
 
     def add_process(self, proc):
         if proc not in self.processes:
-            reactants = []
-            for reactant in proc.reactants:
-                existent_reactant = self.get_entity(reactant, by_entity = True)
-                if existent_reactant:
-                    reactants.append(existent_reactant)
-                else:
-                    self.add_entity(reactant)
-                    reactants.append(reactant)
-            proc.reactants = reactants
-            products = []
-            for product in proc.products:
-                existent_product = self.get_entity(product, by_entity = True)
-                if existent_product:
-                    products.append(existent_product)
-                else:
-                    products.append(product)
-                    self.add_entity(product)
-            proc.products = products
+            if hasattr(proc, "reactants"):
+                reactants = []
+                for reactant in proc.reactants:
+                    existent_reactant = self.get_entity(reactant, by_entity = True)
+                    if existent_reactant:
+                        reactants.append(existent_reactant)
+                    else:
+                        self.add_entity(reactant)
+                        reactants.append(reactant)
+                proc.reactants = reactants
+
+            if hasattr(proc, "products"):
+                products = []
+                for product in proc.products:
+                    existent_product = self.get_entity(product, by_entity = True)
+                    if existent_product:
+                        products.append(existent_product)
+                    else:
+                        products.append(product)
+                        self.add_entity(product)
+                proc.products = products
             self.processes.append(proc)
 
     def add_entity(self, entity):

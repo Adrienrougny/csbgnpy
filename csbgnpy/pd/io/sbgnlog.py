@@ -1,5 +1,7 @@
 from math import atan2
 
+from logicpy import parse
+
 from csbgnpy.utils import *
 from csbgnpy.pd.compartment import *
 from csbgnpy.pd.entity import *
@@ -10,6 +12,10 @@ from csbgnpy.pd.sv import *
 from csbgnpy.pd.ui import *
 from csbgnpy.pd.network import *
 from csbgnpy.pd.io.utils import *
+
+import logicpy.parse
+from logicpy.term import *
+from logicpy.atom import *
 
 class TranslationEnum(Enum):
     AND = "and"
@@ -143,11 +149,6 @@ def _compartment_to_constant(comp):
     const += comp.label
     return Constant(normalize_string(const))
 
-def _label_to_constant(label):
-    if label is None:
-        label = ""
-    return Constant(quote_string(label))
-
 def _lo_to_constant(op):
     const = "lo_{}".format(TranslationEnum[LogicalOperatorEnum(op.__class__).name].value)
     for child in op.children:
@@ -161,6 +162,8 @@ def _process_to_constant(proc):
     const = "p"
     const_reacs = []
     const_prods = []
+    if hasattr(proc, "label"):
+        const += "_{}".format(normalize_string(proc.label))
     if hasattr(proc, "reactants"):
         const += "_"
         for reac in set(proc.reactants):
@@ -220,7 +223,7 @@ def _entity_to_atoms(entity, suffix = ""):
             s |= ss
     if hasattr(entity, "label"):
         labeled_name = TranslationEnum["LABELED"].value + suffix
-        label_const = _label_to_constant(entity.label)
+        label_const = quote_string(escape_string(entity.label))
         labeled_atom = Atom(labeled_name, [entity_const, label_const])
         s.add(labeled_atom)
     if hasattr(entity, "compartment"):
@@ -269,7 +272,7 @@ def _subentity_to_atoms(subentity, suffix = ""):
             ss = _subentity_to_atoms(component, suffix)
             s |= ss
     labeled_name = TranslationEnum["LABELED"].value + suffix
-    label_const = _label_to_constant(subentity.label)
+    label_const = quote_string(escape_string(subentity.label))
     labeled_atom = Atom(labeled_name, [subentity_const, label_const])
     s.add(labeled_atom)
     return s
@@ -281,7 +284,7 @@ def _compartment_to_atoms(comp, suffix = ""):
     comp_atom = Atom(comp_name, [comp_const])
     s.add(comp_atom)
     labeled_name = TranslationEnum["LABELED"].value + suffix
-    label_const = _label_to_constant(comp.label)
+    label_const = quote_string(escape_string(comp.label))
     labeled_atom = Atom(labeled_name, [comp_const, label_const])
     s.add(labeled_atom)
     return s
@@ -297,7 +300,7 @@ def _lo_to_atoms(op, suffix = ""):
             child_const = _lo_to_constant(child)
         else:
             child_const = _entity_to_constant(child)
-        input_name = TranslationEnum["INPUT"].value
+        input_name = TranslationEnum["INPUT"].value + suffix
         input_atom = Atom(input_name, [child_const, op_const])
         s.add(input_atom)
     return s
@@ -322,7 +325,7 @@ def _process_to_atoms(proc, suffix = ""):
     proc_atom = Atom(proc_name, [proc_const])
     s.add(proc_atom)
     if hasattr(proc, "reactants"):
-        reac_name = TranslationEnum["REACTANT"].value
+        reac_name = TranslationEnum["REACTANT"].value + suffix
         for reac in set(proc.reactants):
             if isinstance(reac, EmptySet):
                 card_const = 1
@@ -332,7 +335,7 @@ def _process_to_atoms(proc, suffix = ""):
             reac_atom = Atom(reac_name, [proc_const, reac_const, card_const])
             s.add(reac_atom)
     if hasattr(proc, "products"):
-        prod_name = TranslationEnum["PRODUCT"].value
+        prod_name = TranslationEnum["PRODUCT"].value + suffix
         for prod in proc.products:
             if isinstance(prod, EmptySet):
                 card_const = 1
@@ -341,6 +344,11 @@ def _process_to_atoms(proc, suffix = ""):
             prod_const = _entity_to_constant(prod)
             prod_atom = Atom(prod_name, [proc_const, prod_const, card_const])
             s.add(prod_atom)
+    if hasattr(proc, "label"):
+        labeled_name = TranslationEnum["LABELED"].value + suffix
+        label_const = quote_string(escape_string(proc.label))
+        labeled_atom = Atom(labeled_name, [proc_const, label_const])
+        s.add(labeled_atom)
     return s
 
 def read(*filenames, suffix = ""):
@@ -351,7 +359,7 @@ def read(*filenames, suffix = ""):
         for line in f:
             if line[-1] == "\n":
                 line = line[:-1]
-            atom = parse_atom(line)
+            atom = logicpy.parse.parse_atom(line)
             atoms.add(atom)
     net = atoms_to_network(atoms, suffix)
     return net
