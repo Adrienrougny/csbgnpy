@@ -1,7 +1,15 @@
 from csbgnpy.utils import escape_string
 
 class Activity(object):
+    """The class to model activities"""
     def __init__(self, label = None, compartment = None, id = None):
+        """Initialization function
+
+        :param label: a string denoting the name of the activity
+        :param compartment: the compartment the activity belongs to
+        :param id: the id of the activity
+        :return: None
+        """
         self.label = label if label else ""
         self.compartment = compartment
         self.id = id
@@ -21,11 +29,25 @@ class Activity(object):
         return "{}[{} {{}} @ {}]".format(self.__class__.__name__, escape_string(self.label), self.compartment)
 
 class BiologicalActivity(Activity):
+    """The class to model biological activities"""
     def __init__(self, label = None, compartment = None, uis = None, id = None):
+        """Initialization function
+
+        :param label: a string denoting the name of the activity
+        :param compartment: the compartment the activity belongs to
+        :param uis: a list of units of information
+        :param id: the id of the activity
+        :return: None
+        """
         super().__init__(label, compartment, id)
         self.uis = uis if uis else []
 
     def add_ui(self, ui):
+        """Adds a unit of information to the biological activity
+
+        :param ui: the unit of information to be added
+        :return: None
+        """
         if ui not in self.uis:
             self.uis.append(ui)
 
@@ -42,4 +64,5 @@ class BiologicalActivity(Activity):
         return "{}[{} {{{}}} @ {}]".format(self.__class__.__name__, self.label, self.uis, self.compartment)
 
 class Phenotype(Activity):
+    """The class to model phenotypes"""
     pass

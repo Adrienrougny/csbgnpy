@@ -1,4 +1,5 @@
 class Compartment(object):
+    """THe class to model compartments"""
     def __init__(self, label = None, id = None):
         if label:
             self.label = label

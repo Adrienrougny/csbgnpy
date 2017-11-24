@@ -1,6 +1,7 @@
 from enum import Enum
 
 class UnitOfInformationActivityType(Enum):
+    """Enumeration of the possible types for unit of informations""" 
     MACROMOLECULE = "macromolecule"
     NUCLEIC_ACID_FEATURE = "nucleic acid feature"
     SIMPLE_CHEMICAL = "simple chemical"
@@ -9,10 +10,12 @@ class UnitOfInformationActivityType(Enum):
     PERTURBATION = "perturbation"
 
 class UnitOfInformation(object):
+    """The class to model unit of informations"""
     def __init__(self, id = None):
         self.id = id
 
 class UnitOfInformationActivity(UnitOfInformation):
+    """The class to model activities' units of information"""
     def __init__(self, label = None, type = None, id = None):
         super().__init__(id)
         self.label = label
@@ -30,6 +33,7 @@ class UnitOfInformationActivity(UnitOfInformation):
         return "{}[{}:{}]".format(self.__class__.__name__, self.type.name, self.label)
 
 class UnitOfInformationCompartment(UnitOfInformation):
+    """The class to model compartments' units of information"""
     def __init__(self, prefix = None, label = None, id = None):
         super().__init__(id)
         self.prefix = prefix
