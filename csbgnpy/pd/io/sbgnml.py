@@ -438,7 +438,7 @@ def _renew_ids(net):
     for i, op in enumerate(net.los):
         _renew_id_of_lo(op, i)
 
-def write(net, filename, renew_ids = True):
+def write(net, filename, renew_ids = False):
     sbgn = libsbgn.sbgn()
     sbgnmap = libsbgn.map()
     language = libsbgn.Language.PD
