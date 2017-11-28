@@ -1,5 +1,3 @@
-from modgrammar import *
-
 class IdLookupError(LookupError):
     def __init__(self, id):
         self.id = id

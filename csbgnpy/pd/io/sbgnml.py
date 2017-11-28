@@ -216,7 +216,56 @@ def _make_glyph_from_entity(entity, dids):
             g.set_compartmentRef(dids[entity.compartment])
     if hasattr(entity, "components"):
         for subentity in entity.components:
-            gc = _make_glyph_from_entity(subentity, dids)
+            gc = _make_glyph_from_subentity(subentity, dids)
+            g.add_glyph(gc)
+    if hasattr(entity, "svs"):
+        defsvs = [sv for sv in entity.svs if not isinstance(sv.var, UndefinedVar)]
+        undefsvs = sorted([sv for sv in entity.svs if isinstance(sv.var, UndefinedVar)], key = lambda sv: sv.var.num)
+        svs = defsvs + undefsvs
+        for sv in svs:
+            gsv = libsbgn.glyph()
+            gsv.set_id(sv.id)
+            gsv.set_class(libsbgn.GlyphClass["STATE_VARIABLE"])
+            if isinstance(sv.var, UndefinedVar):
+                var = None
+                bbox = libsbgn.bbox((len(undefsvs) - sv.var.num) * 0.01, 0, 0, 0)
+            else:
+                var = sv.var
+                bbox = libsbgn.bbox(0, 0, 0, 0)
+            gsv.set_state(libsbgn.stateType(sv.val, var))
+            gsv.set_bbox(bbox)
+            g.add_glyph(gsv)
+    if hasattr(entity, "uis"):
+        for ui in entity.uis:
+            gui = libsbgn.glyph()
+            gui.set_id(ui.id)
+            gui.set_class(libsbgn.GlyphClass["UNIT_OF_INFORMATION"])
+            label = libsbgn.label()
+            if ui.prefix is not None:
+                label.set_text(ui.prefix + ':' + ui.label)
+            else:
+                label.set_text(ui.label)
+            gui.set_label(label)
+            bbox = libsbgn.bbox(0, 0, 0, 0)
+            gui.set_bbox(bbox)
+            g.add_glyph(gui)
+    bbox = libsbgn.bbox(0, 0, 0, 0)
+    g.set_bbox(bbox)
+    return g
+
+def _make_glyph_from_subentity(entity, dids):
+    g = libsbgn.glyph()
+    g.set_class(libsbgn.GlyphClass[SubEntityEnum(entity.__class__).name[4:]])
+    g.set_id(entity.id)
+    if hasattr(entity, "label"):
+        label = libsbgn.label()
+        label.set_text(entity.label)
+    # else:
+        # label.set_text("")
+        g.set_label(label)
+    if hasattr(entity, "components"):
+        for subentity in entity.components:
+            gc = _make_glyph_from_subentity(subentity, dids)
             g.add_glyph(gc)
     if hasattr(entity, "svs"):
         defsvs = [sv for sv in entity.svs if not isinstance(sv.var, UndefinedVar)]
