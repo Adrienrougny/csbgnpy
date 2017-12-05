@@ -6,6 +6,9 @@ class Process(object):
     def __init__(self, id = None):
         self.id = id
 
+    def __repr__(self):
+        return "{}({},{})".format(self.__class__.__name__, self.reactants, self.products)
+
     def __eq__(self, other):
         return self.__class__ == other.__class__
 

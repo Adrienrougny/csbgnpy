@@ -22,6 +22,12 @@ class Modulation(object):
             setattr(result, k, deepcopy(v, memo))
         return result
 
+    def __str__(self):
+        return "{}({},{})".format(self.__class__.__name__, self.source, self.target)
+
+    def __repr__(self):
+        return "{}({},{})".format(self.__class__.__name__, self.source, self.target)
+
 class Stimulation(Modulation):
     pass
 
