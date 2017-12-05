@@ -73,24 +73,24 @@ class TranslationEnum(Enum):
     same for processes (sets of reactants and products)
     """
 
-def write(net, filename, suffix = ""):
-    sbgnlog = network_to_atoms(net, suffix)
+def write(net, filename, use_ids = False, suffix = ""):
+    sbgnlog = network_to_atoms(net, use_ids, suffix)
     f = open(filename, 'w')
     f.write('\n'.join(sorted([str(atom) for atom in sbgnlog])))
     f.close()
 
-def network_to_atoms(net, suffix = ''):
+def network_to_atoms(net, use_ids = False, suffix = ''):
     s = set()
     for entity in net.entities:
-        s |= _entity_to_atoms(entity, suffix)
+        s |= _entity_to_atoms(entity, use_ids, suffix)
     for comp in net.compartments:
-        s |= _compartment_to_atoms(comp, suffix)
+        s |= _compartment_to_atoms(comp, use_ids, suffix)
     for op in net.los:
-        s |= _lo_to_atoms(op, suffix)
+        s |= _lo_to_atoms(op, use_ids, suffix)
     for mod in net.modulations:
-        s |= _modulation_to_atoms(mod, suffix)
+        s |= _modulation_to_atoms(mod, use_ids, suffix)
     for proc in net.processes:
-        s |= _process_to_atoms(proc, suffix)
+        s |= _process_to_atoms(proc, use_ids, suffix)
     return s
 
 def _ui_to_constant(ui):
@@ -184,10 +184,13 @@ def _process_to_constant(proc):
         const += '_'.join([str(const) for const in const_reacs]) + '_' + '_'.join([str(const) for const in const_prods])
     return const
 
-def _entity_to_atoms(entity, suffix = ""):
+def _entity_to_atoms(entity, use_ids = False, suffix = ""):
     s = set()
     entity_name = TranslationEnum[EntityEnum(entity.__class__).name].value + suffix
-    entity_const = _entity_to_constant(entity)
+    if use_ids:
+        entity_const = entity.id
+    else:
+        entity_const = _entity_to_constant(entity)
     entity_atom = Atom(entity_name, [entity_const])
     s.add(entity_atom)
     if hasattr(entity, "uis"):
@@ -216,10 +219,13 @@ def _entity_to_atoms(entity, suffix = ""):
     if hasattr(entity, "components"):
         for component in entity.components:
             component_name = TranslationEnum["COMPONENT"].value + suffix
-            component_const = _subentity_to_constant(component)
+            if use_ids:
+                component_const = component.id
+            else:
+                component_const = _subentity_to_constant(component)
             component_atom = Atom(component_name, [entity_const, component_const])
             s.add(component_atom)
-            ss = _subentity_to_atoms(component, suffix)
+            ss = _subentity_to_atoms(component, use_ids, suffix)
             s |= ss
     if hasattr(entity, "label"):
         labeled_name = TranslationEnum["LABELED"].value + suffix
@@ -234,10 +240,13 @@ def _entity_to_atoms(entity, suffix = ""):
             s.add(localized_atom)
     return s
 
-def _subentity_to_atoms(subentity, suffix = ""):
+def _subentity_to_atoms(subentity, use_ids = False,suffix = ""):
     s = set()
     subentity_name = TranslationEnum[SubEntityEnum(subentity.__class__).name].value + suffix
-    subentity_const = _subentity_to_constant(subentity)
+    if use_ids:
+        subentity_const = subentity.id
+    else:
+        subentity_const = _subentity_to_constant(subentity)
     subentity_atom = Atom(subentity_name, [subentity_const])
     s.add(subentity_atom)
     if hasattr(subentity, "uis"):
@@ -266,10 +275,13 @@ def _subentity_to_atoms(subentity, suffix = ""):
     if hasattr(subentity, "components"):
         for component in subentity.components:
             component_name = TranslationEnum["COMPONENT"].value + suffix
-            component_const = _subentity_to_constant(component)
+            if use_ids:
+                component_const = component.id
+            else:
+                component_const = _subentity_to_constant(component)
             component_atom = Atom(component_name, [subentity_const, component_const])
             s.add(component_atom)
-            ss = _subentity_to_atoms(component, suffix)
+            ss = _subentity_to_atoms(component, use_ids, suffix)
             s |= ss
     labeled_name = TranslationEnum["LABELED"].value + suffix
     label_const = quote_string(escape_string(subentity.label))
@@ -277,10 +289,13 @@ def _subentity_to_atoms(subentity, suffix = ""):
     s.add(labeled_atom)
     return s
 
-def _compartment_to_atoms(comp, suffix = ""):
+def _compartment_to_atoms(comp, use_ids = False, suffix = ""):
     s = set()
     comp_name = TranslationEnum["COMPARTMENT"].value + suffix
-    comp_const = _compartment_to_constant(comp)
+    if use_ids:
+        comp_const = comp.id
+    else:
+        comp_const = _compartment_to_constant(comp)
     comp_atom = Atom(comp_name, [comp_const])
     s.add(comp_atom)
     labeled_name = TranslationEnum["LABELED"].value + suffix
@@ -289,39 +304,52 @@ def _compartment_to_atoms(comp, suffix = ""):
     s.add(labeled_atom)
     return s
 
-def _lo_to_atoms(op, suffix = ""):
+def _lo_to_atoms(op, use_ids = False, suffix = ""):
     s = set()
     op_name = TranslationEnum[LogicalOperatorEnum(op.__class__).name].value + suffix
-    op_const = _lo_to_constant(op)
+    if use_ids:
+        op_const = op.id
+    else:
+        op_const = _lo_to_constant(op)
     op_atom = Atom(op_name, [op_const])
     s.add(op_atom)
     for child in op.children:
-        if isinstance(child, LogicalOperator):
-            child_const = _lo_to_constant(child)
+        if use_ids:
+            child_const = child.id
         else:
-            child_const = _entity_to_constant(child)
+            if isinstance(child, LogicalOperator):
+                child_const = _lo_to_constant(child)
+            else:
+                child_const = _entity_to_constant(child)
         input_name = TranslationEnum["INPUT"].value + suffix
         input_atom = Atom(input_name, [child_const, op_const])
         s.add(input_atom)
     return s
 
-def _modulation_to_atoms(mod, suffix = ""):
+def _modulation_to_atoms(mod, use_ids = False, suffix = ""):
     s = set()
     source = mod.source
     mod_name = TranslationEnum[ModulationEnum(mod.__class__).name].value + suffix
-    if isinstance(source, LogicalOperator):
-        source_const = _lo_to_constant(source)
+    if use_ids:
+        source_const =source.id
+        target_const = mod.target.id
     else:
-        source_const = _entity_to_constant(source)
-    target_const = _process_to_constant(mod.target)
+        if isinstance(source, LogicalOperator):
+            source_const = _lo_to_constant(source)
+        else:
+            source_const = _entity_to_constant(source)
+        target_const = _process_to_constant(mod.target)
     mod_atom = Atom(mod_name, [source_const, target_const])
     s.add(mod_atom)
     return s
 
-def _process_to_atoms(proc, suffix = ""):
+def _process_to_atoms(proc, use_ids = False, suffix = ""):
     s = set()
     proc_name = TranslationEnum[ProcessEnum(proc.__class__).name].value + suffix
-    proc_const = _process_to_constant(proc)
+    if use_ids:
+        proc_const = proc.id
+    else:
+        proc_const = _process_to_constant(proc)
     proc_atom = Atom(proc_name, [proc_const])
     s.add(proc_atom)
     if hasattr(proc, "reactants"):
@@ -331,7 +359,10 @@ def _process_to_atoms(proc, suffix = ""):
                 card_const = 1
             else:
                 card_const = proc.reactants.count(reac)
-            reac_const = _entity_to_constant(reac)
+            if use_ids:
+                reac_const = reac.id
+            else:
+                reac_const = _entity_to_constant(reac)
             reac_atom = Atom(reac_name, [proc_const, reac_const, card_const])
             s.add(reac_atom)
     if hasattr(proc, "products"):
@@ -341,7 +372,10 @@ def _process_to_atoms(proc, suffix = ""):
                 card_const = 1
             else:
                 card_const = proc.products.count(prod)
-            prod_const = _entity_to_constant(prod)
+            if use_ids:
+                prod_const = prod.id
+            else:
+                prod_const = _entity_to_constant(prod)
             prod_atom = Atom(prod_name, [proc_const, prod_const, card_const])
             s.add(prod_atom)
     if hasattr(proc, "label"):
