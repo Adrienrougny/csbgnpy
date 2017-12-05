@@ -200,8 +200,8 @@ def _make_entity_from_cd(cdspecies, tree, ns):
             entity.add_ui(ui)
         elif cd_class == "RNA" or cd_class == "ANTISENSE_RNA":
             ui = UnitOfInformation()
-            ui.prefix = "mt"
-            ui.label = "rna"
+            ui.prefix = "ct"
+            ui.label = "mRNA"
             ui.id = entity.id + "_" + "ui"
             entity.add_ui(ui)
         if hasattr(entity, "compartment"):
