@@ -1,6 +1,10 @@
 from copy import deepcopy
-from csbgnpy.pd.lo import LogicalOperator
-from csbgnpy.pd.entity import Entity
+from collections import defaultdict
+
+from csbgnpy.pd.lo import *
+from csbgnpy.pd.entity import *
+from csbgnpy.pd.modulation import *
+from csbgnpy.pd.ui import *
 from csbgnpy.utils import get_object
 
 class Network(object):
@@ -10,6 +14,34 @@ class Network(object):
         self.modulations = modulations if modulations is not None else []
         self.compartments = compartments if compartments is not None else []
         self.los = los if los is not None else []
+
+    @property
+    def macromolecules(self):
+        return [e for e in self.entities if isinstance(e, Macromolecule)]
+
+    @property
+    def associations(self):
+        return [p for p in self.processes if insinstance(p, Association)]
+
+    @property
+    def transcriptions(self):
+        transcriptions = []
+        for p in self.processes:
+            if isinstance(p.reactants[0], EmptySet) and isinstance(p.products[0], NucleicAcidFeature) and UnitOfInformation("ct", "mRNA") in p.products[0].uis:
+                for m in self.modulations:
+                    if m.target == p and isinstance(m, NecessaryStimulation) and isinstance(m.source, NucleicAcidFeature) and UnitOfInformation("ct", "gene") in m.source.uis:
+                        transcriptions.append(p)
+        return transcriptions
+
+    @property
+    def translations(self):
+        translations = []
+        for p in self.processes:
+            if isinstance(p.reactants[0], EmptySet) and isinstance(p.products[0], Macromolecule):
+                for m in self.modulations:
+                    if m.target == p and isinstance(m, NecessaryStimulation) and isinstance(m.source, NucleicAcidFeature) and UnitOfInformation("ct", "mRNA") in m.source.uis:
+                        translations.append(p)
+        return translations
 
     def add_process(self, proc):
         if proc not in self.processes:
@@ -120,8 +152,9 @@ class Network(object):
                 entity.compartment = None
 
     def remove_lo(self, op):
+        remove_op = True
         toremove = set()
-        for child in self.children:
+        for child in op.children:
             if isinstance(child, LogicalOperator):
                 toremove.add(child)
         for child in toremove:
@@ -130,9 +163,11 @@ class Network(object):
         for modulation in self.modulations:
             if modulation.source == op:
                 toremove.add(modulation)
+                remove_op = False
         for modulation in toremove:
             self.remove_modulation(modulation)
-        self.los.remove(op)
+        if remove_op:
+            self.los.remove(op)
 
     def remove_modulation(self, modulation):
         self.modulations.remove(modulation)
@@ -293,6 +328,26 @@ class Network(object):
         # new.los = list(set(self.los).difference(set(other.los)))
         # new.compartments = list(set(self.compartments).difference(set(other.compartments)))
         return new
+
+    def simplify_gene_expressions(self):
+        mods = defaultdict(list)
+        for t in self.transcriptions:
+            for m in self.modulations:
+                if m.target == t:
+                    if isinstance(m.source, NucleicAcidFeature) and UnitOfInformation("ct", "gene") in m.source.uis:
+                        self.remove_entity(m.source)
+                    else:
+                        mods[t].append(m)
+            self.remove_process(t)
+        for tt in self.translations:
+            for m in self.modulations:
+                if isinstance(m.source, NucleicAcidFeature) and UnitOfInformation("ct", "mRNA") in m.source.uis and m.target == tt:
+                    for t in mods:
+                        if t.products[0] == m.source:
+                            for mod in mods[t]:
+                                mod.target = tt
+                                self.add_modulation(mod)
+                    self.remove_entity(m.source)
 
     def __eq__(self, other):
         return isinstance(other, Network) and \
