@@ -137,7 +137,8 @@ def read(*filenames):
                     mtype = cdmod.get("type")
                     if mtype.startswith("BOOLEAN"):
                         chids = cdmod.get("modifiers").split(',')
-                        toskip = len(chids)
+                        if isinstance(modulation, Catalysis): #when CATALYSIS, the modulations are repeated after the AND node
+                            toskip = len(chids)
                 else:
                     toskip -= 1
         # TODO: should be forwarded to Entities objects instead (aliases
