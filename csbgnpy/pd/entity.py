@@ -1,5 +1,7 @@
 from copy import deepcopy
 
+from csbnpy.pd.sv import UndefVar
+
 class Entity(object):
     """The class to model entity pools"""
     def __init__(self, id = None):
@@ -48,6 +50,13 @@ class StatefulEntity(Entity):
         :return: None
         """
         if sv not in self.svs:
+            if isinstance(sv.var, UndefVar) and not sv.var:
+                max = 0
+                for sv2 in self.svs:
+                    if isinstance(sv2.var, UndefVar) and sv2.var > max:
+                        max = sv2.var
+                max += 1
+                sv.var.num = max
             self.svs.append(sv)
 
     def add_ui(self, ui):
