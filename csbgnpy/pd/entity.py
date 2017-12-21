@@ -1,6 +1,6 @@
 from copy import deepcopy
 
-from csbnpy.pd.sv import UndefVar
+from csbgnpy.pd.sv import UndefinedVar
 
 class Entity(object):
     """The class to model entity pools"""
@@ -50,10 +50,10 @@ class StatefulEntity(Entity):
         :return: None
         """
         if sv not in self.svs:
-            if isinstance(sv.var, UndefVar) and not sv.var:
+            if isinstance(sv.var, UndefinedVar) and not sv.var:
                 max = 0
                 for sv2 in self.svs:
-                    if isinstance(sv2.var, UndefVar) and sv2.var > max:
+                    if isinstance(sv2.var, UndefinedVar) and sv2.var > max:
                         max = sv2.var
                 max += 1
                 sv.var.num = max
