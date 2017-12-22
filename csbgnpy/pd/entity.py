@@ -13,9 +13,6 @@ class Entity(object):
     def __eq__(self, other):
         return self.__class__ == other.__class__
 
-    def __repr__(self):
-        return "%s[]" % self.__class__.__name__
-
     def __hash__(self):
         return hash((self.__class__))
 
@@ -29,6 +26,24 @@ class Entity(object):
 
     def __lt__(self, other):
         return self.__repr__() < other.__repr__()
+
+    def __str__(self):
+        s = self.__class__.__name__ + "("
+        if hasattr(self, "components"):
+            s += "[" + "|".join([str(subentity) for subentity in self.components]) + "]"
+        if hasattr(self, "uis"):
+            s += "[" + "|".join([str(ui) for ui in self.uis]) + "]"
+        if hasattr(self, "svs"):
+            s += "[" + "|".join([str(sv) for sv in self.svs]) + "]"
+        if hasattr(self, "label"):
+            s += self.label
+        if hasattr(self, "compartment"):
+            s += "#" + str(self.compartment)
+        s += ")"
+        return s
+
+    def __repr__(self):
+        return str(self)
 
 class EmptySet(Entity):
     """The class to model empty sets"""
@@ -124,11 +139,6 @@ class StatefulEntity(Entity):
     def __hash__(self):
         return hash((self.__class__, self.label, self.compartment, frozenset(self.svs), frozenset(self.uis)))
 
-    def __repr__(self):
-        return "%s[%s {%s,%s} @ %s]" % (self.__class__.__name__, self.label,
-                    self.svs, self.uis,
-                    self.compartment.label if self.compartment else "None")
-
 class StatelessEntity(Entity):
     """The class to model stateless entity pools"""
     def __init__(self, label = None, compartment = None, id = None):
@@ -143,10 +153,6 @@ class StatelessEntity(Entity):
 
     def __hash__(self):
         return hash((self.__class__, self.label, self.compartment))
-
-    def __repr__(self):
-        return "%s[%s @ %s]" % (self.__class__.__name__, self.label, 
-                    self.compartment.label if self.compartment else "None")
 
 class UnspecifiedEntity(StatelessEntity):
     """The class to model pools of unspecified entity pools"""
@@ -193,11 +199,6 @@ class Complex(StatefulEntity):
 
     def __hash__(self):
         return hash((self.__class__, self.label, self.compartment, frozenset(self.svs), frozenset(self.uis), frozenset(self.components)))
-
-    def __repr__(self):
-        return "%s[%s {%s,%s,%s} @ %s]" % (self.__class__.__name__, self.label,
-                    self.svs, self.uis, self.components,
-                    self.compartment.label if self.compartment else "None")
 
 class Multimer(StatefulEntity):
     """The class to model multimer pools"""

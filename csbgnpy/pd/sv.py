@@ -45,3 +45,9 @@ class StateVariable(object):
         for k, v in self.__dict__.items():
             setattr(result, k, deepcopy(v, memo))
         return result
+
+    def __str__(self):
+        s = self.val + "@"
+        if not isinstance(self.var, UndefinedVar):
+            s += self.var
+        return s

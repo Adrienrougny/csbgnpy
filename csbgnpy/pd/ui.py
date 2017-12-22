@@ -24,3 +24,9 @@ class UnitOfInformation(object):
 
     def __repr__(self):
         return "{}:{}".format(self.prefix, self.label)
+
+    def __str__(self):
+        s = self.label
+        if self.prefix:
+            s = self.prefix + ":" + s
+        return s

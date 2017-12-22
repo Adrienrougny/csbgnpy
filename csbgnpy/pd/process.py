@@ -23,6 +23,16 @@ class Process(object):
             setattr(result, k, deepcopy(v, memo))
         return result
 
+    def __str__(self):
+        s = self.__class__.__name__ + "("
+        s += "[" + "|".join(["{}:{}".format(stoech, entity) for (stoech, entity) in [(self.reactants.count(i), i) for i in set(self.reactants)]]) + "]"
+        s += "[" + "|".join(["{}:{}".format(stoech, entity) for (stoech, entity) in [(self.products.count(i), i) for i in set(self.products)]]) + "]"
+        s += ")"
+        return s
+
+    def __repr__(self):
+        return str(self)
+
 class NonStoichiometricProcess(Process):
     def __init__(self, label = None, id = None):
         super().__init__(id)

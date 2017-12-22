@@ -10,9 +10,6 @@ class SubEntity(object):
     def __eq__(self, other):
         return self.__class__ == other.__class__
 
-    def __repr__(self):
-        return "%s[]" % self.__class__.__name__
-
     def __hash__(self):
         return hash((self.__class__))
 
@@ -26,6 +23,22 @@ class SubEntity(object):
 
     def __lt__(self, other):
         return self.__repr__() < other.__repr__()
+
+    def __str__(self):
+        s = self.__class__.__name__ + "("
+        if hasattr(self, "components"):
+            s += "[" + "|".join([str(subentity) for subentity in self.components]) + "]"
+        if hasattr(self, "uis"):
+            s += "[" + "|".join([str(ui) for ui in self.uis]) + "]"
+        if hasattr(self, "svs"):
+            s += "[" + "|".join([str(sv) for sv in self.svs]) + "]"
+        if hasattr(self, "label"):
+            s += self.label
+        s += ")"
+        return s
+
+    def __repr__(self):
+        return str(self)
 
 class StatefulSubEntity(SubEntity):
     def __init__(self, label = None, svs = None, uis = None, id = None):
@@ -77,10 +90,6 @@ class StatefulSubEntity(SubEntity):
     def __hash__(self):
         return hash((self.__class__, self.label, frozenset(self.svs), frozenset(self.uis)))
 
-    def __repr__(self):
-        return "%s[%s {%s,%s}]" % (self.__class__.__name__, self.label,
-                    self.svs, self.uis)
-
 class StatelessSubEntity(SubEntity):
     def __init__(self, label = None, id = None):
         super().__init__(id)
@@ -92,9 +101,6 @@ class StatelessSubEntity(SubEntity):
 
     def __hash__(self):
         return hash((self.__class__, self.label))
-
-    def __repr__(self):
-        return "%s[%s]" % (self.__class__.__name__, self.label)
 
 class SubUnspecifiedEntity(StatelessSubEntity):
     pass
