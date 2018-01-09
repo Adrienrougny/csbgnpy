@@ -6,6 +6,7 @@ from csbgnpy.pd.entity import *
 from csbgnpy.pd.modulation import *
 from csbgnpy.pd.ui import *
 from csbgnpy.utils import get_object
+from csbgnpy.pd.io.sbgntxt import *
 
 class Network(object):
     def __init__(self, entities = None, processes = None, modulations = None, compartments = None, los = None):
@@ -44,6 +45,9 @@ class Network(object):
         return translations
 
     def add_process(self, proc):
+        if isinstance(proc, str):
+            parser = Parser()
+            proc =  parser.process.parseString(proc)
         if proc not in self.processes:
             if hasattr(proc, "reactants"):
                 reactants = []
@@ -69,6 +73,9 @@ class Network(object):
             self.processes.append(proc)
 
     def add_entity(self, entity):
+        if isinstance(entity, str):
+            parser = Parser()
+            entity =  parser.entity.parseString(entity)
         if entity not in self.entities:
             self.entities.append(entity)
             if hasattr(entity, "compartment") and entity.compartment:
@@ -79,6 +86,9 @@ class Network(object):
                     self.add_compartment(entity.compartment)
 
     def add_modulation(self, mod):
+        if isinstance(mod, str):
+            parser = Parser()
+            mod =  parser.modulation.parseString(mod)
         if mod not in self.modulations:
             source = mod.source
             target = mod.target
@@ -102,10 +112,16 @@ class Network(object):
             self.modulations.append(mod)
 
     def add_compartment(self, comp):
+        if isinstance(comp, str):
+            parser = Parser()
+            comp =  parser.compartment.parseString(comp)
         if comp not in self.compartments:
             self.compartments.append(comp)
 
     def add_lo(self, op):
+        if isinstance(op, str):
+            parser = Parser()
+            op =  parser.lo.parseString(op)
         if op not in self.los:
             for child in op.children:
                 if isinstance(child, Entity):
@@ -125,12 +141,18 @@ class Network(object):
             self.los.append(op)
 
     def remove_process(self, process):
+        if isinstance(process, str):
+            parser = Parser()
+            process =  parser.process.parseString(process)
         for modulation in self.modulations:
             if modulation.target == process:
                 self.remove_modulation(modulation)
         self.processes.remove(process)
 
     def remove_entity(self, entity):
+        if isinstance(entity, str):
+            parser = Parser()
+            entity =  parser.entity.parseString(entity)
         toremove = set()
         for process in self.processes:
             if entity in process.reactants or entity in process.products:
@@ -146,12 +168,18 @@ class Network(object):
         self.entities.remove(entity)
 
     def remove_compartment(self, compartment):
+        if isinstance(compartment, str):
+            parser = Parser()
+            compartment =  parser.compartment.parseString(compartment)
         self.compartments.remove(compartment)
         for entity in self.entities:
             if hasattr(entity, "compartment") and entity.compartment == compartment:
                 entity.compartment = None
 
     def remove_lo(self, op):
+        if isinstance(op, str):
+            parser = Parser()
+            op =  parser.lo.parseString(op)
         remove_op = True
         toremove = set()
         for child in op.children:
@@ -170,11 +198,14 @@ class Network(object):
             self.los.remove(op)
 
     def remove_modulation(self, modulation):
+        if isinstance(modulation, str):
+            parser = Parser()
+            modulation =  parser.modulation.parseString(modulation)
         self.modulations.remove(modulation)
         if isinstance(modulation.source, LogicalOperator):
             self.remove_lo(modulation.source)
 
-    def get_compartment(self, val, by_compartment = False, by_id = False, by_label = False, by_hash = False):
+    def get_compartment(self, val, by_compartment = False, by_id = False, by_label = False, by_hash = False, by_string = False):
         for c in self.compartments:
             if by_compartment:
                 if c == val:
@@ -189,9 +220,12 @@ class Network(object):
             if by_hash:
                 if hash(c) == val:
                     return c
+            if by_string:
+                if str(c) == val:
+                    return c
         return None
 
-    def get_lo(self, val, by_lo = False, by_id = False, by_hash = False):
+    def get_lo(self, val, by_lo = False, by_id = False, by_hash = False, by_string = False):
         for o in self.los:
             if by_lo:
                 if o == val:
@@ -202,9 +236,12 @@ class Network(object):
             if by_hash:
                 if hash(o) == val:
                     return o
+            if by_string:
+                if str(o) == val:
+                    return o
         return None
 
-    def get_modulation(self, val, by_modulation = False, by_id = False, by_hash = False):
+    def get_modulation(self, val, by_modulation = False, by_id = False, by_hash = False, by_string = False):
         for m in self.modulations:
             if by_modulation:
                 if m == val:
@@ -215,9 +252,12 @@ class Network(object):
             if by_hash:
                 if hash(m) == val:
                     return m
+            if by_string:
+                if str(m) == val:
+                    return m
         return None
 
-    def get_process(self, val, by_process = False, by_id = False, by_label = False, by_hash = False):
+    def get_process(self, val, by_process = False, by_id = False, by_label = False, by_hash = False, by_string = False):
         for p in self.processes:
             if by_process:
                 if p == val:
@@ -232,9 +272,12 @@ class Network(object):
             if by_hash:
                 if hash(p) == val:
                     return p
+            if by_string:
+                if str(p) == val:
+                    return p
         return None
 
-    def get_entity(self, val, by_entity = False, by_id = False, by_label = False, by_hash = False):
+    def get_entity(self, val, by_entity = False, by_id = False, by_label = False, by_hash = False, by_string = False):
         for e in self.entities:
             if by_entity:
                 if e == val:
@@ -248,6 +291,9 @@ class Network(object):
                         return e
             if by_hash:
                 if hash(e) == val:
+                    return e
+            if by_string:
+                if str(e) == val:
                     return e
         return None
 
