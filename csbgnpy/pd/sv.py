@@ -47,7 +47,10 @@ class StateVariable(object):
         return result
 
     def __str__(self):
-        s = self.val + "@"
+        s = ""
+        if self.val:
+            s += self.val
+        s += "@"
         if not isinstance(self.var, UndefinedVar):
             s += self.var
         return s

@@ -38,7 +38,8 @@ class Entity(object):
         if hasattr(self, "label"):
             s += self.label
         if hasattr(self, "compartment"):
-            s += "#" + str(self.compartment)
+            if self.compartment:
+                s += "#" + str(self.compartment)
         s += ")"
         return s
 

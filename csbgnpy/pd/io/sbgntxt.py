@@ -9,13 +9,14 @@ from csbgnpy.pd.entity import *
 
 def read(*filenames):
     net = Network()
+    parser = Parser()
     for filename in filenames:
         with open(filename) as f:
             for i, line in f:
                 if line[-1] == "\n":
                     line = line[:-1]
                 try:
-                    elem = self.entry.parseString(line)
+                    elem = parser.entry.parseString(line)
                 except ParseException as err:
                     print("Error in file {}, line {}, col {}".format(filename, i, err.col))
                 if isinstance(elem, Entity):
@@ -33,15 +34,15 @@ def read(*filenames):
 def write(net, filename):
     with open(filename, 'w') as f:
         for entity in net.entities:
-            f.write(str(entity))
+            f.write("{}\n".format(str(entity)))
         for process in net.processes:
-            f.write(str(process))
+            f.write("{}\n".format(str(process)))
         for modulation in net.modulations:
-            f.write(str(modulation))
+            f.write("{}\n".format(str(modulation)))
         for op in net.los:
-            f.write(str(op))
+            f.write("{}\n".format(str(op)))
         for comp in net.compartments:
-            f.write(str(comp))
+            f.write("{}\n".format(str(comp)))
 
 class Parser(object):
     def __init__(self):
@@ -51,13 +52,13 @@ class Parser(object):
         self.pre = Word(alphanums)
         self.label = Word(alphanums)
 
-        self.sv = Optional(self.val("val")) + "@" + Optional(self.var("var"))
+        self.sv = Empty() | Literal("@") | self.val("val") | "@" + self.var("var") | self.val("val") + "@" + self.var("var")
         self.sv.setParseAction(self._toks_to_sv)
 
         self.ui = Optional(self.pre("pre") + ":") + self.label("label")
         self.ui.setParseAction(self._toks_to_ui)
 
-        self.svs = Literal("[") + Optional(Group(delimitedList(self.sv, delim = self.sep))("elems")) + Literal("]")
+        self.svs = Literal("[") + (Empty() | Group(delimitedList(self.sv, delim = self.sep))("elems")) + Literal("]")
 
         self.uis = Literal("[") + Optional(Group(delimitedList(self.ui, delim = self.sep))("elems")) + Literal("]")
 
@@ -236,20 +237,20 @@ class Parser(object):
         return op
 
 parser = Parser()
-# res = parser.entity.parseString("Macromolecule(m#Compartment(c))")
-# res = parser.entity.parseString("Complex([SubComplex([SubMacromolecule(a)]c)][pre1:label1|pres2:label2][Val1@Var1|Val2@Var2]elabel#Compartment(clabel))")
-# res = parser.entity.parseString("Complex([SubComplex([SubMacromolecule([][vaaal@vaaar]a)]c)][pre1:label1|pres2:label2][Val1@Var1|Val2@Var2]elabel#Compartment(clabel))")
-# res = parser.entity.parseString("Macromolecule(m)")
-# res = parser.entity.parseString("EmptySet()")
-# res = parser.process.parseString("GenericProcess([Macromolecule(a)][Macromolecule([pre:label][P@var1|Q@var2]a)])")
-
-res = parser.modulation.parseString("Stimulation(AndOperator([Macromolecule(a)|Macromolecule(b)])|GenericProcess([Macromolecule(a)][Macromolecule([pre:label][P@var1|Q@var2]a)]))")
-
-# res= parser.lo.parseString("AndOperator([Macromolecule(a)|Macromolecule(b)])")
-
-# res = parser.entity.parseString("Macromolecule([][P@var1|Q@]a)")
-
-# res = parser.components.parseString("[]")
-# res = parser.subentity.parseString("SubComplex([SubMacromolecule([][vaaal@vaaar]a)]c)")
-# res = parser.entity.parseString("Macromolecule([pre1:label1|pres2:label2][Val1@Var1|Val2@Var2]elabel#Compartment(clabel))")
+res = parser.entity.parseString("Macromolecule([][]m#Compartment(c))")
+# # res = parser.entity.parseString("Complex([SubComplex([SubMacromolecule(a)]c)][pre1:label1|pres2:label2][Val1@Var1|Val2@Var2]elabel#Compartment(clabel))")
+# # res = parser.entity.parseString("Complex([SubComplex([SubMacromolecule([][vaaal@vaaar]a)]c)][pre1:label1|pres2:label2][Val1@Var1|Val2@Var2]elabel#Compartment(clabel))")
+# # res = parser.entity.parseString("Macromolecule(m)")
+# # res = parser.entity.parseString("EmptySet()")
+# # res = parser.process.parseString("GenericProcess([Macromolecule(a)][Macromolecule([pre:label][P@var1|Q@var2]a)])")
+#
+# res = parser.modulation.parseString("Stimulation(AndOperator([Macromolecule(a)|Macromolecule(b)])|GenericProcess([Macromolecule(a)][Macromolecule([pre:label][P@var1|Q@var2]a)]))")
+#
+# # res= parser.lo.parseString("AndOperator([Macromolecule(a)|Macromolecule(b)])")
+#
+# # res = parser.entity.parseString("Macromolecule([][P@var1|Q@]a)")
+#
+# # res = parser.components.parseString("[]")
+# # res = parser.subentity.parseString("SubComplex([SubMacromolecule([][vaaal@vaaar]a)]c)")
+# # res = parser.entity.parseString("Macromolecule([pre1:label1|pres2:label2][Val1@Var1|Val2@Var2]elabel#Compartment(clabel))")
 print(res[0])
