@@ -24,6 +24,16 @@ class LogicalOperator(object):
             setattr(result, k, deepcopy(v, memo))
         return result
 
+    def __str__(self):
+        s = self.__class__.__name__
+        s += "(["
+        s += "|".join([str(child) for child in self.children])
+        s += "])"
+        return s
+
+    def __repr__(self):
+        return self.__str__()
+
 class AndOperator(LogicalOperator):
     pass
 
