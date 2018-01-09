@@ -7,6 +7,42 @@ from csbgnpy.pd.ui import *
 from csbgnpy.pd.compartment import *
 from csbgnpy.pd.entity import *
 
+def read(*filenames):
+    net = Network()
+    for filename in filenames:
+        with open(filename) as f:
+            for i, line in f:
+                if line[-1] == "\n":
+                    line = line[:-1]
+                try:
+                    elem = self.entry.parseString(line)
+                except ParseException as err:
+                    print("Error in file {}, line {}, col {}".format(filename, i, err.col))
+                if isinstance(elem, Entity):
+                    net.add_entity(elem)
+                elif isinstance(elem, Process):
+                    net.add_process(elem)
+                elif isinstance(elem, Comparment):
+                    net.add_compartment(elem)
+                elif isinstance(elem, LogicalOperator):
+                    net.add_lo(elem)
+                elif isinstance(elem, Modulation):
+                    net.add_modulation(elem)
+    return net
+
+def write(net, filename):
+    with open(filename, 'w') as f:
+        for entity in net.entities:
+            f.write(str(entity))
+        for process in net.processes:
+            f.write(str(process))
+        for modulation in net.modulations:
+            f.write(str(modulation))
+        for op in net.los:
+            f.write(str(op))
+        for comp in net.compartments:
+            f.write(str(comp))
+
 class Parser(object):
     def __init__(self):
         self.sep = "|"
@@ -63,6 +99,30 @@ class Parser(object):
 
         self.process = self.processclass("clazz") + "(" + Optional(self.processparticipants("reactants") + self.processparticipants("products")) + Optional(self.label("label")) + ")"
         self.process.setParseAction(self._toks_to_process)
+
+        self.loclass = functools.reduce(lambda x, y: x | y, [Literal(elem.value.__name__) for elem in LogicalOperatorEnum])
+        self.loclass.setParseAction(self._toks_to_lo_class)
+
+        self.lo = Forward()
+
+        self.lochild = self.entity | self.lo
+        # self.lochild.setParseAction(self._toks_to_lochild)
+
+        self.lochildren = (Literal("[") + Group(delimitedList(self.lochild, delim = self.sep))("elems") + Literal("]"))
+
+        self.lo <<= self.loclass("clazz") + "(" + self.lochildren("children") + ")"
+        self.lo.setParseAction(self._toks_to_lo)
+
+        self.modulationclass = functools.reduce(lambda x, y: x | y, [Literal(elem.value.__name__) for elem in ModulationEnum])
+        self.modulationclass.setParseAction(self._toks_to_modulation_class)
+
+        self.modulationsource = self.entity | self.lo
+        self.modulationtarget = self.process
+
+        self.modulation = self.modulationclass("clazz") + "(" + self.modulationsource("source") + self.sep + self.modulationtarget("target") + ")"
+        self.modulation.setParseAction(self._toks_to_modulation)
+
+        self.entry = self.entity | self.process | self.lo | self.compartment | self.modulation
 
     def _toks_to_sv(self, toks):
         val = toks.val
@@ -151,13 +211,43 @@ class Parser(object):
             process.products += product
         return process
 
+    def _toks_to_modulation_class(self, toks):
+        for elem in ModulationEnum:
+            if elem.value.__name__ == toks[0]:
+                return elem.value
+        return None
+
+    def _toks_to_modulation(self, toks):
+        modulation = toks.clazz()
+        modulation.source = toks.source
+        modulation.target = toks.target
+        return modulation
+
+    def _toks_to_lo_class(self, toks):
+        for elem in LogicalOperatorEnum:
+            if elem.value.__name__ == toks[0]:
+                return elem.value
+        return None
+
+    def _toks_to_lo(self, toks):
+        op = toks.clazz()
+        for child in toks.children.elems:
+            op.add_child(child)
+        return op
+
 parser = Parser()
 # res = parser.entity.parseString("Macromolecule(m#Compartment(c))")
 # res = parser.entity.parseString("Complex([SubComplex([SubMacromolecule(a)]c)][pre1:label1|pres2:label2][Val1@Var1|Val2@Var2]elabel#Compartment(clabel))")
 # res = parser.entity.parseString("Complex([SubComplex([SubMacromolecule([][vaaal@vaaar]a)]c)][pre1:label1|pres2:label2][Val1@Var1|Val2@Var2]elabel#Compartment(clabel))")
 # res = parser.entity.parseString("Macromolecule(m)")
-res = parser.entity.parseString("EmptySet()")
-res = parser.process.parseString("GenericProcess([Macromolecule(a)][Macromolecule([][P@var1]a)])")
+# res = parser.entity.parseString("EmptySet()")
+# res = parser.process.parseString("GenericProcess([Macromolecule(a)][Macromolecule([pre:label][P@var1|Q@var2]a)])")
+
+res = parser.modulation.parseString("Stimulation(AndOperator([Macromolecule(a)|Macromolecule(b)])|GenericProcess([Macromolecule(a)][Macromolecule([pre:label][P@var1|Q@var2]a)]))")
+
+# res= parser.lo.parseString("AndOperator([Macromolecule(a)|Macromolecule(b)])")
+
+# res = parser.entity.parseString("Macromolecule([][P@var1|Q@]a)")
 
 # res = parser.components.parseString("[]")
 # res = parser.subentity.parseString("SubComplex([SubMacromolecule([][vaaal@vaaar]a)]c)")
