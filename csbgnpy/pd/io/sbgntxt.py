@@ -1,4 +1,4 @@
-from pyparsing import Word, alphanums, Optional, Literal, delimitedList, Forward, ParseException, Group, nums, Empty
+from pyparsing import Word, alphanums, Optional, Literal, delimitedList, Forward, ParseException, Group, nums, Empty, printables
 import functools
 
 from csbgnpy.pd.io.utils import *
@@ -6,24 +6,26 @@ from csbgnpy.pd.sv import *
 from csbgnpy.pd.ui import *
 from csbgnpy.pd.compartment import *
 from csbgnpy.pd.entity import *
+from csbgnpy.pd.network import *
 
 def read(*filenames):
     net = Network()
     parser = Parser()
     for filename in filenames:
         with open(filename) as f:
-            for i, line in f:
+            for i, line in enumerate(f):
+                elem = None
                 if line[-1] == "\n":
                     line = line[:-1]
                 try:
                     elem = parser.entry.parseString(line)
                 except ParseException as err:
-                    print("Error in file {}, line {}, col {}".format(filename, i, err.col))
+                    print("Error in file {}, line {}, col {}".format(filename, i + 1, err.col))
                 if isinstance(elem, Entity):
                     net.add_entity(elem)
                 elif isinstance(elem, Process):
                     net.add_process(elem)
-                elif isinstance(elem, Comparment):
+                elif isinstance(elem, Compartment):
                     net.add_compartment(elem)
                 elif isinstance(elem, LogicalOperator):
                     net.add_lo(elem)
@@ -47,18 +49,18 @@ def write(net, filename):
 class Parser(object):
     def __init__(self):
         self.sep = "|"
-        self.val = Word(alphanums)
-        self.var = Word(alphanums)
-        self.pre = Word(alphanums)
-        self.label = Word(alphanums)
+        self.val = Word(alphanums + "β/_")
+        self.var = Word(alphanums + "β")
+        self.pre = Word(alphanums + "β")
+        self.label = Word(alphanums + "β/_")
 
-        self.sv = Empty() | Literal("@") | self.val("val") | "@" + self.var("var") | self.val("val") + "@" + self.var("var")
+        self.sv = Literal("@") ^ self.val("val") ^ (self.val("val") + "@") ^ ("@" + self.var("var")) ^ (self.val("val") + "@" + self.var("var")) ^ Empty()
         self.sv.setParseAction(self._toks_to_sv)
 
         self.ui = Optional(self.pre("pre") + ":") + self.label("label")
         self.ui.setParseAction(self._toks_to_ui)
 
-        self.svs = Literal("[") + (Empty() | Group(delimitedList(self.sv, delim = self.sep))("elems")) + Literal("]")
+        self.svs = Literal("[") + (Empty() ^ Group(delimitedList(self.sv, delim = self.sep))("elems")) + Literal("]")
 
         self.uis = Literal("[") + Optional(Group(delimitedList(self.ui, delim = self.sep))("elems")) + Literal("]")
 
@@ -237,7 +239,9 @@ class Parser(object):
         return op
 
 parser = Parser()
-res = parser.entity.parseString("Macromolecule([][]m#Compartment(c))")
+# res = parser.entity.parseString("Macromolecule([][val@]m#Compartment(c))")
+# res = parser.entity.parseString("Macromolecule([][]βarrestin2)")
+# res = parser.label.parseString("βarrestin2")
 # # res = parser.entity.parseString("Complex([SubComplex([SubMacromolecule(a)]c)][pre1:label1|pres2:label2][Val1@Var1|Val2@Var2]elabel#Compartment(clabel))")
 # # res = parser.entity.parseString("Complex([SubComplex([SubMacromolecule([][vaaal@vaaar]a)]c)][pre1:label1|pres2:label2][Val1@Var1|Val2@Var2]elabel#Compartment(clabel))")
 # # res = parser.entity.parseString("Macromolecule(m)")
@@ -253,4 +257,4 @@ res = parser.entity.parseString("Macromolecule([][]m#Compartment(c))")
 # # res = parser.components.parseString("[]")
 # # res = parser.subentity.parseString("SubComplex([SubMacromolecule([][vaaal@vaaar]a)]c)")
 # # res = parser.entity.parseString("Macromolecule([pre1:label1|pres2:label2][Val1@Var1|Val2@Var2]elabel#Compartment(clabel))")
-print(res[0])
+# print(res[0])
