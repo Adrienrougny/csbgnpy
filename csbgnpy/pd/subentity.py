@@ -1,5 +1,7 @@
 from copy import deepcopy
 
+from csbgnpy.pd.sv import UndefinedVar
+
 class SubEntity(object):
     def __init__(self, id = None):
         self.id = id
@@ -48,7 +50,19 @@ class StatefulSubEntity(SubEntity):
         self.uis = uis if uis else []
 
     def add_sv(self, sv):
+        """Adds a state variable to the subentity
+
+        :param sv: the state variable to be added
+        :return: None
+        """
         if sv not in self.svs:
+            if isinstance(sv.var, UndefinedVar) and not sv.var.num:
+                max = 0
+                for sv2 in self.svs:
+                    if isinstance(sv2.var, UndefinedVar) and sv2.var.num > max:
+                        max = sv2.var.num
+                max += 1
+                sv.var.num = max
             self.svs.append(sv)
 
     def add_ui(self, ui):

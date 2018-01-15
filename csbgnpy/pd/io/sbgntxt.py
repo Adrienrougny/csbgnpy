@@ -1,4 +1,4 @@
-from pyparsing import Word, alphanums, Optional, Literal, delimitedList, Forward, ParseException, Group, nums, Empty, printables
+from pyparsing import Word, alphanums, Optional, Literal, delimitedList, Forward, ParseException, Group, nums, Empty, printables, OneOrMore, WordEnd, Combine
 import functools
 
 from csbgnpy.pd.io.utils import *
@@ -6,9 +6,9 @@ from csbgnpy.pd.sv import *
 from csbgnpy.pd.ui import *
 from csbgnpy.pd.compartment import *
 from csbgnpy.pd.entity import *
-from csbgnpy.pd.network import *
 
 def read(*filenames):
+    from csbgnpy.pd.network import Network
     net = Network()
     parser = Parser()
     for filename in filenames:
@@ -18,7 +18,7 @@ def read(*filenames):
                 if line[-1] == "\n":
                     line = line[:-1]
                 try:
-                    elem = parser.entry.parseString(line)
+                    elem = parser.entry.parseString(line)[0]
                 except ParseException as err:
                     print("Error in file {}, line {}, col {}".format(filename, i + 1, err.col))
                 if isinstance(elem, Entity):
@@ -47,12 +47,15 @@ def write(net, filename):
             f.write("{}\n".format(str(comp)))
 
 class Parser(object):
-    def __init__(self):
+    def __init__(self, debug = False):
         self.sep = "|"
-        self.val = Word(alphanums + "β/_")
+        self.val = Word(alphanums + "β/_?")
         self.var = Word(alphanums + "β")
         self.pre = Word(alphanums + "β")
-        self.label = Word(alphanums + "β/_")
+        self.strlabel = alphanums + "β/_* -+("
+        self.label = Word(self.strlabel + ")")
+        self.labelend = Combine(OneOrMore(Word(self.strlabel) | ")" +~WordEnd(wordChars = self.strlabel + ")")))
+        self.labelendend = Combine(OneOrMore(Word(self.strlabel) | Literal(")") + ~(Literal(")") + WordEnd(wordChars = self.strlabel + ")"))))
 
         self.sv = Literal("@") ^ self.val("val") ^ (self.val("val") + "@") ^ ("@" + self.var("var")) ^ (self.val("val") + "@" + self.var("var")) ^ Empty()
         self.sv.setParseAction(self._toks_to_sv)
@@ -64,32 +67,49 @@ class Parser(object):
 
         self.uis = Literal("[") + Optional(Group(delimitedList(self.ui, delim = self.sep))("elems")) + Literal("]")
 
-        self.compartment = "Compartment" + "(" + Optional(self.uis("uis")) + Optional(self.label("label")) + ")"
-        self.compartment.setParseAction(self._toks_to_compartment)
+        self.compartment = Literal("Compartment") + \
+                Literal("(") + \
+                Optional(self.uis("uis")) + \
+                Optional(self.labelend("label")) + Literal(")")
 
-        self.subentityclass = functools.reduce(lambda x, y: x | y, [Literal(elem.value.__name__) for elem in SubEntityEnum])
+        self.compartmentinent = Literal("Compartment") + \
+                Literal("(") + \
+                Optional(self.uis("uis")) + \
+                Optional(self.labelendend("label")).setDebug(flag = debug) + Literal(")").setDebug(flag = debug)
+
+        self.compartment.setParseAction(self._toks_to_compartment)
+        self.compartmentinent.setParseAction(self._toks_to_compartment)
+
+        self.subentityclass = functools.reduce(lambda x, y: x ^ y, [Literal(elem.value.__name__) for elem in SubEntityEnum])
         self.subentityclass.setParseAction(self._toks_to_subentity_class)
 
         self.subentity = Forward()
 
         self.components = (Literal("[") + Optional(Group(delimitedList(self.subentity, delim = self.sep))("elems")) + Literal("]"))
 
-        self.subentity <<= self.subentityclass("clazz") + "(" + (self.components("components") + self.uis("uis") + self.svs("svs") | \
-                self.uis("uis") + self.svs("svs") | \
-                self.components("components") | \
+        self.subentity <<= self.subentityclass("clazz") + "(" + \
+                (self.components("components") + self.uis("uis") + self.svs("svs") ^ \
+                self.uis("uis") + self.svs("svs") ^ \
+                self.components("components") ^ \
                 Empty()) + \
-                self.label("label") + ")"
+                self.labelend("label") + \
+                Literal(")")
+
         self.subentity.setParseAction(self._toks_to_subentity)
 
-        self.entityclass = functools.reduce(lambda x, y: x | y, [Literal(elem.value.__name__) for elem in EntityEnum])
+        self.entityclass = functools.reduce(lambda x, y: x ^ y, [Literal(elem.value.__name__) for elem in EntityEnum])
         self.entityclass.setParseAction(self._toks_to_entity_class)
 
-        self.entity = self.entityclass("clazz") + "(" + (self.components("components") + self.uis("uis") + self.svs("svs") | \
-                self.uis("uis") + self.svs("svs") | \
-                self.components("components") | \
+        self.entity = self.entityclass("clazz") + Literal("(") + \
+                (self.components("components") + self.uis("uis") + self.svs("svs") ^ \
+                self.uis("uis") + self.svs("svs") ^ \
+                self.components("components") ^ \
                 Empty()) + \
-                Optional(self.label("label")) + \
-                Optional("#" + self.compartment("compartment")) + ")"
+                (self.label("label") + Literal("#") + self.compartmentinent("compartment") + Literal(")") ^ \
+                self.labelend("label") + Literal(")") ^ \
+                Empty() + Literal(")"))
+                # Optional(self.label("label")) + \
+                # Optional("#" + self.compartment("compartment")) + ")"
         self.entity.setParseAction(self._toks_to_entity)
 
         self.processparticipant = Optional(Word(nums)("stoech") + ":") + self.entity("participant")
@@ -97,13 +117,26 @@ class Parser(object):
 
         self.processparticipants = (Literal("[") + Group(delimitedList(self.processparticipant, delim = self.sep))("elems") + Literal("]"))
 
-        self.processclass = functools.reduce(lambda x, y: x | y, [Literal(elem.value.__name__) for elem in ProcessEnum])
+        self.processclass = functools.reduce(lambda x, y: x ^ y, [Literal(elem.value.__name__) for elem in ProcessEnum])
         self.processclass.setParseAction(self._toks_to_process_class)
 
-        self.process = self.processclass("clazz") + "(" + Optional(self.processparticipants("reactants") + self.processparticipants("products")) + Optional(self.label("label")) + ")"
+        self.process = self.processclass("clazz").setDebug(flag = debug) + \
+                Literal("(").setDebug(flag = debug) + \
+                Optional(self.processparticipants("reactants").setDebug(flag = debug) + \
+                self.processparticipants("products").setDebug(flag = debug)) + \
+                Optional(self.labelend("label")).setDebug(flag = debug) + \
+                Literal(")").setDebug(flag = debug)
+
+        self.processinmod = self.processclass("clazz").setDebug(flag = debug) + \
+                Literal("(").setDebug(flag = debug) + \
+                Optional(self.processparticipants("reactants").setDebug(flag = debug) + \
+                self.processparticipants("products").setDebug(flag = debug)) + \
+                Optional(self.labelendend("label")).setDebug(flag = debug) + \
+                Literal(")").setDebug(flag = debug)
+
         self.process.setParseAction(self._toks_to_process)
 
-        self.loclass = functools.reduce(lambda x, y: x | y, [Literal(elem.value.__name__) for elem in LogicalOperatorEnum])
+        self.loclass = functools.reduce(lambda x, y: x ^ y, [Literal(elem.value.__name__) for elem in LogicalOperatorEnum])
         self.loclass.setParseAction(self._toks_to_lo_class)
 
         self.lo = Forward()
@@ -116,21 +149,30 @@ class Parser(object):
         self.lo <<= self.loclass("clazz") + "(" + self.lochildren("children") + ")"
         self.lo.setParseAction(self._toks_to_lo)
 
-        self.modulationclass = functools.reduce(lambda x, y: x | y, [Literal(elem.value.__name__) for elem in ModulationEnum])
+        self.modulationclass = functools.reduce(lambda x, y: x ^ y, [Literal(elem.value.__name__) for elem in ModulationEnum])
         self.modulationclass.setParseAction(self._toks_to_modulation_class)
 
         self.modulationsource = self.entity | self.lo
-        self.modulationtarget = self.process
+        self.modulationtarget = self.processinmod
 
-        self.modulation = self.modulationclass("clazz") + "(" + self.modulationsource("source") + self.sep + self.modulationtarget("target") + ")"
+        self.modulation = self.modulationclass("clazz").setDebug(flag = debug) + \
+                Literal("(").setDebug(flag = debug) + \
+                self.modulationsource("source").setDebug(flag = debug) + \
+                Literal(self.sep).setDebug(flag = debug) + \
+                self.modulationtarget("target").setDebug(flag = debug) + \
+                Literal(")").setDebug(flag = debug)
+
         self.modulation.setParseAction(self._toks_to_modulation)
 
         self.entry = self.entity | self.process | self.lo | self.compartment | self.modulation
 
     def _toks_to_sv(self, toks):
-        val = toks.val
-        var = toks.var
-        if not var:
+        val = None
+        if toks.val:
+            val = toks.val
+        if toks.var:
+            var = toks.var
+        else:
             var = UndefinedVar()
         return StateVariable(val = val, var = var)
 

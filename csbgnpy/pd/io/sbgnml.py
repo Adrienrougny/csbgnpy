@@ -11,7 +11,7 @@ from csbgnpy.pd.modulation import *
 from csbgnpy.pd.lo import *
 from csbgnpy.pd.sv import *
 from csbgnpy.pd.ui import *
-from csbgnpy.pd.network import *
+from csbgnpy.pd.network import Network
 from csbgnpy.pd.io.utils import *
 
 def atan2pi(y, x):

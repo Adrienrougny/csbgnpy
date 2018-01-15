@@ -66,11 +66,11 @@ class StatefulEntity(Entity):
         :return: None
         """
         if sv not in self.svs:
-            if isinstance(sv.var, UndefinedVar) and not sv.var:
+            if isinstance(sv.var, UndefinedVar) and not sv.var.num:
                 max = 0
                 for sv2 in self.svs:
-                    if isinstance(sv2.var, UndefinedVar) and sv2.var > max:
-                        max = sv2.var
+                    if isinstance(sv2.var, UndefinedVar) and sv2.var.num > max:
+                        max = sv2.var.num
                 max += 1
                 sv.var.num = max
             self.svs.append(sv)
