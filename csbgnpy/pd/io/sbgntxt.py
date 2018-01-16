@@ -280,24 +280,3 @@ class Parser(object):
         for child in toks.children.elems:
             op.add_child(child)
         return op
-
-parser = Parser()
-# res = parser.entity.parseString("Macromolecule([][val@]m#Compartment(c))")
-# res = parser.entity.parseString("Macromolecule([][]βarrestin2)")
-# res = parser.label.parseString("βarrestin2")
-# # res = parser.entity.parseString("Complex([SubComplex([SubMacromolecule(a)]c)][pre1:label1|pres2:label2][Val1@Var1|Val2@Var2]elabel#Compartment(clabel))")
-# # res = parser.entity.parseString("Complex([SubComplex([SubMacromolecule([][vaaal@vaaar]a)]c)][pre1:label1|pres2:label2][Val1@Var1|Val2@Var2]elabel#Compartment(clabel))")
-# # res = parser.entity.parseString("Macromolecule(m)")
-# # res = parser.entity.parseString("EmptySet()")
-# # res = parser.process.parseString("GenericProcess([Macromolecule(a)][Macromolecule([pre:label][P@var1|Q@var2]a)])")
-#
-# res = parser.modulation.parseString("Stimulation(AndOperator([Macromolecule(a)|Macromolecule(b)])|GenericProcess([Macromolecule(a)][Macromolecule([pre:label][P@var1|Q@var2]a)]))")
-#
-# # res= parser.lo.parseString("AndOperator([Macromolecule(a)|Macromolecule(b)])")
-#
-# # res = parser.entity.parseString("Macromolecule([][P@var1|Q@]a)")
-#
-# # res = parser.components.parseString("[]")
-# # res = parser.subentity.parseString("SubComplex([SubMacromolecule([][vaaal@vaaar]a)]c)")
-# # res = parser.entity.parseString("Macromolecule([pre1:label1|pres2:label2][Val1@Var1|Val2@Var2]elabel#Compartment(clabel))")
-# print(res[0])
