@@ -50,7 +50,7 @@ class Parser(object):
     def __init__(self, debug = False):
         self.sep = "|"
         self.val = Word(alphanums + "β/_?")
-        self.var = Word(alphanums + "β")
+        self.var = Word(alphanums + "β ")
         self.pre = Word(alphanums + "β")
         self.strlabel = alphanums + "β/_* -+("
         self.label = Word(self.strlabel + ")")
@@ -135,6 +135,7 @@ class Parser(object):
                 Literal(")").setDebug(flag = debug)
 
         self.process.setParseAction(self._toks_to_process)
+        self.processinmod.setParseAction(self._toks_to_process)
 
         self.loclass = functools.reduce(lambda x, y: x ^ y, [Literal(elem.value.__name__) for elem in LogicalOperatorEnum])
         self.loclass.setParseAction(self._toks_to_lo_class)
@@ -164,7 +165,7 @@ class Parser(object):
 
         self.modulation.setParseAction(self._toks_to_modulation)
 
-        self.entry = self.entity | self.process | self.lo | self.compartment | self.modulation
+        self.entry = self.entity ^ self.process ^ self.lo ^ self.compartment ^ self.modulation
 
     def _toks_to_sv(self, toks):
         val = None
