@@ -20,12 +20,6 @@ def atan2pi(y, x):
         a = a + 2 * pi
     return a
 
-def obj_from_coll(obj, coll):
-    for o in coll:
-        if o == obj:
-            return o
-    return None
-
 def read(*filenames):
     net = Network()
     compartments = set([])
