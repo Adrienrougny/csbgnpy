@@ -6,11 +6,17 @@ from csbgnpy.pd.sv import *
 from csbgnpy.pd.ui import *
 from csbgnpy.pd.compartment import *
 from csbgnpy.pd.entity import *
+from csbgnpy.pd.io.utils import *
 
 def read(*filenames):
     from csbgnpy.pd.network import Network
     net = Network()
     parser = Parser()
+    compartments = set([])
+    entities = set([])
+    los = set([])
+    processes = set([])
+    modulations = set([])
     for filename in filenames:
         with open(filename) as f:
             for i, line in enumerate(f):
@@ -22,15 +28,39 @@ def read(*filenames):
                 except ParseException as err:
                     print("Error in file {}, line {}, col {}".format(filename, i + 1, err.col))
                 if isinstance(elem, Entity):
-                    net.add_entity(elem)
+                    entities.add(elem)
                 elif isinstance(elem, Process):
-                    net.add_process(elem)
+                    processes.add(elem)
                 elif isinstance(elem, Compartment):
-                    net.add_compartment(elem)
+                    compartments.add(elem)
                 elif isinstance(elem, LogicalOperator):
-                    net.add_lo(elem)
+                    los.add(elem)
                 elif isinstance(elem, Modulation):
-                    net.add_modulation(elem)
+                    modulations.add(elem)
+    for entity in entities:
+        if hasattr(entity, "compartment") and entity.compartment:
+            entity.compartment = obj_from_coll(entity.compartment, compartments)
+    for proc in processes:
+        if hasattr(proc, "reactants"):
+            for i, reactant in enumerate(proc.reactants):
+                proc.reactants[i] = obj_from_coll(reactant, entities)
+        if hasattr(proc, "products"):
+            for i, product in enumerate(proc.products):
+                proc.products[i] = obj_from_coll(product, entities)
+    for op in los:
+        for i, child in enumerate(op.children):
+            if isinstance(child, LogicalOperator):
+                op.children[i] = obj_from_coll(child, los)
+    for mod in modulations:
+        if isinstance(mod.source, LogicalOperator):
+            mod.source = obj_from_coll(mod.source, los)
+        mod.target = obj_from_coll(mod.target, processes)
+    net.entities = list(entities)
+    net.compartments = list(compartments)
+    net.processes = list(processes)
+    net.los = list(los)
+    net.modulations = list(modulations)
+
     return net
 
 def write(net, filename):
