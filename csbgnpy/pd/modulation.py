@@ -39,3 +39,8 @@ class Catalysis(Stimulation):
 
 class NecessaryStimulation(Stimulation):
     pass
+
+class AbsoluteInhibition(Inhibition):
+    pass
+
+
