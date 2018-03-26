@@ -9,6 +9,7 @@ from csbgnpy.utils import get_object
 from csbgnpy.pd.io.sbgntxt import Parser
 
 class Network(object):
+    """The class to model SBGN PD maps"""
     def __init__(self, entities = None, processes = None, modulations = None, compartments = None, los = None):
         self.entities = entities if entities is not None else []
         self.processes = processes if processes is not None else []
@@ -45,6 +46,12 @@ class Network(object):
         return translations
 
     def add_process(self, proc):
+        """Adds a process to the map
+
+        Also recursively adds the reactants and the products if they do not already belong to the map.
+
+        :param proc: the process to be added (object or sbgntxt string)
+        """
         if isinstance(proc, str):
             parser = Parser()
             proc =  parser.process.parseString(proc)[0]
@@ -73,6 +80,12 @@ class Network(object):
             self.processes.append(proc)
 
     def add_entity(self, entity):
+        """Adds an entity pool to the map
+
+        Also recursively adds the compartment if it does not already belong to the map.
+
+        :param entity: the entity to be added (object or sbgntxt string)
+        """
         if isinstance(entity, str):
             parser = Parser()
             entity =  parser.entity.parseString(entity)[0]
@@ -86,6 +99,12 @@ class Network(object):
                     self.add_compartment(entity.compartment)
 
     def add_modulation(self, mod):
+        """Adds an modulation to the map
+
+        Also recursively adds the source and the target if they do not already belong to the map.
+
+        :param mod: the modulation to be added (object or sbgntxt string)
+        """
         if isinstance(mod, str):
             parser = Parser()
             mod =  parser.modulation.parseString(mod)[0]
@@ -112,6 +131,10 @@ class Network(object):
             self.modulations.append(mod)
 
     def add_compartment(self, comp):
+        """Adds a compartment to the map
+
+        :param comp: the compartment to be added (object or sbgntxt string)
+        """
         if isinstance(comp, str):
             parser = Parser()
             comp =  parser.compartment.parseString(comp)[0]
@@ -119,6 +142,12 @@ class Network(object):
             self.compartments.append(comp)
 
     def add_lo(self, op):
+        """Adds a logical operator to the map
+
+        Also recursively adds the children if they do not already belong to the map.
+
+        :param op: the logical operator to be added (object or sbgntxt string)
+        """
         if isinstance(op, str):
             parser = Parser()
             op =  parser.lo.parseString(op)[0]
@@ -141,6 +170,12 @@ class Network(object):
             self.los.append(op)
 
     def remove_process(self, process):
+        """Removes a process from the map
+
+        Also removes the modulations targetting this process.
+
+        :param process: the process to be removed
+        """
         if isinstance(process, str):
             parser = Parser()
             process =  parser.process.parseString(process)[0]
@@ -150,6 +185,12 @@ class Network(object):
         self.processes.remove(process)
 
     def remove_entity(self, entity):
+        """Removes an entity pool from the map
+
+        Also removes the processes consuming or producing this entity pool, an the modulations departing from it.
+
+        :param entity: the entity pool to be removed
+        """
         if isinstance(entity, str):
             parser = Parser()
             entity =  parser.entity.parseString(entity)[0]
@@ -168,6 +209,12 @@ class Network(object):
         self.entities.remove(entity)
 
     def remove_compartment(self, compartment):
+        """Removes a compartment from the map
+
+        Also sets the compartment attribute of the entity pools belonging to this compartment to None.
+
+        :param compartment: the compartment to be removed
+        """
         if isinstance(compartment, str):
             parser = Parser()
             compartment =  parser.compartment.parseString(compartment)[0]
@@ -177,6 +224,12 @@ class Network(object):
                 entity.compartment = None
 
     def remove_lo(self, op):
+        """Removes a logical operator from the map
+
+        Also removes all children of the logical operators that are themselves logical operators, if those are not the children of other operators or the source of a modualtion.
+
+        :param op: the logical operator to be removed
+        """
         if isinstance(op, str):
             parser = Parser()
             op =  parser.lo.parseString(op)[0]
@@ -205,6 +258,12 @@ class Network(object):
                 self.modulations.remove(modulation)
 
     def remove_modulation(self, modulation):
+        """Removes a modulation from the map
+
+        Also removes its source if it is a logical operator that is not the child of another operator or the source of another modualtion.
+
+        :param modulation: the modulation to be removed
+        """
         if isinstance(modulation, str):
             parser = Parser()
             modulation =  parser.modulation.parseString(modulation)
@@ -222,6 +281,19 @@ class Network(object):
             self.remove_lo(modulation.source)
 
     def get_compartment(self, val, by_compartment = False, by_id = False, by_label = False, by_hash = False, by_string = True):
+        """Retrieves a compartment from the map
+
+        Possible ways of searching for the compartment: by object, id, hash or sbgntxt string.
+        Only the first matching compartment is retrieved.
+        Returns None if no matching compartment is found.
+
+        :param val: the value to be searched
+        :param by_ui: if True, search by object
+        :param by_id: if True, search by id
+        :param by_hash: if True, search by hash
+        :param by_string: if True, search by sbgntxt string
+        :return: the unit of information or None
+        """
         if by_string:
             parser = Parser()
             val = parser.compartment.parseString(val)[0]
@@ -242,6 +314,19 @@ class Network(object):
         return None
 
     def get_lo(self, val, by_lo = False, by_id = False, by_hash = False, by_string = True):
+        """Retrieves a logical operator from the map
+
+        Possible ways of searching for the logical operator: by object, id, hash or sbgntxt string.
+        Only the first matching logical operator is retrieved.
+        Returns None if no matching logical operator is found.
+
+        :param val: the value to be searched
+        :param by_ui: if True, search by object
+        :param by_id: if True, search by id
+        :param by_hash: if True, search by hash
+        :param by_string: if True, search by sbgntxt string
+        :return: the unit of information or None
+        """
         if by_string:
             parser = Parser()
             val = parser.lo.parseString(val)[0]
@@ -258,6 +343,19 @@ class Network(object):
         return None
 
     def get_modulation(self, val, by_modulation = False, by_id = False, by_hash = False, by_string = True):
+        """Retrieves a modulation from the map
+
+        Possible ways of searching for the modulation: by object, id, hash or sbgntxt string.
+        Only the first matching modulation is retrieved.
+        Returns None if no matching modulation is found.
+
+        :param val: the value to be searched
+        :param by_ui: if True, search by object
+        :param by_id: if True, search by id
+        :param by_hash: if True, search by hash
+        :param by_string: if True, search by sbgntxt string
+        :return: the unit of information or None
+        """
         if by_string:
             parser = Parser()
             val = parser.modulation.parseString(val)[0]
@@ -274,6 +372,19 @@ class Network(object):
         return None
 
     def get_process(self, val, by_process = False, by_id = False, by_label = False, by_hash = False, by_string = True):
+        """Retrieves a process from the map
+
+        Possible ways of searching for the process: by object, id, hash or sbgntxt string.
+        Only the first matching process is retrieved.
+        Returns None if no matching process is found.
+
+        :param val: the value to be searched
+        :param by_ui: if True, search by object
+        :param by_id: if True, search by id
+        :param by_hash: if True, search by hash
+        :param by_string: if True, search by sbgntxt string
+        :return: the unit of information or None
+        """
         if by_string:
             parser = Parser()
             val = parser.process.parseString(val)[0]
@@ -294,6 +405,19 @@ class Network(object):
         return None
 
     def get_entity(self, val, by_entity = True, by_id = False, by_label = False, by_hash = False, by_string = True):
+        """Retrieves a entity pool from the map
+
+        Possible ways of searching for the entity pool: by object, id, hash or sbgntxt string.
+        Only the first matching entity pool is retrieved.
+        Returns None if no matching entity pool is found.
+
+        :param val: the value to be searched
+        :param by_ui: if True, search by object
+        :param by_id: if True, search by id
+        :param by_hash: if True, search by hash
+        :param by_string: if True, search by sbgntxt string
+        :return: the unit of information or None
+        """
         if by_string:
             parser = Parser()
             val = parser.entity.parseString(val)[0]
@@ -314,6 +438,12 @@ class Network(object):
         return None
 
     def replace_entity(e1, e2):
+        """Replaces an entity pool by another in the map
+
+        :param e1: the entity pool to be replaced
+        :param e2: the replacing entity pool
+        :return: None
+        """
         if isinstance(e1, str):
             parser = Parser()
             e1 =  parser.entity.parseString(e1)
@@ -345,6 +475,12 @@ class Network(object):
                     lo.children.append(e1)
 
     def replace_lo(lo1, lo2):
+        """Replaces an logical operator by another in the map
+
+        :param lo1: the logical operator to be replaced
+        :param lo2: the replacing logical operator
+        :return: None
+        """
         if isinstance(lo1, str):
             parser = Parser()
             lo1 =  parser.lo.parseString(lo1)
@@ -365,6 +501,12 @@ class Network(object):
                     op.children.append(lo1)
 
     def replace_modulation(m1, m2):
+        """Replaces an modulation by another in the map
+
+        :param m1: the modulation to be replaced
+        :param m2: the replacing modulation
+        :return: None
+        """
         if isinstance(m1, str):
             parser = Parser()
             m1 =  parser.modulation.parseString(m1)
@@ -375,6 +517,12 @@ class Network(object):
         self.remove_modulation(m1)
 
     def replace_compartment(c1, c2):
+        """Replaces a compartment by another in the map
+
+        :param c1: the compartment to be replaced
+        :param c2: the replacing compartment
+        :return: None
+        """
         if isinstance(c1, str):
             parser = Parser()
             c1 =  parser.compartment.parseString(c1)
@@ -388,6 +536,12 @@ class Network(object):
         self.remove_compartment(c2)
 
     def replace_process(p1, p2):
+        """Replaces an process by another in the map
+
+        :param p1: the process to be replaced
+        :param p2: the replacing process
+        :return: None
+        """
         if isinstance(p1, str):
             parser = Parser()
             p1 =  parser.process.parseString(p1)
@@ -401,6 +555,11 @@ class Network(object):
         self.remove_process(p1)
 
     def union(self, other):
+        """Returns the union of the map with another map
+
+        :param other: the other map
+        :return: a new map that is the union of the map and the other map
+        """
         new = Network()
         for e in self.entities:
             new.add_entity(deepcopy(e))
@@ -430,6 +589,11 @@ class Network(object):
         return new
 
     def intersection(self, other):
+        """Returns the intersection of the map with another map
+
+        :param other: the other map
+        :return: a new map that is the intersection of the map and the other map
+        """
         new = Network()
         for e in self.entities:
             if e in other.entities:
@@ -454,6 +618,11 @@ class Network(object):
         # new.compartments = list(set(self.compartments).intersection(set(other.compartments)))
 
     def difference(self, other):
+        """Returns the difference of the map with another map
+
+        :param other: the other map
+        :return: a new map that is the difference of the map and the other map
+        """
         new = Network()
         for m in self.modulations:
             if m not in other.modulations:
@@ -479,6 +648,10 @@ class Network(object):
         return new
 
     def simplify_gene_expressions(self):
+        """Simplifies transcription and translation process into generic processes a la CellDesigner
+
+        :return: None
+        """
         mods = defaultdict(list)
         for t in self.transcriptions:
             for m in self.modulations:
