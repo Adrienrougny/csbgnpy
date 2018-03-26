@@ -132,7 +132,7 @@ class Network(object):
                     else:
                         self.add_entity(child)
                 elif isinstance(child, LogicalOperator):
-                    existent_child = get_lo(child, by_lo = True)
+                    existent_child = self.get_lo(child, by_lo = True)
                     if existent_child:
                         op.children.remove(child)
                         op.children.append(child)
@@ -180,34 +180,53 @@ class Network(object):
         if isinstance(op, str):
             parser = Parser()
             op =  parser.lo.parseString(op)[0]
-        remove_op = True
+        self.los.remove(op)
         toremove = set()
         for child in op.children:
             if isinstance(child, LogicalOperator):
-                toremove.add(child)
+                remove_child = True
+                # we don't remove the child if it belongs to another logical function
+                for lo in self.los:
+                    for ch in lo.children:
+                        if ch = child:
+                            remove_child = False
+                            break
+                if remove_child:
+                    # we don't remove the child if it is the source of a modulation
+                    for mod in self.modulations:
+                        if mod.source == child:
+                            remove_child = False
+                if remove_child:
+                    toremove.add(child)
         for child in toremove:
             self.remove_lo(child)
-        toremove = set()
         for modulation in self.modulations:
             if modulation.source == op:
-                toremove.add(modulation)
-                remove_op = False
-        for modulation in toremove:
-            self.remove_modulation(modulation)
-        if remove_op:
-            self.los.remove(op)
+                self.modulations.remove(modulation)
 
     def remove_modulation(self, modulation):
         if isinstance(modulation, str):
             parser = Parser()
             modulation =  parser.modulation.parseString(modulation)
         self.modulations.remove(modulation)
+        # no orphan logical operator
         if isinstance(modulation.source, LogicalOperator):
+            # we don't remove the lo if it is the source of another modulation
+            for mod in self.modulations:
+                if mod.source == modulation.source:
+                    return
+            # we don't remove the lo if it belongs to another logical function
+            for lo in self.los:
+                if modulation.source in lo.children:
+                    return
             self.remove_lo(modulation.source)
 
-    def get_compartment(self, val, by_compartment = False, by_id = False, by_label = False, by_hash = False, by_string = False):
+    def get_compartment(self, val, by_compartment = False, by_id = False, by_label = False, by_hash = False, by_string = True):
+        if by_string:
+            parser = Parser()
+            val = parser.compartment.parseString(val)[0]
         for c in self.compartments:
-            if by_compartment:
+            if by_compartment or by_string:
                 if c == val:
                     return c
             if by_id:
@@ -220,14 +239,14 @@ class Network(object):
             if by_hash:
                 if hash(c) == val:
                     return c
-            if by_string:
-                if str(c) == val:
-                    return c
         return None
 
-    def get_lo(self, val, by_lo = False, by_id = False, by_hash = False, by_string = False):
+    def get_lo(self, val, by_lo = False, by_id = False, by_hash = False, by_string = True):
+        if by_string:
+            parser = Parser()
+            val = parser.lo.parseString(val)[0]
         for o in self.los:
-            if by_lo:
+            if by_lo or by_string:
                 if o == val:
                     return o
             if by_id:
@@ -236,14 +255,14 @@ class Network(object):
             if by_hash:
                 if hash(o) == val:
                     return o
-            if by_string:
-                if str(o) == val:
-                    return o
         return None
 
-    def get_modulation(self, val, by_modulation = False, by_id = False, by_hash = False, by_string = False):
+    def get_modulation(self, val, by_modulation = False, by_id = False, by_hash = False, by_string = True):
+        if by_string:
+            parser = Parser()
+            val = parser.modulation.parseString(val)[0]
         for m in self.modulations:
-            if by_modulation:
+            if by_modulation or by_string:
                 if m == val:
                     return m
             if by_id:
@@ -252,14 +271,14 @@ class Network(object):
             if by_hash:
                 if hash(m) == val:
                     return m
-            if by_string:
-                if str(m) == val:
-                    return m
         return None
 
-    def get_process(self, val, by_process = False, by_id = False, by_label = False, by_hash = False, by_string = False):
+    def get_process(self, val, by_process = False, by_id = False, by_label = False, by_hash = False, by_string = True):
+        if by_string:
+            parser = Parser()
+            val = parser.process.parseString(val)[0]
         for p in self.processes:
-            if by_process:
+            if by_process or by_string:
                 if p == val:
                     return p
             if by_id:
@@ -272,12 +291,9 @@ class Network(object):
             if by_hash:
                 if hash(p) == val:
                     return p
-            if by_string:
-                if str(p) == val:
-                    return p
         return None
 
-    def get_entity(self, val, by_entity = True, by_id = False, by_label = False, by_hash = False, by_string = False):
+    def get_entity(self, val, by_entity = True, by_id = False, by_label = False, by_hash = False, by_string = True):
         if by_string:
             parser = Parser()
             val = parser.entity.parseString(val)[0]
@@ -296,6 +312,93 @@ class Network(object):
                 if hash(e) == val:
                     return e
         return None
+
+    def replace_entity(e1, e2):
+        if isinstance(e1, str):
+            parser = Parser()
+            e1 =  parser.entity.parseString(e1)
+        if isinstance(e2, str):
+            parser = Parser()
+            e2 =  parser.entity.parseString(e2)
+        existent_entity = self.get_entity(e1, by_entity = True)
+        if existent_entity:
+            e2 = existent_entity
+        self.add_entity(e2)
+        for modulation in self.modulations:
+            if modulation.source = e1:
+                modulation.source = e2
+        for process in self.processes:
+            for reac in process.reactants:
+                if reac == e1:
+                    process.reactants.remove(e1)
+                    process.reactants.append(e2)
+                    break
+            for prod in process.products:
+                if prod == e1:
+                    process.products.remove(e1)
+                    process.products.append(e2)
+                    break
+        for lo in self.los:
+            for child in lo.children:
+                if child == e1:
+                    lo.children.remove(e1)
+                    lo.children.append(e1)
+
+    def replace_lo(lo1, lo2):
+        if isinstance(lo1, str):
+            parser = Parser()
+            lo1 =  parser.lo.parseString(lo1)
+        if isinstance(lo2, str):
+            parser = Parser()
+            lo2 =  parser.modulation.parseString(lo2)
+        existent_lo = self.get_entity(lo1, by_lo = True)
+        if existent_lo:
+            lo2 = existent_lo
+        self.add_lo(lo2)
+        for modulation in self.modulations:
+            if modulation.source = lo1:
+                modulation.source = lo2
+        for op in self.los:
+            for child in op.children:
+                if child == lo1:
+                    op.children.remove(lo1)
+                    op.children.append(lo1)
+
+    def replace_modulation(m1, m2):
+        if isinstance(m1, str):
+            parser = Parser()
+            m1 =  parser.modulation.parseString(m1)
+        if isinstance(m2, str):
+            parser = Parser()
+            m2 =  parser.modulation.parseString(m2)
+        self.add_modulation(m2)
+        self.remove_modulation(m1)
+
+    def replace_compartment(c1, c2):
+        if isinstance(c1, str):
+            parser = Parser()
+            c1 =  parser.compartment.parseString(c1)
+        if isinstance(c2, str):
+            parser = Parser()
+            c2 =  parser.compartment.parseString(c2)
+        self.add_compartment(c2)
+        for entity in self.entities:
+            if entity.compartment == c1:
+                entity.compartment == c2:
+        self.remove_compartment(c2)
+
+    def replace_process(p1, p2):
+        if isinstance(p1, str):
+            parser = Parser()
+            p1 =  parser.process.parseString(p1)
+        if isinstance(p2, str):
+            parser = Parser()
+            p2 =  parser.process.parseString(p2)
+        self.add_process(p2)
+        for modulation in self.modulations:
+            if modulation.target == p1:
+                modulation.target == p2:
+        self.remove_process(p1)
 
     def union(self, other):
         new = Network()
