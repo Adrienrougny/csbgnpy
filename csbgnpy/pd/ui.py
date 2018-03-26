@@ -1,6 +1,7 @@
 from copy import deepcopy
 
 class UnitOfInformation(object):
+    """The class to model units of information"""
     def __init__(self, prefix = None, label = None, id = None):
         self.prefix = prefix
         self.label = label

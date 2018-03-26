@@ -1,6 +1,7 @@
 from copy import deepcopy
 
 class UndefinedVar(object):
+    """The class to model undefined variables"""
     def __init__(self, num = None):
         self.num = num
 
@@ -22,6 +23,7 @@ class UndefinedVar(object):
         return result
 
 class StateVariable(object):
+    """The class to model state variables"""
     def __init__(self, var = None, val = None, id = None):
         self.var = var
         self.val = val
