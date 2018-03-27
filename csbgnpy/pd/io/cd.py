@@ -90,6 +90,7 @@ TranslationDic = {
 }
 
 def read(*filenames):
+    """Builds an SBGN PD map from an L2V4 CellDesigner file"""
     net = Network()
     toskip = 0
     aliases = {}
