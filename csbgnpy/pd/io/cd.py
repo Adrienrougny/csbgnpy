@@ -12,7 +12,7 @@ from csbgnpy.pd.ui import *
 from csbgnpy.pd.network import *
 
 # ns = {"sbml":"http://www.sbml.org/sbml/level2/version4", "cd":"http://www.sbml.org/2001/ns/celldesigner"}
-def __obj_from_coll(obj, coll):
+def _obj_from_coll(obj, coll):
     for o in coll:
         if o == obj:
             return o
