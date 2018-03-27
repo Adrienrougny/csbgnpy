@@ -9,6 +9,11 @@ from csbgnpy.pd.entity import *
 from csbgnpy.pd.io.utils import *
 
 def read(*filenames):
+    """Builds a map from SBGNtxt files
+
+    :param filenames: names of files to be read
+    :return: a map that is the union of the maps described in the input files
+     """
     from csbgnpy.pd.network import Network
     net = Network()
     parser = Parser()
@@ -64,6 +69,10 @@ def read(*filenames):
     return net
 
 def write(net, filename):
+    """Writes a map to a SBGNtxt file
+
+   :param filename: the SBGNtxt file to be created
+   """
     with open(filename, 'w') as f:
         for entity in net.entities:
             f.write("{}\n".format(str(entity)))
@@ -77,6 +86,7 @@ def write(net, filename):
             f.write("{}\n".format(str(comp)))
 
 class Parser(object):
+    """The class to parse SBGNtxt elements"""
     def __init__(self, debug = False):
         self.sep = "|"
         self.val = Word(alphanums + "β/_?")

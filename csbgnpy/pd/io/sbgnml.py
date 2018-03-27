@@ -21,6 +21,11 @@ def atan2pi(y, x):
     return a
 
 def read(*filenames):
+    """Builds a map from SBGN-ML files
+
+    :param filenames: names of files to be read
+    :return: a map that is the union of the maps described in the input files
+    """
     net = Network()
     compartments = set([])
     entities = set([])
@@ -457,6 +462,11 @@ def _renew_ids(net):
         _renew_id_of_lo(op, i)
 
 def write(net, filename, renew_ids = False):
+    """Writes a map to an SBGN-ML file
+
+    :param filename: the SBGN-ML file to be created
+    :param renew_ids: if True, renews the ids of the glyphs
+    """
     sbgn = libsbgn.sbgn()
     sbgnmap = libsbgn.map()
     language = libsbgn.Language.PD
