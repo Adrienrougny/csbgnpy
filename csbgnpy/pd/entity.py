@@ -89,11 +89,13 @@ class StatefulEntity(Entity):
 
         Possible ways of searching for the unit of information are: by object, id, or hash.
         Only the first matching unit of information is retrieved.
+        Returns None if no matching unit of information is found.
 
         :param val: the value to be searched
         :param by_ui: if True, search by object
         :param by_id: if True, search by id
         :param by_hash: if True, search by hash
+        :return: the unit of information or None
         """
         for ui in self.uis:
             if by_ui:
@@ -112,11 +114,13 @@ class StatefulEntity(Entity):
 
         Possible ways of searching for the state variable are: by object, id, or hash.
         Only the first matching state variable is retrieved.
+        Returns None if no matching unit of information is found.
 
         :param val: the value to be searched
         :param by_sv: if True, search by object
         :param by_id: if True, search by id
         :param by_hash: if True, search by hash
+        :return: the state variable or None
         """
         for sv in self.svs:
             if by_sv:

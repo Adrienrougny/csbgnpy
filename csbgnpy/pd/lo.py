@@ -2,10 +2,16 @@ from copy import deepcopy
 # from LogicalOperatorClazz import *
 
 class LogicalOperator(object):
+    """The class to model logical operators"""
     def __init__(self, children = None, id = None):
         self.children = children if children else []
 
     def add_child(self, child):
+        """Adds a child to the logical operator
+
+        :param child: the child to be added
+        :return None
+        """
         if child not in self.children:
             self.children.append(child)
 
@@ -35,12 +41,15 @@ class LogicalOperator(object):
         return self.__str__()
 
 class AndOperator(LogicalOperator):
+    """The class to model and operators"""
     pass
 
 class OrOperator(LogicalOperator):
+    """The class to model or operators"""
     pass
 
 class NotOperator(LogicalOperator):
+    """The class to model not operators"""
     pass
 
 

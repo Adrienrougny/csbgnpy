@@ -6,6 +6,7 @@ from csbgnpy.pd.modulation import *
 from csbgnpy.pd.lo import *
 
 class EntityEnum(Enum):
+    """Enum for entity pools"""
     UNSPECIFIED_ENTITY = UnspecifiedEntity
     SIMPLE_CHEMICAL = SimpleChemical
     MACROMOLECULE = Macromolecule
@@ -19,6 +20,7 @@ class EntityEnum(Enum):
     PERTURBING_AGENT = PerturbingAgent
 
 class SubEntityEnum(Enum):
+    """Enum for subentities"""
     SUB_UNSPECIFIED_ENTITY = SubUnspecifiedEntity
     SUB_SIMPLE_CHEMICAL = SubSimpleChemical
     SUB_MACROMOLECULE = SubMacromolecule
@@ -30,6 +32,7 @@ class SubEntityEnum(Enum):
     SUB_COMPLEX_MULTIMER = SubComplexMultimer
 
 class ProcessEnum(Enum):
+    """Enum for processes"""
     PROCESS = GenericProcess
     OMITTED_PROCESS = OmittedProcess
     UNCERTAIN_PROCESS  = UncertainProcess
@@ -38,11 +41,13 @@ class ProcessEnum(Enum):
     PHENOTYPE = Phenotype
 
 class LogicalOperatorEnum(Enum):
+    """Enum for logical operators"""
     OR = OrOperator
     AND = AndOperator
     NOT = NotOperator
 
 class ModulationEnum(Enum):
+    """Enum for modulations"""
     CATALYSIS  = Catalysis
     MODULATION  = Modulation
     STIMULATION  = Stimulation

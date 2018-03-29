@@ -12,13 +12,14 @@ from csbgnpy.pd.ui import *
 from csbgnpy.pd.network import *
 
 # ns = {"sbml":"http://www.sbml.org/sbml/level2/version4", "cd":"http://www.sbml.org/2001/ns/celldesigner"}
-def obj_from_coll(obj, coll):
+def _obj_from_coll(obj, coll):
     for o in coll:
         if o == obj:
             return o
     return None
 
 TranslationDic = {
+    """The dictionary to translate CellDesigner elements to classes"""
     "PROTEIN": Macromolecule,
     "GENE": NucleicAcidFeature,
     "RNA": NucleicAcidFeature,
@@ -90,6 +91,11 @@ TranslationDic = {
 }
 
 def read(*filenames):
+    """Builds a map from L2V4 CellDesigner files
+
+    :param filenames: names of files to be read
+    :return: a map that is the union of the maps described in the input files
+    """
     net = Network()
     toskip = 0
     aliases = {}
@@ -110,7 +116,7 @@ def read(*filenames):
                 compartments.add(comp)
                 dids[comp.id] = comp
             else:
-                dids[comp.id] = obj_from_coll(comp, compartments)
+                dids[comp.id] = _obj_from_coll(comp, compartments)
         for cdspecies in tree.xpath("//sbml:species", namespaces = ns): #making entities and phenotypes
             cd_class = cdspecies.xpath(".//celldesigner:class", namespaces = ns)[0].text
             if cd_class == "PHENOTYPE":
@@ -119,21 +125,21 @@ def read(*filenames):
                     processes.add(process)
                     dids[process.id] = process
                 else:
-                    dids[process.id] = obj_from_coll(process, processes)
+                    dids[process.id] = _obj_from_coll(process, processes)
             else:
                 entity = _make_entity_from_cd(cdspecies, tree, ns, dids)
                 if entity not in entities:
                     entities.add(entity)
                     dids[entity.id] = entity
                 else:
-                    dids[entity.id] = obj_from_coll(entity, entities)
+                    dids[entity.id] = _obj_from_coll(entity, entities)
         for cdproc in tree.xpath("//sbml:reaction", namespaces = ns): # making additional emtyset
             process = _make_process_from_cd(cdproc, tree, ns, dids)
             if process not in processes:
                 processes.add(process)
                 dids[process.id] = process
             else:
-                dids[process.id] = obj_from_coll(process, processes)
+                dids[process.id] = _obj_from_coll(process, processes)
             for cdmod in cdproc.xpath(".//celldesigner:modification", namespaces = ns):
                 if not toskip:
                     modulation = _make_modulation_from_cd(cdmod, tree, ns, dids)
@@ -146,7 +152,7 @@ def read(*filenames):
                             los.add(lo)
                             dids[lo.id] = lo
                         else:
-                            dids[lo.id] = obj_from_coll(lo, los)
+                            dids[lo.id] = _obj_from_coll(lo, los)
                         chids = cdmod.get("modifiers").split(',')
                         if isinstance(modulation, Catalysis): #when CATALYSIS, the modulations are repeated after the AND node
                             toskip = len(chids)
