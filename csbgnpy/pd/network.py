@@ -437,7 +437,7 @@ class Network(object):
                     return e
         return None
 
-    def replace_entity(e1, e2):
+    def replace_entity(self, e1, e2):
         """Replaces an entity pool by another in the map
 
         :param e1: the entity pool to be replaced
@@ -450,7 +450,7 @@ class Network(object):
         if isinstance(e2, str):
             parser = Parser()
             e2 =  parser.entity.parseString(e2)
-        existent_entity = self.get_entity(e1, by_entity = True)
+        existent_entity = self.get_entity(e2, by_entity = True)
         if existent_entity:
             e2 = existent_entity
         self.add_entity(e2)
@@ -474,7 +474,7 @@ class Network(object):
                     lo.children.remove(e1)
                     lo.children.append(e1)
 
-    def replace_lo(lo1, lo2):
+    def replace_lo(self, lo1, lo2):
         """Replaces an logical operator by another in the map
 
         :param lo1: the logical operator to be replaced
@@ -487,7 +487,7 @@ class Network(object):
         if isinstance(lo2, str):
             parser = Parser()
             lo2 =  parser.modulation.parseString(lo2)
-        existent_lo = self.get_entity(lo1, by_lo = True)
+        existent_lo = self.get_entity(lo2, by_lo = True)
         if existent_lo:
             lo2 = existent_lo
         self.add_lo(lo2)
@@ -500,7 +500,7 @@ class Network(object):
                     op.children.remove(lo1)
                     op.children.append(lo1)
 
-    def replace_modulation(m1, m2):
+    def replace_modulation(self, m1, m2):
         """Replaces an modulation by another in the map
 
         :param m1: the modulation to be replaced
@@ -516,7 +516,7 @@ class Network(object):
         self.add_modulation(m2)
         self.remove_modulation(m1)
 
-    def replace_compartment(c1, c2):
+    def replace_compartment(self, c1, c2):
         """Replaces a compartment by another in the map
 
         :param c1: the compartment to be replaced
@@ -533,9 +533,9 @@ class Network(object):
         for entity in self.entities:
             if entity.compartment == c1:
                 entity.compartment = c2
-        self.remove_compartment(c2)
+        self.remove_compartment(c1)
 
-    def replace_process(p1, p2):
+    def replace_process(self, p1, p2):
         """Replaces an process by another in the map
 
         :param p1: the process to be replaced
@@ -648,7 +648,7 @@ class Network(object):
         return new
 
     def simplify_gene_expressions(self):
-        """Simplifies transcription and translation process into generic processes a la CellDesigner
+        """Simplifies transcription and translation processes into generic processes a la CellDesigner
 
         :return: None
         """
@@ -656,20 +656,19 @@ class Network(object):
         for t in self.transcriptions:
             for m in self.modulations:
                 if m.target == t:
-                    if isinstance(m.source, NucleicAcidFeature) and UnitOfInformation("ct", "gene") in m.source.uis:
-                        self.remove_entity(m.source)
-                    else:
-                        mods[t].append(m)
-            self.remove_process(t)
-        for tt in self.translations:
+                    if isinstance(m.source, NucleicAcidFeature) and UnitOfInformation("ct", "gene") in m.source.uis and m.source.label == t.products[0].label:
+                        t.reactants.append(m.source)
+                        t.reactants.remove(EmptySet())
+                        self.remove_modulation(m)
+                        break
+        for t in self.translations:
             for m in self.modulations:
-                if isinstance(m.source, NucleicAcidFeature) and UnitOfInformation("ct", "mRNA") in m.source.uis and m.target == tt:
-                    for t in mods:
-                        if t.products[0] == m.source:
-                            for mod in mods[t]:
-                                mod.target = tt
-                                self.add_modulation(mod)
-                    self.remove_entity(m.source)
+                if m.target == t:
+                    if isinstance(m.source, NucleicAcidFeature) and UnitOfInformation("ct", "mRNA") in m.source.uis and m.source.label == t.products[0].label:
+                        t.reactants.append(m.source)
+                        t.reactants.remove(EmptySet())
+                        self.remove_modulation(m)
+                        break
 
     def __eq__(self, other):
         return isinstance(other, Network) and \
