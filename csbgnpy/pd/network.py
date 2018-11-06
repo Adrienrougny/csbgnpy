@@ -241,7 +241,7 @@ class Network(object):
                 # we don't remove the child if it belongs to another logical function
                 for lo in self.los:
                     for ch in lo.children:
-                        if ch = child:
+                        if ch == child:
                             remove_child = False
                             break
                 if remove_child:
@@ -280,7 +280,7 @@ class Network(object):
                     return
             self.remove_lo(modulation.source)
 
-    def get_compartment(self, val, by_compartment = False, by_id = False, by_label = False, by_hash = False, by_string = True):
+    def get_compartment(self, val, by_compartment = False, by_id = False, by_label = False, by_hash = False, by_string = False):
         """Retrieves a compartment from the map
 
         Possible ways of searching for the compartment: by object, id, hash or sbgntxt string.
@@ -313,7 +313,7 @@ class Network(object):
                     return c
         return None
 
-    def get_lo(self, val, by_lo = False, by_id = False, by_hash = False, by_string = True):
+    def get_lo(self, val, by_lo = False, by_id = False, by_hash = False, by_string = False):
         """Retrieves a logical operator from the map
 
         Possible ways of searching for the logical operator: by object, id, hash or sbgntxt string.
@@ -342,7 +342,7 @@ class Network(object):
                     return o
         return None
 
-    def get_modulation(self, val, by_modulation = False, by_id = False, by_hash = False, by_string = True):
+    def get_modulation(self, val, by_modulation = False, by_id = False, by_hash = False, by_string = False):
         """Retrieves a modulation from the map
 
         Possible ways of searching for the modulation: by object, id, hash or sbgntxt string.
@@ -371,7 +371,7 @@ class Network(object):
                     return m
         return None
 
-    def get_process(self, val, by_process = False, by_id = False, by_label = False, by_hash = False, by_string = True):
+    def get_process(self, val, by_process = False, by_id = False, by_label = False, by_hash = False, by_string = False):
         """Retrieves a process from the map
 
         Possible ways of searching for the process: by object, id, hash or sbgntxt string.
@@ -404,7 +404,7 @@ class Network(object):
                     return p
         return None
 
-    def get_entity(self, val, by_entity = True, by_id = False, by_label = False, by_hash = False, by_string = True):
+    def get_entity(self, val, by_entity = True, by_id = False, by_label = False, by_hash = False, by_string = False):
         """Retrieves a entity pool from the map
 
         Possible ways of searching for the entity pool: by object, id, hash or sbgntxt string.
@@ -455,7 +455,7 @@ class Network(object):
             e2 = existent_entity
         self.add_entity(e2)
         for modulation in self.modulations:
-            if modulation.source = e1:
+            if modulation.source == e1:
                 modulation.source = e2
         for process in self.processes:
             for reac in process.reactants:
@@ -492,7 +492,7 @@ class Network(object):
             lo2 = existent_lo
         self.add_lo(lo2)
         for modulation in self.modulations:
-            if modulation.source = lo1:
+            if modulation.source == lo1:
                 modulation.source = lo2
         for op in self.los:
             for child in op.children:
@@ -532,7 +532,7 @@ class Network(object):
         self.add_compartment(c2)
         for entity in self.entities:
             if entity.compartment == c1:
-                entity.compartment == c2:
+                entity.compartment = c2
         self.remove_compartment(c2)
 
     def replace_process(p1, p2):
@@ -551,7 +551,7 @@ class Network(object):
         self.add_process(p2)
         for modulation in self.modulations:
             if modulation.target == p1:
-                modulation.target == p2:
+                modulation.target = p2
         self.remove_process(p1)
 
     def union(self, other):
