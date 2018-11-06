@@ -51,6 +51,8 @@ class ModulationEnum(Enum):
     CATALYSIS  = Catalysis
     MODULATION  = Modulation
     STIMULATION  = Stimulation
+    ABSOLUTE_STIMULATION  = AbsoluteStimulation
     INHIBITION  = Inhibition
+    ABSOLUTE_INHIBITION  = AbsoluteInhibition
     UNKNOWN_INFLUENCE  = Modulation
     NECESSARY_STIMULATION  = NecessaryStimulation
