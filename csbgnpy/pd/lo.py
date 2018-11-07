@@ -5,6 +5,7 @@ class LogicalOperator(object):
     """The class to model logical operators"""
     def __init__(self, children = None, id = None):
         self.children = children if children else []
+        self.id = id
 
     def add_child(self, child):
         """Adds a child to the logical operator
@@ -22,13 +23,13 @@ class LogicalOperator(object):
         return self.__class__ == other.__class__ and \
         set(self.children) == set(other.children)
 
-    def __deepcopy__(self, memo):
-        cls = self.__class__
-        result = cls.__new__(cls)
-        memo[id(self)] = result
-        for k, v in self.__dict__.items():
-            setattr(result, k, deepcopy(v, memo))
-        return result
+    # def __deepcopy__(self, memo):
+    #     cls = self.__class__
+    #     result = cls.__new__(cls)
+    #     memo[id(self)] = result
+    #     for k, v in self.__dict__.items():
+    #         setattr(result, k, deepcopy(v, memo))
+    #     return result
 
     def __str__(self):
         s = self.__class__.__name__
@@ -36,9 +37,6 @@ class LogicalOperator(object):
         s += "|".join([str(child) for child in self.children])
         s += "])"
         return s
-
-    def __repr__(self):
-        return self.__str__()
 
 class AndOperator(LogicalOperator):
     """The class to model and operators"""

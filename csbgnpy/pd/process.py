@@ -6,22 +6,19 @@ class Process(object):
     def __init__(self, id = None):
         self.id = id
     
-    def __repr__(self):
-        return "{}({},{})".format(self.__class__.__name__, self.reactants, self.products)
-
     def __eq__(self, other):
         return self.__class__ == other.__class__
 
     def __hash__(self):
         return hash((self.__class__))
 
-    def __deepcopy__(self, memo):
-        cls = self.__class__
-        result = cls.__new__(cls)
-        memo[id(self)] = result
-        for k, v in self.__dict__.items():
-            setattr(result, k, deepcopy(v, memo))
-        return result
+    # def __deepcopy__(self, memo):
+    #     cls = self.__class__
+    #     result = cls.__new__(cls)
+    #     memo[id(self)] = result
+    #     for k, v in self.__dict__.items():
+    #         setattr(result, k, deepcopy(v, memo))
+    #     return result
 
     def __str__(self):
         s = self.__class__.__name__ + "("

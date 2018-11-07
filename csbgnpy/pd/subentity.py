@@ -16,16 +16,16 @@ class SubEntity(object):
     def __hash__(self):
         return hash((self.__class__))
 
-    def __deepcopy__(self, memo):
-        cls = self.__class__
-        result = cls.__new__(cls)
-        memo[id(self)] = result
-        for k, v in self.__dict__.items():
-            setattr(result, k, deepcopy(v, memo))
-        return result
+    # def __deepcopy__(self, memo):
+    #     cls = self.__class__
+    #     result = cls.__new__(cls)
+    #     memo[id(self)] = result
+    #     for k, v in self.__dict__.items():
+    #         setattr(result, k, deepcopy(v, memo))
+    #     return result
 
     def __lt__(self, other):
-        return self.__repr__() < other.__repr__()
+        return str(self) < str(other)
 
     def __str__(self):
         s = self.__class__.__name__ + "("
@@ -39,9 +39,6 @@ class SubEntity(object):
             s += self.label
         s += ")"
         return s
-
-    def __repr__(self):
-        return str(self)
 
 class StatefulSubEntity(SubEntity):
     """The class to model stateful subentities"""

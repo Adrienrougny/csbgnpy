@@ -117,7 +117,7 @@ class Network(object):
                     mod.source = existent_source
                 else:
                     self.add_entity(source)
-            elif  isinstance(source, LogicalOperator):
+            elif isinstance(source, LogicalOperator):
                 existent_source = self.get_lo(source, by_lo = True)
                 if existent_source:
                     mod.source = existent_source
@@ -129,6 +129,7 @@ class Network(object):
             else:
                 self.add_process(target)
             self.modulations.append(mod)
+        return mod
 
     def add_compartment(self, comp):
         """Adds a compartment to the map
@@ -156,15 +157,13 @@ class Network(object):
                 if isinstance(child, Entity):
                     existent_child = self.get_entity(child, by_entity = True)
                     if existent_child:
-                        op.children.remove(child)
-                        op.children.append(child)
+                        op.children[op.children.index(child)] = existent_child
                     else:
                         self.add_entity(child)
                 elif isinstance(child, LogicalOperator):
                     existent_child = self.get_lo(child, by_lo = True)
                     if existent_child:
-                        op.children.remove(child)
-                        op.children.append(child)
+                        op.children[op.children.index(child)] = existent_child
                     else:
                         self.add_lo(child)
             self.los.append(op)
@@ -253,9 +252,7 @@ class Network(object):
                     toremove.add(child)
         for child in toremove:
             self.remove_lo(child)
-        for modulation in self.modulations:
-            if modulation.source == op:
-                self.modulations.remove(modulation)
+        self.modulations = [mod for mod in self.modulations if mod.source != op]
 
     def remove_modulation(self, modulation):
         """Removes a modulation from the map
@@ -460,19 +457,14 @@ class Network(object):
         for process in self.processes:
             for reac in process.reactants:
                 if reac == e1:
-                    process.reactants.remove(e1)
-                    process.reactants.append(e2)
-                    break
+                    process.reactants[process.reactants.index(e1)] = e2
             for prod in process.products:
                 if prod == e1:
-                    process.products.remove(e1)
-                    process.products.append(e2)
-                    break
+                    process.products[process.products.index(e1)] = e2
         for lo in self.los:
             for child in lo.children:
                 if child == e1:
-                    lo.children.remove(e1)
-                    lo.children.append(e1)
+                    lo.children[lo.children.index(e1)] = e2
 
     def replace_lo(self, lo1, lo2):
         """Replaces an logical operator by another in the map
@@ -497,8 +489,7 @@ class Network(object):
         for op in self.los:
             for child in op.children:
                 if child == lo1:
-                    op.children.remove(lo1)
-                    op.children.append(lo1)
+                    op.children[op.children.index(lo1)] = lo2
 
     def replace_modulation(self, m1, m2):
         """Replaces an modulation by another in the map
@@ -609,7 +600,7 @@ class Network(object):
                 new.add_compartment(deepcopy(c))
         for o in self.los:
             if o in other.los:
-                new.add_compartment(deepcopy(c))
+                new.add_compartment(deepcopy(o))
         return new
         # new.entities = list(set(self.entities).intersection(set(other.entities)))
         # new.processes = list(set(self.processes).intersection(set(other.processes)))
@@ -629,10 +620,6 @@ class Network(object):
                 new.add_modulation(deepcopy(m))
         for p in self.processes:
             if p not in other.processes:
-                # for e in p.reactants:
-                    # if hasattr(e, "label") and e.label == "p16INK4a":
-                        # print("aaa")
-                newp = deepcopy(p)
                 new.add_process(deepcopy(p))
         for e in self.entities:
             if e not in other.entities:
@@ -640,6 +627,9 @@ class Network(object):
         for c in self.compartments:
             if c not in other.compartments:
                 new.add_compartment(deepcopy(c))
+        for o in self.los:
+            if o not in other.los:
+                new.add_lo(deepcopy(o))
         # new.entities = list(set(self.entities).difference(set(other.entities)))
         # new.processes = list(set(self.processes).difference(set(other.processes)))
         # new.modulations = list(set(self.modulations).difference(set(other.modulations)))

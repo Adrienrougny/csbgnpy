@@ -16,16 +16,13 @@ class Entity(object):
     def __hash__(self):
         return hash((self.__class__))
 
-    def __deepcopy__(self, memo):
-        cls = self.__class__
-        result = cls.__new__(cls)
-        memo[id(self)] = result
-        for k, v in self.__dict__.items():
-            setattr(result, k, deepcopy(v, memo))
-        return result
-
-    def __lt__(self, other):
-        return self.__repr__() < other.__repr__()
+    # def __deepcopy__(self, memo):
+    #     cls = self.__class__
+    #     result = cls.__new__(cls)
+    #     memo[id(self)] = result
+    #     for k, v in self.__dict__.items():
+    #         setattr(result, k, deepcopy(v, memo))
+    #     return result
 
     def __str__(self):
         s = self.__class__.__name__ + "("
@@ -43,8 +40,12 @@ class Entity(object):
         s += ")"
         return s
 
-    def __repr__(self):
-        return str(self)
+    def __lt__(self, other):
+        return str(self) < str(other)
+
+    def __gt__(self, other):
+        return str(self) > str(other)
+
 
 class EmptySet(Entity):
     """The class to model empty sets"""
