@@ -13,6 +13,7 @@ from csbgnpy.pd.sv import *
 from csbgnpy.pd.ui import *
 from csbgnpy.pd.network import Network
 from csbgnpy.pd.io.utils import *
+from csbgnpy.pd.io.utils import _obj_from_coll
 
 def atan2pi(y, x):
     a = atan2(y, x)
@@ -43,7 +44,7 @@ def read(*filenames):
                     compartments.add(comp)
                     dids[comp.id] = comp
                 else:
-                    dids[comp.id] = obj_from_coll(comp, compartments)
+                    dids[comp.id] = _obj_from_coll(comp, compartments)
         for glyph in sbgnmap.get_glyph():
             if glyph.get_class().name in [attribute.name for attribute in list(EntityEnum)]:
                 entity = _make_entity_from_glyph(glyph, dids)
@@ -51,7 +52,7 @@ def read(*filenames):
                     entities.add(entity)
                     dids[entity.id] = entity
                 else:
-                    dids[entity.id] = obj_from_coll(entity, entities)
+                    dids[entity.id] = _obj_from_coll(entity, entities)
             elif glyph.get_class().name in [attribute.name for attribute in list(LogicalOperatorEnum)]:
                 op  = _make_lo_node_from_glyph(glyph)
                 los.append(op)
@@ -75,11 +76,11 @@ def read(*filenames):
     for op in los:
         for i, child in enumerate(op.children):
             if isinstance(child, LogicalOperator):
-                op.children[i] = obj_from_coll(child, los)
+                op.children[i] = _obj_from_coll(child, los)
     for mod in modulations:
         if isinstance(mod.source, LogicalOperator):
-            mod.source = obj_from_coll(mod.source, los)
-        mod.target = obj_from_coll(mod.target, processes)
+            mod.source = _obj_from_coll(mod.source, los)
+        mod.target = _obj_from_coll(mod.target, processes)
     net.entities = list(entities)
     net.compartments = list(compartments)
     net.processes = list(processes)

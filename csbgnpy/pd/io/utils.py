@@ -56,3 +56,9 @@ class ModulationEnum(Enum):
     ABSOLUTE_INHIBITION  = AbsoluteInhibition
     UNKNOWN_INFLUENCE  = Modulation
     NECESSARY_STIMULATION  = NecessaryStimulation
+
+def _obj_from_coll(obj, coll):
+    for o in coll:
+        if o == obj:
+            return o
+    return None
