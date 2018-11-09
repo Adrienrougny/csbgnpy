@@ -18,8 +18,8 @@ def _obj_from_coll(obj, coll):
             return o
     return None
 
+"""The dictionary to translate CellDesigner elements to classes"""
 TranslationDic = {
-    """The dictionary to translate CellDesigner elements to classes"""
     "PROTEIN": Macromolecule,
     "GENE": NucleicAcidFeature,
     "RNA": NucleicAcidFeature,
