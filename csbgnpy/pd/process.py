@@ -27,8 +27,11 @@ class Process(object):
         s += ")"
         return s
 
-    def __repr__(self):
-        return str(self)
+    def __lt__(self, other):
+        return str(self) < str(other)
+
+    def __gt__(self, other):
+        return str(self) > str(other)
 
 class NonStoichiometricProcess(Process):
     """The class to model non stoichiometric processes"""

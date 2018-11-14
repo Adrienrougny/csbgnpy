@@ -26,6 +26,14 @@ class Modulation(object):
     def __str__(self):
         return "{}({}|{})".format(self.__class__.__name__, self.source, self.target)
 
+    def __lt__(self, other):
+        return str(self) < str(other)
+
+    def __gt__(self, other):
+        return str(self) > str(other)
+
+
+
 class Stimulation(Modulation):
     """The class to model stimulations"""
     pass

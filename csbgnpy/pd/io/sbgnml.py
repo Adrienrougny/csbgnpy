@@ -418,22 +418,22 @@ def _make_arcs_from_lo(op, dids):
 def _renew_id_of_entity(entity, i):
         entity.id = "epn_{0}".format(i)
         if hasattr(entity, "conmponents"):
-            for j, subentity in enumerate(entity.components): # should be made recursive
+            for j, subentity in enumerate(sorted(entity.components)): # should be made recursive
                 _renew_id_of_subentity(subentity, entity, j)
         if hasattr(entity, "svs"):
-            for k, sv in enumerate(entity.svs):
+            for k, sv in enumerate(sorted(entity.svs)):
                 _renew_id_of_sv(sv, entity, k)
         if hasattr(entity, "uis"):
-            for l, ui in enumerate(entity.uis):
+            for l, ui in enumerate(sorted(entity.uis)):
                 _renew_id_of_ui(ui, entity, l)
 
 def _renew_id_of_subentity(subentity, entity, j):
     subentity.id = "{0}_sub_{1}".format(entity.id, j)
-    for h, subsubentity in enumerate(subentity.components): # should be made recursive
+    for h, subsubentity in enumerate(sorted(subentity.components)): # should be made recursive
         _renew_id_of_subentity(subsubentity, entity, h)
-    for k, sv in enumerate(entity.svs):
+    for k, sv in enumerate(sorted(entity.svs)):
         _renew_id_of_sv(sv, entity, k)
-    for l, ui in enumerate(entity.uis):
+    for l, ui in enumerate(sorted(entity.uis)):
         _renew_id_of_ui(ui, entity, l)
 
 def _renew_id_of_sv(sv, entity, k):
@@ -441,7 +441,6 @@ def _renew_id_of_sv(sv, entity, k):
 
 def _renew_id_of_ui(ui, entity, l):
     ui.id = "{0}_ui_{1}".format(entity.id, l)
-
 
 def _renew_id_of_compartment(compartment, i):
     compartment.id = "comp_{0}".format(i)
@@ -453,13 +452,13 @@ def _renew_id_of_lo(op, i):
     op.id = "op_{0}".format(i)
 
 def _renew_ids(net):
-    for i, entity in enumerate(net.entities):
+    for i, entity in enumerate(sorted(net.entities)):
         _renew_id_of_entity(entity, i)
-    for i, compartment in enumerate(net.compartments):
+    for i, compartment in enumerate(sorted(net.compartments)):
         _renew_id_of_compartment(compartment, i)
-    for i, process in enumerate(net.processes):
+    for i, process in enumerate(sorted(net.processes)):
         _renew_id_of_process(process, i)
-    for i, op in enumerate(net.los):
+    for i, op in enumerate(sorted(net.los)):
         _renew_id_of_lo(op, i)
 
 def write(net, filename, renew_ids = False):

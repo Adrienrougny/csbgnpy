@@ -40,6 +40,12 @@ class SubEntity(object):
         s += ")"
         return s
 
+    def __lt__(self, other):
+        return str(self) < str(other)
+
+    def __gt__(self, other):
+        return str(self) > str(other)
+
 class StatefulSubEntity(SubEntity):
     """The class to model stateful subentities"""
     def __init__(self, label = None, svs = None, uis = None, id = None):

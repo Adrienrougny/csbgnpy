@@ -38,6 +38,12 @@ class LogicalOperator(object):
         s += "])"
         return s
 
+    def __lt__(self, other):
+        return str(self) < str(other)
+
+    def __gt__(self, other):
+        return str(self) > str(other)
+
 class AndOperator(LogicalOperator):
     """The class to model and operators"""
     pass

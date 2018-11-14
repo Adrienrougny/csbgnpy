@@ -14,13 +14,13 @@ class UndefinedVar(object):
     def __repr__(self):
         return "Undefined({0})".format(self.num)
 
-    def __deepcopy__(self, memo):
-        cls = self.__class__
-        result = cls.__new__(cls)
-        memo[id(self)] = result
-        for k, v in self.__dict__.items():
-            setattr(result, k, deepcopy(v, memo))
-        return result
+    # def __deepcopy__(self, memo):
+    #     cls = self.__class__
+    #     result = cls.__new__(cls)
+    #     memo[id(self)] = result
+    #     for k, v in self.__dict__.items():
+    #         setattr(result, k, deepcopy(v, memo))
+    #     return result
 
 class StateVariable(object):
     """The class to model state variables"""
@@ -34,19 +34,16 @@ class StateVariable(object):
                 self.var == other.var and \
                 self.val == other.val
 
-    def __repr__(self):
-        return "%s=%s" % (self.var, self.val)
-
     def __hash__(self):
         return hash((self.var, self.val))
 
-    def __deepcopy__(self, memo):
-        cls = self.__class__
-        result = cls.__new__(cls)
-        memo[id(self)] = result
-        for k, v in self.__dict__.items():
-            setattr(result, k, deepcopy(v, memo))
-        return result
+    # def __deepcopy__(self, memo):
+    #     cls = self.__class__
+    #     result = cls.__new__(cls)
+    #     memo[id(self)] = result
+    #     for k, v in self.__dict__.items():
+    #         setattr(result, k, deepcopy(v, memo))
+    #     return result
 
     def __str__(self):
         s = ""
@@ -56,3 +53,11 @@ class StateVariable(object):
         if not isinstance(self.var, UndefinedVar):
             s += self.var
         return s
+
+    def __lt__(self, other):
+        return str(self) < str(other)
+
+    def __gt__(self, other):
+        return str(self) > str(other)
+
+
