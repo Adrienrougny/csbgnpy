@@ -214,6 +214,56 @@ def _make_modulation_from_arc(arc, dids):
     modulation.target = dids[target_id]
     return modulation
 
+def write(net, filename, renew_ids = False):
+    """Writes a map to an SBGN-ML file
+
+    :param filename: the SBGN-ML file to be created
+    :param renew_ids: if True, renews the ids of the glyphs
+    """
+    sbgn = libsbgn.sbgn()
+    sbgnmap = libsbgn.map()
+    language = libsbgn.Language.PD
+    sbgnmap.set_language(language)
+    sbgn.set_map(sbgnmap)
+    dids = {}
+    if renew_ids:
+        _renew_ids(net)
+    for comp in net.compartments:
+        g = _make_glyph_from_compartment(comp)
+        sbgnmap.add_glyph(g)
+        dids[comp] = g.get_id()
+    for entity in net.entities:
+        g = _make_glyph_from_entity(entity, dids)
+        sbgnmap.add_glyph(g)
+        dids[entity] = g.get_id()
+    for op in net.los:
+        g = _make_glyph_from_lo(op)
+        sbgnmap.add_glyph(g)
+        dids[op] = g.get_id()
+        arcs = _make_arcs_from_lo(op, dids)
+        for arc in arcs:
+            sbgnmap.add_arc(arc)
+    for process in net.processes:
+        p = _make_glyph_from_process(process)
+        sbgnmap.add_glyph(p)
+        dids[process] = p.get_id()
+        arcs = _make_arcs_from_process(process, dids)
+        for arc in arcs:
+            sbgnmap.add_arc(arc)
+    for modulation in net.modulations:
+        arc = _make_arc_from_modulation(modulation, dids)
+        sbgnmap.add_arc(arc)
+    sbgn.write_file(filename)
+    ifile = open(filename)
+    s = ifile.read()
+    ifile.close()
+    s = s.replace("sbgn:","")
+    s = s.replace(' xmlns:sbgn="http://sbgn.org/libsbgn/0.2"', "")
+    s = s.replace('."', '.0"')
+    ofile = open(filename, "w")
+    ofile.write(s)
+    ofile.close()
+
 def _make_glyph_from_compartment(comp):
     g = libsbgn.glyph()
     g.set_class(libsbgn.GlyphClass.COMPARTMENT)
@@ -461,54 +511,16 @@ def _renew_ids(net):
     for i, op in enumerate(sorted(net.los)):
         _renew_id_of_lo(op, i)
 
-def write(net, filename, renew_ids = False):
-    """Writes a map to an SBGN-ML file
-
-    :param filename: the SBGN-ML file to be created
-    :param renew_ids: if True, renews the ids of the glyphs
-    """
-    sbgn = libsbgn.sbgn()
-    sbgnmap = libsbgn.map()
-    language = libsbgn.Language.PD
-    sbgnmap.set_language(language)
-    sbgn.set_map(sbgnmap)
-    dids = {}
-    if renew_ids:
-        _renew_ids(net)
-    for comp in net.compartments:
-        g = _make_glyph_from_compartment(comp)
-        sbgnmap.add_glyph(g)
-        dids[comp] = g.get_id()
-    for entity in net.entities:
-        g = _make_glyph_from_entity(entity, dids)
-        sbgnmap.add_glyph(g)
-        dids[entity] = g.get_id()
-    for op in net.los:
-        g = _make_glyph_from_lo(op)
-        sbgnmap.add_glyph(g)
-        dids[op] = g.get_id()
-        arcs = _make_arcs_from_lo(op, dids)
-        for arc in arcs:
-            sbgnmap.add_arc(arc)
-    for process in net.processes:
-        p = _make_glyph_from_process(process)
-        sbgnmap.add_glyph(p)
-        dids[process] = p.get_id()
-        arcs = _make_arcs_from_process(process, dids)
-        for arc in arcs:
-            sbgnmap.add_arc(arc)
-    for modulation in net.modulations:
-        arc = _make_arc_from_modulation(modulation, dids)
-        sbgnmap.add_arc(arc)
-    sbgn.write_file(filename)
-    ifile = open(filename)
-    s = ifile.read()
-    ifile.close()
-    s = s.replace("sbgn:","")
-    s = s.replace(' xmlns:sbgn="http://sbgn.org/libsbgn/0.2"', "")
-    s = s.replace('."', '.0"')
-    ofile = open(filename, "w")
-    ofile.write(s)
-    ofile.close()
-
-
+def _renew_unknown_ids(net):
+    for i, entity in enumerate(sorted(net.entities)):
+        if not entity.id:
+            _renew_id_of_entity(entity, i)
+    for i, compartment in enumerate(sorted(net.compartments)):
+        if not compartment.id:
+            _renew_id_of_compartment(compartment, i)
+    for i, process in enumerate(sorted(net.processes)):
+        if not process.id:
+            _renew_id_of_process(process, i)
+    for i, op in enumerate(sorted(net.los)):
+        if not op.id:
+            _renew_id_of_lo(op, i)
