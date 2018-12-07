@@ -53,14 +53,20 @@ def read(*filenames):
                     dids[entity.id] = entity
                 else:
                     dids[entity.id] = _obj_from_coll(entity, entities)
+                for port in glyph.get_port():
+                    dids[port.id] = entity
             elif glyph.get_class().name in [attribute.name for attribute in list(LogicalOperatorEnum)]:
                 op  = _make_lo_node_from_glyph(glyph)
                 los.append(op)
                 dids[op.id] = op
+                for port in glyph.get_port():
+                    dids[port.id] = op
             elif glyph.get_class().name in [attribute.name for attribute in list(ProcessEnum)]:
                 proc = _make_process_node_from_glyph(glyph)
                 processes.append(proc)
                 dids[proc.id] = proc
+                for port in glyph.get_port():
+                    dids[port.id] = proc
         for arc in sbgnmap.get_arc(): # making modulations
             if arc.get_class().name == "CONSUMPTION":
                 _make_reactant_from_arc(arc, dids)
@@ -141,9 +147,20 @@ def _make_entity_from_glyph(glyph, dids):
         elif subglyph.get_class().name == "STATE_VARIABLE":
             lsvs.append(subglyph)
     if lsvs:
+        if not glyph.bbox:
+            has_bbox = False
+        else:
+            has_bbox = True
+        for sv in lsvs:
+            if not sv.bbox:
+                has_bbox = False
+                break
         i = 1
-        center = (glyph.bbox.x + glyph.bbox.w / 2, glyph.bbox.y + glyph.bbox.h / 2)
-        lsorted = sorted(lsvs, key = lambda g: atan2pi(-(g.bbox.y + g.bbox.h / 2 - center[1]), g.bbox.x + g.bbox.w / 2 - center[0]))
+        if has_bbox: # if all glyphs have a bbox, we order svs following the trigonometric  angle
+            center = (glyph.bbox.x + glyph.bbox.w / 2, glyph.bbox.y + glyph.bbox.h / 2)
+            lsorted = sorted(lsvs, key = lambda g: atan2pi(-(g.bbox.y + g.bbox.h / 2 - center[1]), g.bbox.x + g.bbox.w / 2 - center[0]))
+        else: # we order svs by their alphabetical order
+            lsorted = sorted(lsvs, key = lambda g: "{}@{}".format(g.get_state().get_value(), g.get_state().get_variable()))
         for subglyph in lsorted:
             sv = _make_sv_from_glyph(subglyph, i)
             if isinstance(sv.var, UndefinedVar):
@@ -168,9 +185,20 @@ def _make_subentity_from_glyph(glyph):
         elif subglyph.get_class().name == "STATE_VARIABLE":
             lsvs.append(subglyph)
     if lsvs:
+        if not glyph.bbox:
+            has_bbox = False
+        else:
+            has_bbox = True
+        for sv in lsvs:
+            if not sv.bbox:
+                has_bbox = False
+                break
         i = 1
-        center = (glyph.bbox.x + glyph.bbox.w / 2, glyph.bbox.y + glyph.bbox.h / 2)
-        lsorted = sorted(lsvs, key = lambda g: atan2pi(-(g.bbox.y + g.bbox.h / 2 - center[1]), g.bbox.x + g.bbox.w / 2 - center[0]))
+        if has_bbox: # if all glyphs have a bbox, we order svs following the trigonometric  angle
+            center = (glyph.bbox.x + glyph.bbox.w / 2, glyph.bbox.y + glyph.bbox.h / 2)
+            lsorted = sorted(lsvs, key = lambda g: atan2pi(-(g.bbox.y + g.bbox.h / 2 - center[1]), g.bbox.x + g.bbox.w / 2 - center[0]))
+        else: # we order svs by their alphabetical order
+            lsorted = sorted(lsvs, key = lambda g: "{}@{}".format(g.get_state().get_value(), g.get_state().get_variable()))
         for subglyph in lsorted:
             sv = _make_sv_from_glyph(subglyph, i)
             if isinstance(sv.var, UndefinedVar):
