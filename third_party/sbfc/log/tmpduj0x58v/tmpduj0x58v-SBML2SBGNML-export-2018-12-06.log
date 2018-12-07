@@ -1,0 +1,10 @@
+------------------------------------------------------------
+2018-12-06 16:23
+sbfConverter.sh: Convertion, using SBML2SBGNML, for '/tmp/tmpduj0x58v'...
+------------------------------------------------------------
+Loading the default Identifiers.org registry database from the jar file.
+Exception in thread "main" java.lang.StringIndexOutOfBoundsException: String index out of range: -1
+	at java.lang.String.substring(String.java:1967)
+	at org.sbfc.converter.Converter.convertFromFile(Converter.java:217)
+	at org.sbfc.converter.Converter.convertFromFile(Converter.java:130)
+	at org.sbfc.converter.Converter.main(Converter.java:297)
