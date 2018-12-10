@@ -23,9 +23,6 @@ class UnitOfInformation(object):
     #         setattr(result, k, deepcopy(v, memo))
     #     return result
 
-    def __repr__(self):
-        return "{}:{}".format(self.prefix, self.label)
-
     def __str__(self):
         s = self.label
         if self.prefix:

@@ -1,5 +1,6 @@
 from copy import deepcopy
 from collections import defaultdict
+import re
 
 from csbgnpy.pd.lo import *
 from csbgnpy.pd.entity import *
@@ -129,7 +130,6 @@ class Network(object):
             else:
                 self.add_process(target)
             self.modulations.append(mod)
-        return mod
 
     def add_compartment(self, comp):
         """Adds a compartment to the map
@@ -544,6 +544,71 @@ class Network(object):
             if modulation.target == p1:
                 modulation.target = p2
         self.remove_process(p1)
+
+    def query_entities(self, regexp):
+        """Retrieves entities of the map whose sbgntxt representation match an input regular expression
+
+        :param regexp: the regular expression to match
+        :return: all entities matching the regular expression
+        """
+        res = []
+        r = re.compile(regexp)
+        for e in self.entities:
+            if r.match(str(e)):
+                res.append(e)
+        return res
+
+    def query_processes(self, regexp):
+        """Retrieves processes of the map whose sbgntxt representation match an input regular expression
+
+        :param regexp: the regular expression to match
+        :return: all processes matching the regular expression
+        """
+        res = []
+        r = re.compile(regexp)
+        for e in self.processes:
+            if r.match(str(e)):
+                res.append(e)
+        return res
+
+    def query_los(self, regexp):
+        """Retrieves logical operators of the map whose sbgntxt representation match an input regular expression
+
+        :param regexp: the regular expression to match
+        :return: all processes matching the regular expression
+        """
+        res = []
+        r = re.compile(regexp)
+        for e in self.los:
+            if r.match(str(e)):
+                res.append(e)
+        return res
+
+    def query_modulations(self, regexp):
+        """Retrieves modulations of the map whose sbgntxt representation match an input regular expression
+
+        :param regexp: the regular expression to match
+        :return: all processes matching the regular expression
+        """
+        res = []
+        r = re.compile(regexp)
+        for e in self.modulations:
+            if r.match(str(e)):
+                res.append(e)
+        return res
+
+    def query_compartments(self, regexp):
+        """Retrieves compartments of the map whose sbgntxt representation match an input regular expression
+
+        :param regexp: the regular expression to match
+        :return: all processes matching the regular expression
+        """
+        res = []
+        r = re.compile(regexp)
+        for e in self.compartments:
+            if r.match(str(e)):
+                res.append(e)
+        return res
 
     def union(self, other):
         """Returns the union of the map with another map
