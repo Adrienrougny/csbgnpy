@@ -2,26 +2,18 @@ from copy import deepcopy
 
 class Process(object):
     """The class to model processes"""
-
     def __init__(self, id = None):
         self.id = id
-    
+
     def __eq__(self, other):
         return self.__class__ == other.__class__
 
     def __hash__(self):
         return hash((self.__class__))
 
-    # def __deepcopy__(self, memo):
-    #     cls = self.__class__
-    #     result = cls.__new__(cls)
-    #     memo[id(self)] = result
-    #     for k, v in self.__dict__.items():
-    #         setattr(result, k, deepcopy(v, memo))
-    #     return result
-
     def __str__(self):
         s = self.__class__.__name__ + "("
+        # TODO: need to sort for canonical
         s += "[" + "|".join(["{}:{}".format(stoech, entity) for (stoech, entity) in [(self.reactants.count(i), i) for i in set(self.reactants)]]) + "]"
         s += "[" + "|".join(["{}:{}".format(stoech, entity) for (stoech, entity) in [(self.products.count(i), i) for i in set(self.products)]]) + "]"
         s += ")"

@@ -225,7 +225,7 @@ class Network(object):
     def remove_lo(self, op):
         """Removes a logical operator from the map
 
-        Also removes all children of the logical operators that are themselves logical operators, if those are not the children of other operators or the source of a modualtion.
+        Also removes all children of the logical operators that are themselves logical operators, if those are not the children of other operators or the source of a modulation, as well as the modulations departing from the operator.
 
         :param op: the logical operator to be removed
         """
@@ -257,13 +257,13 @@ class Network(object):
     def remove_modulation(self, modulation):
         """Removes a modulation from the map
 
-        Also removes its source if it is a logical operator that is not the child of another operator or the source of another modualtion.
+        Also removes its source if it is a logical operator that is not the child of another operator or the source of another modulation.
 
         :param modulation: the modulation to be removed
         """
         if isinstance(modulation, str):
             parser = Parser()
-            modulation =  parser.modulation.parseString(modulation)
+            modulation =  parser.modulation.parseString(modulation)[0]
         self.modulations.remove(modulation)
         # no orphan logical operator
         if isinstance(modulation.source, LogicalOperator):
@@ -285,7 +285,7 @@ class Network(object):
         Returns None if no matching compartment is found.
 
         :param val: the value to be searched
-        :param by_ui: if True, search by object
+        :param by_compartment: if True, search by object
         :param by_id: if True, search by id
         :param by_hash: if True, search by hash
         :param by_string: if True, search by sbgntxt string
@@ -318,7 +318,7 @@ class Network(object):
         Returns None if no matching logical operator is found.
 
         :param val: the value to be searched
-        :param by_ui: if True, search by object
+        :param by_lo: if True, search by object
         :param by_id: if True, search by id
         :param by_hash: if True, search by hash
         :param by_string: if True, search by sbgntxt string
@@ -348,7 +348,7 @@ class Network(object):
 
         :param val: the value to be searched
         :param by_ui: if True, search by object
-        :param by_id: if True, search by id
+        :param by_modulation: if True, search by id
         :param by_hash: if True, search by hash
         :param by_string: if True, search by sbgntxt string
         :return: the unit of information or None
@@ -376,7 +376,7 @@ class Network(object):
         Returns None if no matching process is found.
 
         :param val: the value to be searched
-        :param by_ui: if True, search by object
+        :param by_process: if True, search by object
         :param by_id: if True, search by id
         :param by_hash: if True, search by hash
         :param by_string: if True, search by sbgntxt string
@@ -409,7 +409,7 @@ class Network(object):
         Returns None if no matching entity pool is found.
 
         :param val: the value to be searched
-        :param by_ui: if True, search by object
+        :param by_entity: if True, search by object
         :param by_id: if True, search by id
         :param by_hash: if True, search by hash
         :param by_string: if True, search by sbgntxt string
@@ -439,18 +439,16 @@ class Network(object):
 
         :param e1: the entity pool to be replaced
         :param e2: the replacing entity pool
-        :return: None
         """
         if isinstance(e1, str):
             parser = Parser()
-            e1 =  parser.entity.parseString(e1)
+            e1 =  parser.entity.parseString(e1)[0]
         if isinstance(e2, str):
             parser = Parser()
-            e2 =  parser.entity.parseString(e2)
+            e2 =  parser.entity.parseString(e2)[0]
         existent_entity = self.get_entity(e2, by_entity = True)
         if existent_entity:
             e2 = existent_entity
-        self.add_entity(e2)
         for modulation in self.modulations:
             if modulation.source == e1:
                 modulation.source = e2
@@ -465,24 +463,24 @@ class Network(object):
             for child in lo.children:
                 if child == e1:
                     lo.children[lo.children.index(e1)] = e2
+        self.remove_entity(e1)
+        self.add_entity(e2)
 
     def replace_lo(self, lo1, lo2):
         """Replaces an logical operator by another in the map
 
         :param lo1: the logical operator to be replaced
         :param lo2: the replacing logical operator
-        :return: None
         """
         if isinstance(lo1, str):
             parser = Parser()
-            lo1 =  parser.lo.parseString(lo1)
+            lo1 =  parser.lo.parseString(lo1)[0]
         if isinstance(lo2, str):
             parser = Parser()
-            lo2 =  parser.modulation.parseString(lo2)
+            lo2 =  parser.modulation.parseString(lo2)[0]
         existent_lo = self.get_entity(lo2, by_lo = True)
         if existent_lo:
             lo2 = existent_lo
-        self.add_lo(lo2)
         for modulation in self.modulations:
             if modulation.source == lo1:
                 modulation.source = lo2
@@ -490,20 +488,21 @@ class Network(object):
             for child in op.children:
                 if child == lo1:
                     op.children[op.children.index(lo1)] = lo2
+        self.remove_lo(lo1)
+        self.add_lo(lo2)
 
     def replace_modulation(self, m1, m2):
         """Replaces an modulation by another in the map
 
         :param m1: the modulation to be replaced
         :param m2: the replacing modulation
-        :return: None
         """
         if isinstance(m1, str):
             parser = Parser()
-            m1 =  parser.modulation.parseString(m1)
+            m1 =  parser.modulation.parseString(m1)[0]
         if isinstance(m2, str):
             parser = Parser()
-            m2 =  parser.modulation.parseString(m2)
+            m2 =  parser.modulation.parseString(m2)[0]
         self.add_modulation(m2)
         self.remove_modulation(m1)
 
@@ -512,41 +511,172 @@ class Network(object):
 
         :param c1: the compartment to be replaced
         :param c2: the replacing compartment
-        :return: None
         """
         if isinstance(c1, str):
             parser = Parser()
-            c1 =  parser.compartment.parseString(c1)
+            c1 =  parser.compartment.parseString(c1)[0]
         if isinstance(c2, str):
             parser = Parser()
-            c2 =  parser.compartment.parseString(c2)
-        self.add_compartment(c2)
+            c2 =  parser.compartment.parseString(c2)[0]
+        existent_compartment = self.get_compartment(c2, by_compartment = True)
+        if existent_compartment:
+            c2 = existent_compartment
         for entity in self.entities:
-            if entity.compartment == c1:
-                entity.compartment = c2
+            if hasattr(entity, "compartment"):
+                if entity.compartment == c1:
+                    entity.compartment = c2
         self.remove_compartment(c1)
+        self.add_compartment(c2)
 
     def replace_process(self, p1, p2):
-        """Replaces an process by another in the map
+        """Replaces a process by another in the map
 
         :param p1: the process to be replaced
         :param p2: the replacing process
-        :return: None
         """
         if isinstance(p1, str):
             parser = Parser()
-            p1 =  parser.process.parseString(p1)
+            p1 =  parser.process.parseString(p1)[0]
         if isinstance(p2, str):
             parser = Parser()
-            p2 =  parser.process.parseString(p2)
-        self.add_process(p2)
+            p2 =  parser.process.parseString(p2)[0]
+        existent_process = self.get_process(p2, by_process = True)
+        if existent_process:
+            p2 = existent_process
         for modulation in self.modulations:
             if modulation.target == p1:
                 modulation.target = p2
         self.remove_process(p1)
+        self.add_process(p2)
+
+    def replace_subentity(self, e1, e2):
+        """Replaces a subentity by another in the map
+
+        :param e1: the subentity to be replaced
+        :param e2: the replacing subentity
+        """
+        def _replace_subentity_rec(e, e1, e2):
+            if hasattr(e, "components"):
+                for i, se in enumerate(e.components):
+                    if se == e1:
+                        e.components[i] = copy.deepcopy(e2)
+                    _replace_subentity_rec(se, e1, e2)
+        if isinstance(e1, str):
+            parser = Parser()
+            e1 =  parser.subentity.parseString(e1)[0]
+        if isinstance(e2, str):
+            parser = Parser()
+            e2 =  parser.subentity.parseString(e2)[0]
+        for e in self.entities:
+            _replace_subentity_rec(e, e1, e2)
+
+    def replace_label(self, l1, l2):
+        """Replaces all substrings matching regexp l1 in all labels of the map by string l2
+
+        :param l1: the regexp of the substring to be replaced
+        :param l2: the replacing string
+        """
+        r = re.compile(l1)
+        for entity in self.entities:
+            if hasattr(entity, "label") and entity.label:
+                entity.label = r.sub(l2, entity.label)
+            if hasattr(entity, "components"):
+                for subentity in entity.components:
+                    if hasattr(subentity, "label") and subentity.label:
+                        subentity.label = r.sub(l2, subentity.label)
+        for compartment in self.compartments:
+            if hasattr(compartment, "label") and compartment.label:
+                compartment.label = r.sub(l2, compartment.label)
+        for process in self.processes:
+            if hasattr(process, "label") and process.label:
+                process.label = r.sub(l2, process.label)
+
+    def replace_sv(self, sv1, sv2):
+        """Replaces a state variable by another state variable in the map
+
+        :param sv1: the state variable to be replaced
+        :param sv2: the replacing state variable
+        """
+        if isinstance(sv1, str):
+            parser = Parser()
+            sv1 =  parser.sv.parseString(e1)[0]
+        if isinstance(sv2, str):
+            parser = Parser()
+            sv2 =  parser.sv.parseString(e2)[0]
+        for entity in self.entities:
+            if hasattr(entity, "svs"):
+                for i, sv in enumerate(entity.svs):
+                    if sv == sv1:
+                        entity.svs[i] = copy.deepcopy(sv2)
+
+    def replace_ui(self, ui1, ui2):
+        """Replaces a unit of information by another unit of information in the map
+
+        :param ui1: the unit of information to be replaced
+        :param ui2: the replacing unit of information
+        """
+        if isinstance(ui1, str):
+            parser = Parser()
+            ui1 =  parser.ui.parseString(e1)[0]
+        if isinstance(sv2, str):
+            parser = Parser()
+            ui2 =  parser.ui.parseString(e2)[0]
+        for entity in self.entities:
+            if hasattr(entity, "uis"):
+                for i, ui in enumerate(entity.uis):
+                    if ui == ui1:
+                        entity.uis[i] = copy.deepcopy(ui2)
+
+    def replace_sv_var(self, v1, v2):
+        """Replaces a state variable's variable by another variable in the map
+
+        :param v1: the variable to be replaced
+        :param v2: the replacing variable
+        """
+        for entity in self.entities:
+            if hasattr(entity, "svs"):
+                for i, sv in enumerate(entity.svs):
+                    if sv.var == v1:
+                        sv.var = v2
+
+    def replace_sv_val(self, v1, v2):
+        """Replaces a state variable's value by another value in the map
+
+        :param v1: the value to be replaced
+        :param v2: the replacing value
+        """
+        for entity in self.entities:
+            if hasattr(entity, "svs"):
+                for i, sv in enumerate(entity.svs):
+                    if sv.val == v1:
+                        sv.val = v2
+
+    def replace_ui_prefix(self, p1, p2):
+        """Replaces a unit of information's prefix by another prefix in the map
+
+        :param p1: the prefix to be replaced
+        :param p2: the replacing prefix
+        """
+        for entity in self.entities:
+            if hasattr(entity, "uis"):
+                for i, ui in enumerate(entity.uis):
+                    if ui.prefix == p1:
+                        ui.prefix = p2
+
+    def replace_ui_label(self, l1, l2):
+        """Replaces a unit of information's label by another label in the map
+
+        :param l1: the label to be replaced
+        :param l2: the replacing label
+        """
+        for entity in self.entities:
+            if hasattr(entity, "uis"):
+                for i, ui in enumerate(entity.uis):
+                    if ui.label == p1:
+                        ui.label = p2
 
     def query_entities(self, regexp):
-        """Retrieves entities of the map whose sbgntxt representation match an input regular expression
+        """Retrieves entities of the map whose sbgntxt representation contain a substring matching an input regular expression
 
         :param regexp: the regular expression to match
         :return: all entities matching the regular expression
@@ -554,12 +684,12 @@ class Network(object):
         res = []
         r = re.compile(regexp)
         for e in self.entities:
-            if r.match(str(e)):
+            if r.search(str(e)):
                 res.append(e)
         return res
 
     def query_processes(self, regexp):
-        """Retrieves processes of the map whose sbgntxt representation match an input regular expression
+        """Retrieves processes of the map whose sbgntxt representation contain a substring matching an input regular expression
 
         :param regexp: the regular expression to match
         :return: all processes matching the regular expression
@@ -567,12 +697,12 @@ class Network(object):
         res = []
         r = re.compile(regexp)
         for e in self.processes:
-            if r.match(str(e)):
+            if r.search(str(e)):
                 res.append(e)
         return res
 
     def query_los(self, regexp):
-        """Retrieves logical operators of the map whose sbgntxt representation match an input regular expression
+        """Retrieves logical operators of the map whose sbgntxt representation contain a substring matching an input regular expression
 
         :param regexp: the regular expression to match
         :return: all processes matching the regular expression
@@ -580,12 +710,12 @@ class Network(object):
         res = []
         r = re.compile(regexp)
         for e in self.los:
-            if r.match(str(e)):
+            if r.search(str(e)):
                 res.append(e)
         return res
 
     def query_modulations(self, regexp):
-        """Retrieves modulations of the map whose sbgntxt representation match an input regular expression
+        """Retrieves modulations of the map whose sbgntxt representation contain a substring matching an input regular expression
 
         :param regexp: the regular expression to match
         :return: all processes matching the regular expression
@@ -593,12 +723,12 @@ class Network(object):
         res = []
         r = re.compile(regexp)
         for e in self.modulations:
-            if r.match(str(e)):
+            if r.search(str(e)):
                 res.append(e)
         return res
 
     def query_compartments(self, regexp):
-        """Retrieves compartments of the map whose sbgntxt representation match an input regular expression
+        """Retrieves compartments of the map whose sbgntxt representation contain a substring matching an input regular expression
 
         :param regexp: the regular expression to match
         :return: all processes matching the regular expression
@@ -606,8 +736,28 @@ class Network(object):
         res = []
         r = re.compile(regexp)
         for e in self.compartments:
-            if r.match(str(e)):
+            if r.search(str(e)):
                 res.append(e)
+        return res
+
+    def query_subentities(self, regexp):
+        """Retrieves subentities of the map whose sbgntxt representation contain a substring matching an input regular expression
+
+        :param regexp: the regular expression to match
+        :return: all subentities matching the regular expression
+        """
+        def _query_subentities_rec(e, r):
+            res = []
+            if hasattr(e, "components"):
+                for se in e.components:
+                    if r.search(str(se)):
+                        res.append(se)
+                    res += _query_subentities_rec(se, r)
+            return res
+        res = []
+        r = re.compile(regexp)
+        for e in self.entities:
+            res += _query_subentities_rec(e, r)
         return res
 
     def union(self, other):
@@ -711,7 +861,7 @@ class Network(object):
         for t in self.transcriptions:
             for m in self.modulations:
                 if m.target == t:
-                    if isinstance(m.source, NucleicAcidFeature) and UnitOfInformation("ct", "gene") in m.source.uis and m.source.label == t.products[0].label:
+                    if isinstance(m.source, NucleicAcidFeature) and UnitOfInformation("ct", "gene") in m.source.uis:
                         t.reactants.append(m.source)
                         t.reactants.remove(EmptySet())
                         self.remove_modulation(m)
@@ -719,7 +869,7 @@ class Network(object):
         for t in self.translations:
             for m in self.modulations:
                 if m.target == t:
-                    if isinstance(m.source, NucleicAcidFeature) and UnitOfInformation("ct", "mRNA") in m.source.uis and m.source.label == t.products[0].label:
+                    if isinstance(m.source, NucleicAcidFeature) and UnitOfInformation("ct", "mRNA") in m.source.uis:
                         t.reactants.append(m.source)
                         t.reactants.remove(EmptySet())
                         self.remove_modulation(m)
@@ -732,11 +882,3 @@ class Network(object):
                 set(self.compartments) == set(other.compartments) and \
                 set(self.los) == set(other.los) and \
                 set(self.modulations) == set(other.modulations)
-
-    def __deepcopy__(self, memo):
-        cls = self.__class__
-        result = cls.__new__(cls)
-        memo[id(self)] = result
-        for k, v in self.__dict__.items():
-            setattr(result, k, deepcopy(v, memo))
-        return result
