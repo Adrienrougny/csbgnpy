@@ -54,13 +54,34 @@ def rem_suffix(s, suffix = None):
     else:
         return s
 
+# def escape_string(s):
+#     s = s.replace("\n", "\\n")
+#     return s
+#
+
+RESERVED_CHARS = ":@[]()#|"
+
 def escape_string(s):
-    s = s.replace("\n", "\\n")
-    return s
+    ss = ""
+    for i, c in enumerate(s):
+        if c in RESERVED_CHARS:
+            ss += "\\{}".format(c)
+        else:
+            ss += c
+    return ss
 
 def deescape_string(s):
-    s = s.replace("\\n", "\n")
-    return s
+    ss = ""
+    for i, c in enumerate(s):
+        if c != "\\" or (i < len(s) - 1 and s[i+1] not in RESERVED_CHARS):
+            ss += c
+    return ss
+#
+#
+#
+# def deescape_string(s):
+#     s = s.replace("\\n", "\n")
+#     return s
 
 def get_object(obj, coll):
     for obj2 in coll:

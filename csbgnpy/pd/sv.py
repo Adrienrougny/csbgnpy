@@ -1,4 +1,4 @@
-from copy import deepcopy
+from csbgnpy.utils import escape_string
 
 class UndefinedVar(object):
     """The class to model undefined variables"""
@@ -37,21 +37,13 @@ class StateVariable(object):
     def __hash__(self):
         return hash((self.var, self.val))
 
-    # def __deepcopy__(self, memo):
-    #     cls = self.__class__
-    #     result = cls.__new__(cls)
-    #     memo[id(self)] = result
-    #     for k, v in self.__dict__.items():
-    #         setattr(result, k, deepcopy(v, memo))
-    #     return result
-
     def __str__(self):
         s = ""
         if self.val:
-            s += self.val
+            s += escape_string(self.val)
         s += "@"
         if not isinstance(self.var, UndefinedVar):
-            s += self.var
+            s += escape_string(self.var)
         return s
 
     def __lt__(self, other):

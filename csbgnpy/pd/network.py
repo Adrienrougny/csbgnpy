@@ -7,7 +7,7 @@ from csbgnpy.pd.entity import *
 from csbgnpy.pd.modulation import *
 from csbgnpy.pd.ui import *
 from csbgnpy.utils import get_object
-from csbgnpy.pd.io.sbgntxt import Parser
+from csbgnpy.pd.io.sbgntxt2 import Parser
 
 class Network(object):
     """The class to model SBGN PD maps"""

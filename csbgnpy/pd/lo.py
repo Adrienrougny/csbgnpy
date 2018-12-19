@@ -1,5 +1,4 @@
 from copy import deepcopy
-# from LogicalOperatorClazz import *
 
 class LogicalOperator(object):
     """The class to model logical operators"""
@@ -23,18 +22,10 @@ class LogicalOperator(object):
         return self.__class__ == other.__class__ and \
         set(self.children) == set(other.children)
 
-    # def __deepcopy__(self, memo):
-    #     cls = self.__class__
-    #     result = cls.__new__(cls)
-    #     memo[id(self)] = result
-    #     for k, v in self.__dict__.items():
-    #         setattr(result, k, deepcopy(v, memo))
-    #     return result
-
     def __str__(self):
         s = self.__class__.__name__
         s += "(["
-        s += "|".join([str(child) for child in self.children])
+        s += "|".join(sorted([str(child) for child in self.children]))
         s += "])"
         return s
 

@@ -1,6 +1,7 @@
 from copy import deepcopy
 
 from csbgnpy.pd.sv import UndefinedVar
+from csbgnpy.utils import *
 
 class Entity(object):
     """The class to model entity pools"""
@@ -16,24 +17,19 @@ class Entity(object):
     def __hash__(self):
         return hash((self.__class__))
 
-    # def __deepcopy__(self, memo):
-    #     cls = self.__class__
-    #     result = cls.__new__(cls)
-    #     memo[id(self)] = result
-    #     for k, v in self.__dict__.items():
-    #         setattr(result, k, deepcopy(v, memo))
-    #     return result
-
     def __str__(self):
         s = self.__class__.__name__ + "("
         if hasattr(self, "components"):
-            s += "[" + "|".join([str(subentity) for subentity in self.components]) + "]"
+            s += "[" + "|".join(sorted([str(subentity) for subentity in self.components])) + "]"
         if hasattr(self, "uis"):
-            s += "[" + "|".join([str(ui) for ui in self.uis]) + "]"
+            s += "[" + "|".join(sorted([str(ui) for ui in self.uis])) + "]"
         if hasattr(self, "svs"):
-            s += "[" + "|".join([str(sv) for sv in self.svs]) + "]"
+            undefsvs = sorted([sv for sv in self.svs if isinstance(sv.var, UndefinedVar)], key = lambda sv: sv.var.num)
+            defsvs = sorted([sv for sv in self.svs if not isinstance(sv.var, UndefinedVar)])
+            svs = undefsvs + defsvs
+            s += "[" + "|".join([str(sv) for sv in svs]) + "]"
         if hasattr(self, "label"):
-            s += self.label
+            s += escape_string(self.label)
         if hasattr(self, "compartment"):
             if self.compartment:
                 s += "#" + str(self.compartment)
@@ -67,12 +63,14 @@ class StatefulEntity(Entity):
         :return: None
         """
         if sv not in self.svs:
-            if isinstance(sv.var, UndefinedVar) and not sv.var.num:
+            if not sv.var or isinstance(sv.var, UndefinedVar) and not sv.var.num:
                 max = 0
                 for sv2 in self.svs:
                     if isinstance(sv2.var, UndefinedVar) and sv2.var.num > max:
                         max = sv2.var.num
                 max += 1
+                if not sv.var:
+                    sv.var = UndefinedVar()
                 sv.var.num = max
             self.svs.append(sv)
 

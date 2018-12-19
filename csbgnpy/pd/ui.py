@@ -1,4 +1,4 @@
-from copy import deepcopy
+from csbgnpy.utils import escape_string
 
 class UnitOfInformation(object):
     """The class to model units of information"""
@@ -15,18 +15,10 @@ class UnitOfInformation(object):
     def __hash__(self):
         return hash((self.prefix, self.label))
 
-    # def __deepcopy__(self, memo):
-    #     cls = self.__class__
-    #     result = cls.__new__(cls)
-    #     memo[id(self)] = result
-    #     for k, v in self.__dict__.items():
-    #         setattr(result, k, deepcopy(v, memo))
-    #     return result
-
     def __str__(self):
-        s = self.label
+        s = escape_string(self.label)
         if self.prefix:
-            s = self.prefix + ":" + s
+            s = escape_string(self.prefix) + ":" + s
         return s
 
     def __lt__(self, other):

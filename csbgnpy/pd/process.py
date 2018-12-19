@@ -1,4 +1,4 @@
-from copy import deepcopy
+from csbgnpy.utils import escape_string
 
 class Process(object):
     """The class to model processes"""
@@ -13,9 +13,10 @@ class Process(object):
 
     def __str__(self):
         s = self.__class__.__name__ + "("
-        # TODO: need to sort for canonical
-        s += "[" + "|".join(["{}:{}".format(stoech, entity) for (stoech, entity) in [(self.reactants.count(i), i) for i in set(self.reactants)]]) + "]"
-        s += "[" + "|".join(["{}:{}".format(stoech, entity) for (stoech, entity) in [(self.products.count(i), i) for i in set(self.products)]]) + "]"
+        s += "[" + "|".join(["{}:{}".format(stoech, entity) for (stoech, entity) in sorted([(self.reactants.count(i), i) for i in set(self.reactants)], key = lambda tup: str(tup[1]))]) + "]"
+        s += "[" + "|".join(["{}:{}".format(stoech, entity) for (stoech, entity) in sorted([(self.products.count(i), i) for i in set(self.products)], key = lambda tup: str(tup[1]))]) + "]"
+        if hasattr(self, "label"):
+            s += escape_string(self.label)
         s += ")"
         return s
 
