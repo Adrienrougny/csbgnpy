@@ -259,7 +259,7 @@ class Parser(object):
 
     def _toks_to_modulation(self, toks):
         modulation = toks.clazz()
-        modulation.source = toks.source
+        modulation.source = toks.source[0]
         modulation.target = toks.target
         return modulation
 
