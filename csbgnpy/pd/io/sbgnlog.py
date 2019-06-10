@@ -12,7 +12,7 @@ from csbgnpy.pd.ui import *
 from csbgnpy.pd.network import *
 from csbgnpy.pd.io.utils import *
 
-class FuncTerm(object):
+class FunctionalTerm(object):
     def __init__(self, name = None, arguments = None):
         self.name = name
         if arguments is None:
@@ -87,6 +87,7 @@ class TranslationEnum(Enum):
     CONSUMPTION = "consumption_pd"
     DISSOCIATION  = "dissociation_pd"
     INHIBITION  = "inhibition_pd"
+    ABSOLUTE_INHIBITION  = "absoluteInhibition_pd"
     INPUT = "input_pd"
     LABELED = "label_pd"
     # LABEL = "label_pd"
@@ -115,7 +116,7 @@ class TranslationEnum(Enum):
     TARGET = "target_pd"
     UNCERTAIN_PROCESS  = "uncertainProcess_pd"
     UNDEFINED = "undef"
-    UNDEF_VAR = "undefVar"
+    UNDEFINED_VAR = "undefVar"
     UNIT_OF_INFORMATION = "unitOfInformation_pd"
     UNKNOWN_INFLUENCE  = "modulation_pd"
     UNSET = "unset"
@@ -159,16 +160,16 @@ def _new_flux_const(dcounter):
     dcounter["flux"] += 1
     return Const("f{}".format(dcounter["flux"]))
 
-def write(net, filename, use_ids = False, suffix = ""):
+def write(net, filename, use_ids = False, suffix = "", endstr = "."):
     sbgnlog = network_to_atoms(net, use_ids, suffix)
     f = open(filename, 'w')
-    f.write('\n'.join(sorted([str(atom) for atom in sbgnlog])))
+    f.write("\n".join(sorted(["{}{}".format(str(atom), endstr) for atom in sbgnlog])))
     f.close()
 
 def network_to_atoms(net, use_ids = False, suffix = ''):
     s = set()
     dconst = {}
-    dcounter = {"entity": 0, "process": 0, "modulation": 0, "lo": 0, "flux": 0, "compartment": 0}
+    dcounter = {"entity": 0, "subentity": 0, "process": 0, "modulation": 0, "lo": 0, "flux": 0, "compartment": 0}
     for entity in net.entities:
         s |= _entity_to_atoms(entity, dconst, dcounter, use_ids, suffix)
     for comp in net.compartments:
@@ -217,7 +218,7 @@ def _entity_to_atoms(entity, dconst, dcounter, use_ids = False, suffix = ""):
             else:
                 sv_value_const = Const(quote_string(sv.val))
             if isinstance(sv.var, UndefinedVar):
-                sv_variable_const = FuncTerm(TranslationEnum["UNDEF_VAR"].value, [entity_const, Const(sv.var.num)])
+                sv_variable_const = FunctionalTerm(TranslationEnum["UNDEFINED_VAR"].value, [entity_const, Const(sv.var.num)])
             else:
                 sv_variable_const = Const(quote_string(sv.var))
             sv_atom = Atom(sv_name, [entity_const, sv_value_const, sv_variable_const])
@@ -360,7 +361,7 @@ def _lo_to_atoms(op, dconst, dcounter, use_ids = False, suffix = ""):
                 child_const = Const(child.id)
             else:
                 if isinstance(child, LogicalOperator):
-                    child_const = _new_lo_constant(dcounter)
+                    child_const = _new_lo_const(dcounter)
                 else:
                     child_const = _new_entity_const(dcounter)
             dconst[child] = child_const
@@ -389,8 +390,8 @@ def _modulation_to_atoms(mod, dconst, dcounter, use_ids = False, suffix = ""):
         if use_ids:
             source_const = Const(mod.source.id)
         else:
-            if isinstance(source, LogicalOperator):
-                source_const = _new_lo_constant(dcounter)
+            if isinstance(mod.source, LogicalOperator):
+                source_const = _new_lo_const(dcounter)
             else:
                 source_const = _new_entity_const(dcounter)
         dconst[mod.source] = source_const
