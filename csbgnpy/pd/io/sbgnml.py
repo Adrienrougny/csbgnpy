@@ -240,6 +240,7 @@ def _make_modulation_from_arc(arc, dids):
     target_id = arc.get_target()
     modulation.source = dids[source_id]
     modulation.target = dids[target_id]
+    modulation.id = arc.get_id()
     return modulation
 
 def write(net, filename, renew_ids = False):
@@ -255,7 +256,7 @@ def write(net, filename, renew_ids = False):
     sbgn.set_map(sbgnmap)
     dids = {}
     if renew_ids:
-        _renew_ids(net)
+        net.renew_ids()
     for comp in net.compartments:
         g = _make_glyph_from_compartment(comp)
         sbgnmap.add_glyph(g)
@@ -268,6 +269,7 @@ def write(net, filename, renew_ids = False):
         g = _make_glyph_from_lo(op)
         sbgnmap.add_glyph(g)
         dids[op] = g.get_id()
+    for op in net.los:
         arcs = _make_arcs_from_lo(op, dids)
         for arc in arcs:
             sbgnmap.add_arc(arc)
@@ -472,7 +474,7 @@ def _make_arc_from_modulation(modulation, dids):
     end = libsbgn.endType(0, 0)
     arc.set_source(dids[modulation.source])
     arc.set_target(dids[modulation.target])
-    arc.set_id("mod_{0}_{1}".format(dids[modulation.source], dids[modulation.target]))
+    arc.set_id(modulation.id)
     arc.set_start(start)
     arc.set_end(end)
     arc.set_class(libsbgn.ArcClass[ModulationEnum(modulation.__class__).name])
@@ -492,63 +494,3 @@ def _make_arcs_from_lo(op, dids):
         arc.set_class(libsbgn.ArcClass["LOGIC_ARC"])
         arcs.add(arc)
     return arcs
-
-def _renew_id_of_entity(entity, i):
-        entity.id = "epn_{0}".format(i)
-        if hasattr(entity, "conmponents"):
-            for j, subentity in enumerate(sorted(entity.components)): # should be made recursive
-                _renew_id_of_subentity(subentity, entity, j)
-        if hasattr(entity, "svs"):
-            for k, sv in enumerate(sorted(entity.svs)):
-                _renew_id_of_sv(sv, entity, k)
-        if hasattr(entity, "uis"):
-            for l, ui in enumerate(sorted(entity.uis)):
-                _renew_id_of_ui(ui, entity, l)
-
-def _renew_id_of_subentity(subentity, entity, j):
-    subentity.id = "{0}_sub_{1}".format(entity.id, j)
-    for h, subsubentity in enumerate(sorted(subentity.components)): # should be made recursive
-        _renew_id_of_subentity(subsubentity, entity, h)
-    for k, sv in enumerate(sorted(entity.svs)):
-        _renew_id_of_sv(sv, entity, k)
-    for l, ui in enumerate(sorted(entity.uis)):
-        _renew_id_of_ui(ui, entity, l)
-
-def _renew_id_of_sv(sv, entity, k):
-    sv.id = "{0}_sv_{1}".format(entity.id, k)
-
-def _renew_id_of_ui(ui, entity, l):
-    ui.id = "{0}_ui_{1}".format(entity.id, l)
-
-def _renew_id_of_compartment(compartment, i):
-    compartment.id = "comp_{0}".format(i)
-
-def _renew_id_of_process(process, i):
-    process.id = "proc_{0}".format(i)
-
-def _renew_id_of_lo(op, i):
-    op.id = "op_{0}".format(i)
-
-def _renew_ids(net):
-    for i, entity in enumerate(sorted(net.entities)):
-        _renew_id_of_entity(entity, i)
-    for i, compartment in enumerate(sorted(net.compartments)):
-        _renew_id_of_compartment(compartment, i)
-    for i, process in enumerate(sorted(net.processes)):
-        _renew_id_of_process(process, i)
-    for i, op in enumerate(sorted(net.los)):
-        _renew_id_of_lo(op, i)
-
-def _renew_unknown_ids(net):
-    for i, entity in enumerate(sorted(net.entities)):
-        if not entity.id:
-            _renew_id_of_entity(entity, i)
-    for i, compartment in enumerate(sorted(net.compartments)):
-        if not compartment.id:
-            _renew_id_of_compartment(compartment, i)
-    for i, process in enumerate(sorted(net.processes)):
-        if not process.id:
-            _renew_id_of_process(process, i)
-    for i, op in enumerate(sorted(net.los)):
-        if not op.id:
-            _renew_id_of_lo(op, i)
