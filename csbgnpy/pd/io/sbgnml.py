@@ -220,7 +220,7 @@ def _make_lo_child_from_arc(arc, dids):
 def _make_process_node_from_glyph(glyph):
     proc = ProcessEnum[glyph.get_class().name].value()
     proc.id = glyph.get_id()
-    if glyph.get_label() is not None:
+    if hasattr(proc, "label") and glyph.get_label() is not None:
         proc.label = glyph.get_label().get_text()
     return proc
 

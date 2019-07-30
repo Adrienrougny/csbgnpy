@@ -885,24 +885,33 @@ class Network(object):
 
     def _renew_id_of_entity(self, entity, i):
             entity.id = "epn_{0}".format(i)
-            if hasattr(entity, "conmponents"):
-                for j, subentity in enumerate(sorted(entity.components)): # should be made recursive
+            if hasattr(entity, "components"):
+                entity.components.sort()
+                for j, subentity in enumerate(entity.components):
                     self._renew_id_of_subentity(subentity, entity, j)
             if hasattr(entity, "svs"):
-                for k, sv in enumerate(sorted(entity.svs)):
+                entity.svs.sort()
+                for k, sv in enumerate(entity.svs):
                     self._renew_id_of_sv(sv, entity, k)
             if hasattr(entity, "uis"):
-                for l, ui in enumerate(sorted(entity.uis)):
+                entity.uis.sort()
+                for l, ui in enumerate(entity.uis):
                     self._renew_id_of_ui(ui, entity, l)
 
     def _renew_id_of_subentity(self, subentity, entity, j):
         subentity.id = "{0}_sub_{1}".format(entity.id, j)
-        for h, subsubentity in enumerate(sorted(subentity.components)): # should be made recursive
-            self._renew_id_of_subentity(subsubentity, entity, h)
-        for k, sv in enumerate(sorted(entity.svs)):
-            self._renew_id_of_sv(sv, entity, k)
-        for l, ui in enumerate(sorted(entity.uis)):
-            self._renew_id_of_ui(ui, entity, l)
+        if hasattr(subentity, "components"):
+            for h, subsubentity in enumerate(subentity.components):
+                entity.components.sort()
+                self._renew_id_of_subentity(subsubentity, entity, h)
+        if hasattr(subentity, "svs"):
+            for k, sv in enumerate(entity.svs):
+                entity.svs.sort()
+                self._renew_id_of_sv(sv, entity, k)
+        if hasattr(subentity, "uis"):
+            for l, ui in enumerate(entity.uis):
+                entity.uis.sort()
+                self._renew_id_of_ui(ui, entity, l)
 
     def _renew_id_of_sv(self, sv, entity, k):
         sv.id = "{0}_sv_{1}".format(entity.id, k)
@@ -923,30 +932,35 @@ class Network(object):
         mod.id = "mod_{}".format(i)
 
     def renew_ids(self):
-        for i, entity in enumerate(sorted(self.entities)):
+        self.entities.sort()
+        self.compartments.sort()
+        self.processes.sort()
+        self.los.sort()
+        self.modulations.sort()
+        for i, entity in enumerate(self.entities):
             self._renew_id_of_entity(entity, i)
-        for i, compartment in enumerate(sorted(self.compartments)):
+        for i, compartment in enumerate(self.compartments):
             self._renew_id_of_compartment(compartment, i)
-        for i, process in enumerate(sorted(self.processes)):
+        for i, process in enumerate(self.processes):
             self._renew_id_of_process(process, i)
-        for i, op in enumerate(sorted(self.los)):
+        for i, op in enumerate(self.los):
             self._renew_id_of_lo(op, i)
-        for i, mod in enumerate(sorted(self.modulations)):
+        for i, mod in enumerate(self.modulations):
             self._renew_id_of_modulation(mod, i)
 
-    def renew_unknown_ids(self):
-        for i, entity in enumerate(sorted(self.entities)):
-            if not entity.id:
-                self._renew_id_of_entity(entity, i)
-        for i, compartment in enumerate(sorted(self.compartments)):
-            if not compartment.id:
-                self._renew_id_of_compartment(compartment, i)
-        for i, process in enumerate(sorted(self.processes)):
-            if not process.id:
-                self._renew_id_of_process(process, i)
-        for i, op in enumerate(sorted(self.los)):
-            if not op.id:
-                self._renew_id_of_lo(op, i)
-        for i, mod in enumerate(sorted(self.modulations)):
-            if not mod.id:
-                self._renew_id_of_modulation(mod, i)
+    # def renew_unknown_ids(self):
+    #     for i, entity in enumerate(sorted(self.entities)):
+    #         if not entity.id:
+    #             self._renew_id_of_entity(entity, i)
+    #     for i, compartment in enumerate(sorted(self.compartments)):
+    #         if not compartment.id:
+    #             self._renew_id_of_compartment(compartment, i)
+    #     for i, process in enumerate(sorted(self.processes)):
+    #         if not process.id:
+    #             self._renew_id_of_process(process, i)
+    #     for i, op in enumerate(sorted(self.los)):
+    #         if not op.id:
+    #             self._renew_id_of_lo(op, i)
+    #     for i, mod in enumerate(sorted(self.modulations)):
+    #         if not mod.id:
+    #             self._renew_id_of_modulation(mod, i)

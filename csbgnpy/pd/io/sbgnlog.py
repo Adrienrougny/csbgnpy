@@ -27,8 +27,11 @@ class FunctionalTerm(object):
         return hash((self.name, tuple(self.arguments)))
 
 class Const(object):
-    def __init__(self, name = None):
-        self.name = name
+    def __init__(self, name = None, to_string = False):
+        if to_string:
+            self.name = '"{}"'.format(name)
+        else:
+            self.name = name
 
     def __lt__(self, other):
         return str(self) < str(other)
@@ -189,7 +192,7 @@ def _entity_to_atoms(entity, dconst, dcounter, use_ids = False, suffix = ""):
         entity_const = dconst[entity]
     else:
         if use_ids:
-            entity_const = Const(entity.id)
+            entity_const = Const(entity.id, to_string = True)
         else:
             entity_const = _new_entity_const(dcounter)
     entity_atom = Atom(entity_name, [entity_const])
@@ -227,7 +230,7 @@ def _entity_to_atoms(entity, dconst, dcounter, use_ids = False, suffix = ""):
         for component in entity.components:
             component_name = TranslationEnum["COMPONENT"].value + suffix
             if use_ids:
-                component_const = Const(component.id)
+                component_const = Const(component.id, to_string = True)
             else:
                 component_const = _new_subentity_const(dcounter)
             component_atom = Atom(component_name, [entity_const, component_const])
@@ -246,7 +249,7 @@ def _entity_to_atoms(entity, dconst, dcounter, use_ids = False, suffix = ""):
                 compartment_const = dconst[entity.compartment]
             else:
                 if use_ids:
-                    compartment_const = Const(entity.compartment.id)
+                    compartment_const = Const(entity.compartment.id, to_string = True)
                 else:
                     compartment_const = _new_compartment_const(dcounter)
                 dconst[entity.compartment] = compartment_const
@@ -261,7 +264,7 @@ def _subentity_to_atoms(subentity, dconst, dcounter, use_ids = False, const = No
         subentity_const = const
     else:
         if use_ids:
-            subentity_const = Const(subentity.id)
+            subentity_const = Const(subentity.id, to_string = True)
         else:
             subentity_const = _new_subentity_const(dcounter)
     subentity_atom = Atom(subentity_name, [subentity_const])
@@ -298,7 +301,7 @@ def _subentity_to_atoms(subentity, dconst, dcounter, use_ids = False, const = No
         for component in subentity.components:
             component_name = TranslationEnum["COMPONENT"].value + suffix
             if use_ids:
-                component_const = Const(component.id)
+                component_const = Const(component.id, to_string = True)
             else:
                 component_const = _new_subsubentity_const(dcounter)
             component_atom = Atom(component_name, [subentity_const, component_const])
@@ -319,7 +322,7 @@ def _compartment_to_atoms(comp, dconst, dcounter, use_ids = False, suffix = ""):
         comp_const = dconst[comp]
     else:
         if use_ids:
-            comp_const = Const(comp.id)
+            comp_const = Const(comp.id, to_string = True)
         else:
             comp_const = _new_compartment_const(dcounter)
     comp_atom = Atom(comp_name, [comp_const])
@@ -348,7 +351,7 @@ def _lo_to_atoms(op, dconst, dcounter, use_ids = False, suffix = ""):
         op_const = dconst[op]
     else:
         if use_ids:
-            op_const = Const(op.id)
+            op_const = Const(op.id, to_string = True)
         else:
             op_const = _new_lo_const(dcounter)
     op_atom = Atom(op_name, [op_const])
@@ -358,7 +361,7 @@ def _lo_to_atoms(op, dconst, dcounter, use_ids = False, suffix = ""):
             child_const = dconst[child]
         else:
             if use_ids:
-                child_const = Const(child.id)
+                child_const = Const(child.id, to_string = True)
             else:
                 if isinstance(child, LogicalOperator):
                     child_const = _new_lo_const(dcounter)
@@ -377,7 +380,7 @@ def _modulation_to_atoms(mod, dconst, dcounter, use_ids = False, suffix = ""):
         mod_const = dconst[mod]
     else:
         if use_ids:
-            mod_const = mod.id
+            mod_const = Const(mod.id, to_string = True)
         else:
             mod_const = _new_modulation_const(dcounter)
         dconst[mod] = mod_const
@@ -388,7 +391,7 @@ def _modulation_to_atoms(mod, dconst, dcounter, use_ids = False, suffix = ""):
         source_const = dconst[mod.source]
     else:
         if use_ids:
-            source_const = Const(mod.source.id)
+            source_const = Const(mod.source.id, to_string = True)
         else:
             if isinstance(mod.source, LogicalOperator):
                 source_const = _new_lo_const(dcounter)
@@ -402,7 +405,7 @@ def _modulation_to_atoms(mod, dconst, dcounter, use_ids = False, suffix = ""):
         target_const = dconst[mod.target]
     else:
         if use_ids:
-            target_const = Const(mod.target.id)
+            target_const = Const(mod.target.id, to_string = True)
         else:
             target_const = _new_process_const(dcounter)
         dconst[mod.target] = target_const
@@ -417,7 +420,7 @@ def _process_to_atoms(proc, dconst, dcounter, use_ids = False, suffix = ""):
         proc_const = dconst[proc]
     else:
         if use_ids:
-            proc_const = Const(proc.id)
+            proc_const = Const(proc.id, to_string = True)
         else:
             proc_const = _new_process_const(dcounter)
         dconst[proc] = proc_const
@@ -430,7 +433,10 @@ def _process_to_atoms(proc, dconst, dcounter, use_ids = False, suffix = ""):
     target_name = TranslationEnum["TARGET"].value + suffix
     if hasattr(proc, "reactants"):
         for reac in set(proc.reactants):
-            cons_const = _new_flux_const(dcounter)
+            if use_ids:
+                cons_const = Const("cons_{}_{}".format(proc.id, reac.id), to_string = True)
+            else:
+                cons_const = _new_flux_const(dcounter)
             cons_atom = Atom(cons_name, [cons_const])
             s.add(cons_atom)
             card_const = Const(proc.reactants.count(reac))
@@ -440,7 +446,7 @@ def _process_to_atoms(proc, dconst, dcounter, use_ids = False, suffix = ""):
                 source_const = dconst[reac]
             else:
                 if use_ids:
-                    source_const = Const(reac.id)
+                    source_const = Const(reac.id, to_string = True)
                 else:
                     source_const = _new_entity_const(dcounter)
                 dconst[reac] = source_const
@@ -450,7 +456,10 @@ def _process_to_atoms(proc, dconst, dcounter, use_ids = False, suffix = ""):
             s.add(target_atom)
     if hasattr(proc, "products"):
         for prod in set(proc.products):
-            prod_const = _new_flux_const(dcounter)
+            if use_ids:
+                prod_const = Const("prod_{}_{}".format(proc.id, prod.id), to_string = True)
+            else:
+                prod_const = _new_flux_const(dcounter)
             prod_atom = Atom(prod_name, [prod_const])
             s.add(prod_atom)
             card_const = Const(proc.products.count(prod))
@@ -460,7 +469,7 @@ def _process_to_atoms(proc, dconst, dcounter, use_ids = False, suffix = ""):
                 target_const = dconst[prod]
             else:
                 if use_ids:
-                    target_const = Const(prod.id)
+                    target_const = Const(prod.id, to_string = True)
                 else:
                     target_const = _new_entity_const(dcounter)
                 dconst[prod] = target_const
