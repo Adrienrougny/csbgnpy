@@ -141,6 +141,7 @@ def _make_entity_from_glyph(glyph, dids):
         if subglyph.get_class().name in [attribute.name for attribute in list(EntityEnum)]:
             subentity = _make_subentity_from_glyph(subglyph)
             entity.add_component(subentity)
+            dids[subglyph.id] = subentity
         elif subglyph.get_class().name == "UNIT_OF_INFORMATION":
             ui = _make_ui_from_glyph(subglyph)
             entity.add_ui(ui)

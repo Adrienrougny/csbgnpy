@@ -12,36 +12,33 @@ from logicpy.term import *
 from logicpy.atom import *
 
 class TranslationEnum(Enum):
+    ACTIVITY = "activity_af"
     BIOLOGICAL_ACTIVITY = "biologicalActivity_af"
     PHENOTYPE = "phenotype_af"
+    LOGICAL_OPERATOR = "logicalOperator_af"
     OR = "or_af"
     AND = "and_af"
     NOT = "not_af"
     DELAY = "delay_af"
-    POSITIVE_INFLUENCE = "stimulates_af"
-    NEGATIVE_INFLUENCE = "inhibits_af"
-    UNKNOWN_INFLUENCE = "unknownModulates_af"
-    NECESSARY_STIMULATION = "necessarilyStimulates_af"
+    POSITIVE_INFLUENCE = "stimulation_af"
+    NEGATIVE_INFLUENCE = "inhibition_af"
+    UNKNOWN_INFLUENCE = "modulation_af"
+    NECESSARY_STIMULATION = "necessaryStimulation_af"
     COMPARTMENT = "compartment_af"
     LABEL = "label_af"
     LABELED = "labeled_af"
     LOCALIZED = "localized_af"
     INPUT = "input_af"
     UNIT_OF_INFORMATION = "unitOfInformation_af"
-    UNDEFINED = "undefined_af"
-    UNSET = "unset_af"
-    VOID = "void_af"
-    COMPLEX = "complex_af"
-    UNSPECIFIED_ENTITY = "unspecifiedentity_af"
-    PERTURBATION = "perturbation_af"
-    MACROMOLECULE = "macromolecule_af"
-    NUCLEIC_ACID_FEATURE = "nucleicacidfeature_af"
-    SIMPLE_CHEMICAL = "simplechemical_af"
-
-    """TO DO :
-    - put a lexicographic order for logical operator nodes so that any logical function can be uniquely identified by its constant
-    same for processes (sets of reactants and products)
-    """
+    UNDEFINED = "undef"
+    UNSET = "unset"
+    VOID = "void"
+    COMPLEX = "complex"
+    UNSPECIFIED_ENTITY = '"unspecified entity"'
+    PERTURBATION = '"perturbation"'
+    MACROMOLECULE = '"macromolecule"'
+    NUCLEIC_ACID_FEATURE = '"nucleic acid feature"'
+    SIMPLE_CHEMICAL = '"simple chemical"'
 
 def write(net, filename, suffix = ""):
     sbgnlog = network_to_atoms(net, suffix)
@@ -60,43 +57,6 @@ def network_to_atoms(net, suffix = ""):
     for mod in net.modulations:
         s |= _modulation_to_atoms(mod, suffix)
     return s
-
-def _ui_to_constant(ui):
-    const = TranslationEnum[ui.type.name].value
-    if ui.label:
-        const += '_'
-        const += normalize_string(ui.label)
-    return Constant(const)
-
-def _activity_to_constant(activity):
-    const = "a_{}".format(TranslationEnum[ActivityEnum(activity.__class__).name].value)
-    if hasattr(activity, "uis") and len(activity.uis) > 0:
-        const += '_'
-        const += '_'.join([str(_ui_to_constant(ui)) for ui in activity.uis])
-    const += "_{}".format(normalize_string(activity.label))
-    if hasattr(activity, "compartment"):
-        if activity.compartment:
-            const += "_{0}".format(_compartment_to_constant(activity.compartment))
-    return Constant(const)
-
-def _compartment_to_constant(comp):
-    const = "c_"
-    const += comp.label
-    return Constant(normalize_string(const))
-
-def _label_to_constant(label):
-    if label is None:
-        label = ""
-    return Constant(quote_string(label))
-
-def _lo_to_constant(op):
-    const = "lo_{}".format(TranslationEnum[LogicalOperatorEnum(op.__class__).name].value)
-    for child in op.children:
-        if isinstance(child, LogicalOperator):
-            const += "_{0}".format(_lo_to_constant(child))
-        else:
-            const += "_{0}".format(_activity_to_constant(child))
-    return Constant(const)
 
 def _activity_to_atoms(activity, suffix = ""):
     s = set()

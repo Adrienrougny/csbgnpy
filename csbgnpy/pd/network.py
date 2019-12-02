@@ -882,3 +882,13 @@ class Network(object):
                 set(self.compartments) == set(other.compartments) and \
                 set(self.los) == set(other.los) and \
                 set(self.modulations) == set(other.modulations)
+
+    def __hash__(self):
+        return hash(
+            (self.__class__,
+            frozenset(self.entities),
+            frozenset(self.processes),
+            frozenset(self.compartments),
+            frozenset(self.los),
+            frozenset(self.modulations))
+        )
