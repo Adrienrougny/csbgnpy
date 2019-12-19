@@ -25,7 +25,7 @@ class Entity(object):
             s += "[" + "|".join(sorted([str(ui) for ui in self.uis])) + "]"
         if hasattr(self, "svs"):
             undefsvs = sorted([sv for sv in self.svs if isinstance(sv.var, UndefinedVar)], key = lambda sv: sv.var.num)
-            defsvs = sorted([sv for sv in self.svs if not isinstance(sv.var, UndefinedVar)])
+            defsvs = sorted([sv for sv in self.svs if not isinstance(sv.var, UndefinedVar)], key = lambda sv: sv.var)
             svs = undefsvs + defsvs
             s += "[" + "|".join([str(sv) for sv in svs]) + "]"
         if hasattr(self, "label"):

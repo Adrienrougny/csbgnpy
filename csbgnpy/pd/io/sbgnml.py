@@ -130,13 +130,13 @@ def _make_compartment_from_glyph(glyph):
 def _make_entity_from_glyph(glyph, dids):
     entity = EntityEnum[glyph.get_class().name].value()
     entity.id = glyph.get_id()
-    lsvs = []
     if glyph.get_label():
         if glyph.get_label().get_text():
             entity.label = glyph.get_label().get_text()
     comp_id = glyph.get_compartmentRef()
     if comp_id is not None:
         entity.compartment = dids[comp_id]
+    lsvs = []
     for subglyph in glyph.get_glyph():
         if subglyph.get_class().name in [attribute.name for attribute in list(EntityEnum)]:
             subentity = _make_subentity_from_glyph(subglyph)
@@ -152,21 +152,21 @@ def _make_entity_from_glyph(glyph, dids):
             has_bbox = False
         else:
             has_bbox = True
-        for sv in lsvs:
-            if not sv.bbox:
-                has_bbox = False
-                break
-        i = 1
-        if has_bbox: # if all glyphs have a bbox, we order svs following the trigonometric  angle
-            center = (glyph.bbox.x + glyph.bbox.w / 2, glyph.bbox.y + glyph.bbox.h / 2)
-            lsorted = sorted(lsvs, key = lambda g: atan2pi(-(g.bbox.y + g.bbox.h / 2 - center[1]), g.bbox.x + g.bbox.w / 2 - center[0]))
-        else: # we order svs by their alphabetical order
-            lsorted = sorted(lsvs, key = lambda g: "{}@{}".format(g.get_state().get_value(), g.get_state().get_variable()))
-        for subglyph in lsorted:
-            sv = _make_sv_from_glyph(subglyph, i)
-            if isinstance(sv.var, UndefinedVar):
-                i += 1
-            entity.add_sv(sv)
+            for sv in lsvs:
+                if not sv.bbox:
+                    has_bbox = False
+                    break
+            i = 1
+            if has_bbox: # if all glyphs have a bbox, we order svs following the trigonometric  angle
+                center = (glyph.bbox.x + glyph.bbox.w / 2, glyph.bbox.y + glyph.bbox.h / 2)
+                lsorted = sorted(lsvs, key = lambda g: atan2pi(-(g.bbox.y + g.bbox.h / 2 - center[1]), g.bbox.x + g.bbox.w / 2 - center[0]))
+            else: # we order svs by their alphabetical order
+                lsorted = sorted(lsvs, key = lambda g: "{}@{}".format(g.get_state().get_value(), g.get_state().get_variable()))
+            for subglyph in lsorted:
+                sv = _make_sv_from_glyph(subglyph, i)
+                if isinstance(sv.var, UndefinedVar):
+                    i += 1
+                entity.add_sv(sv)
     return entity
 
 def _make_subentity_from_glyph(glyph):

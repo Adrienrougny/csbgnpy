@@ -35,7 +35,7 @@ class StateVariable(object):
                 self.val == other.val
 
     def __hash__(self):
-        return hash((self.var, self.val))
+        return hash((self.var, self.val,))
 
     def __str__(self):
         s = ""
@@ -44,6 +44,8 @@ class StateVariable(object):
         s += "@"
         if not isinstance(self.var, UndefinedVar):
             s += escape_string(self.var)
+        # else:
+        #     s += "Undefined({})".format(self.var.num)
         return s
 
     def __lt__(self, other):

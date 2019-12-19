@@ -11,40 +11,14 @@ from csbgnpy.pd.io.sbgntxt import Parser
 
 class Network(object):
     """The class to model SBGN PD maps"""
-    def __init__(self, entities = None, processes = None, modulations = None, compartments = None, los = None):
+    def __init__(self, entities = None, processes = None, modulations = None, compartments = None, los = None, id = None):
         self.entities = entities if entities is not None else []
         self.processes = processes if processes is not None else []
         self.modulations = modulations if modulations is not None else []
         self.compartments = compartments if compartments is not None else []
         self.los = los if los is not None else []
+        self.id = id
 
-    @property
-    def macromolecules(self):
-        return [e for e in self.entities if isinstance(e, Macromolecule)]
-
-    @property
-    def associations(self):
-        return [p for p in self.processes if insinstance(p, Association)]
-
-    @property
-    def transcriptions(self):
-        transcriptions = []
-        for p in self.processes:
-            if isinstance(p.reactants[0], EmptySet) and isinstance(p.products[0], NucleicAcidFeature) and UnitOfInformation("ct", "mRNA") in p.products[0].uis:
-                for m in self.modulations:
-                    if m.target == p and isinstance(m, NecessaryStimulation) and isinstance(m.source, NucleicAcidFeature) and UnitOfInformation("ct", "gene") in m.source.uis:
-                        transcriptions.append(p)
-        return transcriptions
-
-    @property
-    def translations(self):
-        translations = []
-        for p in self.processes:
-            if isinstance(p.reactants[0], EmptySet) and isinstance(p.products[0], Macromolecule):
-                for m in self.modulations:
-                    if m.target == p and isinstance(m, NecessaryStimulation) and isinstance(m.source, NucleicAcidFeature) and UnitOfInformation("ct", "mRNA") in m.source.uis:
-                        translations.append(p)
-        return translations
 
     def add_process(self, proc):
         """Adds a process to the map
@@ -767,31 +741,17 @@ class Network(object):
         :return: a new map that is the union of the map and the other map
         """
         new = Network()
-        for e in self.entities:
-            new.add_entity(deepcopy(e))
-        for p in self.processes:
-            new.add_process(deepcopy(p))
-        for m in self.modulations:
-            new.add_modulation(deepcopy(m))
-        for c in self.compartments:
-            new.add_compartment(deepcopy(c))
-        for o in self.los:
-            new.add_lo(deepcopy(o))
-        for e in other.entities:
-            new.add_entity(deepcopy(e))
-        for p in other.processes:
-            new.add_process(deepcopy(p))
-        for m in other.modulations:
-            new.add_modulation(deepcopy(m))
-        for c in other.compartments:
-            new.add_compartment(deepcopy(c))
-        for o in other.los:
-            new.add_lo(deepcopy(o))
-        # new.entities = list(set(self.entities).union(set(other.entities)))
-        # new.processes = list(set(self.processes).union(set(other.processes)))
-        # new.modulations = list(set(self.modulations).union(set(other.modulations)))
-        # new.los = list(set(self.los).union(set(other.los)))
-        # new.compartments = list(set(self.compartments).union(set(other.compartments)))
+        for net in [self, other]:
+            for e in net.entities:
+                new.add_entity(deepcopy(e))
+            for p in net.processes:
+                new.add_process(deepcopy(p))
+            for m in net.modulations:
+                new.add_modulation(deepcopy(m))
+            for c in net.compartments:
+                new.add_compartment(deepcopy(c))
+            for o in net.los:
+                new.add_lo(deepcopy(o))
         return new
 
     def intersection(self, other):
@@ -854,26 +814,27 @@ class Network(object):
 
     def simplify_gene_expressions(self):
         """Simplifies transcription and translation processes into generic processes a la CellDesigner
-
-        :return: None
         """
-        mods = defaultdict(list)
-        for t in self.transcriptions:
-            for m in self.modulations:
-                if m.target == t:
-                    if isinstance(m.source, NucleicAcidFeature) and UnitOfInformation("ct", "gene") in m.source.uis:
-                        t.reactants.append(m.source)
-                        t.reactants.remove(EmptySet())
-                        self.remove_modulation(m)
-                        break
-        for t in self.translations:
-            for m in self.modulations:
-                if m.target == t:
-                    if isinstance(m.source, NucleicAcidFeature) and UnitOfInformation("ct", "mRNA") in m.source.uis:
-                        t.reactants.append(m.source)
-                        t.reactants.remove(EmptySet())
-                        self.remove_modulation(m)
-                        break
+        gene_ui = UnitOfInformation("ct", "gene")
+        mrna_ui = UnitOfInformation("ct", "mRNA")
+        es = EmptySet()
+        for p in self.processes:
+            if isinstance(p, StoichiometricProcess) and isinstance(p.reactants[0], EmptySet):
+                if isinstance(p.products[0], NucleicAcidFeature) and mrna_ui in p.products[0].uis:
+                    for m in self.modulations:
+                        if m.target == p and isinstance(m, NecessaryStimulation) and isinstance(m.source, NucleicAcidFeature) and gene_ui in m.source.uis:
+                                p.reactants.append(m.source)
+                                p.reactants.remove(es)
+                                self.remove_modulation(m)
+                                break
+                elif isinstance(p.products[0], Macromolecule):
+                    for m in self.modulations:
+                        if m.target == p and isinstance(m, NecessaryStimulation) and isinstance(m.source, NucleicAcidFeature) and mrna_ui in m.source.uis:
+                                p.reactants.append(m.source)
+                                p.reactants.remove(es)
+                                self.remove_modulation(m)
+                                break
+
 
     def __eq__(self, other):
         return isinstance(other, Network) and \
@@ -892,6 +853,21 @@ class Network(object):
             frozenset(self.los),
             frozenset(self.modulations))
         )
+
+    def __str__(self):
+        # we sort all elements to make the method deterministic
+        l = []
+        for compartment in sorted(self.compartments):
+            l.append(str(compartment))
+        for entity in sorted(self.entities):
+            l.append(str(entity))
+        for process in sorted(self.processes):
+            l.append(str(process))
+        for op in sorted(self.los):
+            l.append(str(op))
+        for modulation in sorted(self.modulations):
+            l.append(str(modulation))
+        return "\n".join(l)
 
     def _renew_id_of_entity(self, entity, i):
             entity.id = "epn_{0}".format(i)
@@ -933,6 +909,7 @@ class Network(object):
         mod.id = "mod_{}".format(i)
 
     def renew_ids(self):
+        # we sort all elements to make the renewing deterministic
         for i, entity in enumerate(sorted(self.entities)):
             self._renew_id_of_entity(entity, i)
         for i, compartment in enumerate(sorted(self.compartments)):
@@ -945,6 +922,7 @@ class Network(object):
             self._renew_id_of_modulation(mod, i)
 
     def renew_unknown_ids(self):
+        # we sort all elements to make the renewing deterministic
         for i, entity in enumerate(sorted(self.entities)):
             if not entity.id:
                 self._renew_id_of_entity(entity, i)
