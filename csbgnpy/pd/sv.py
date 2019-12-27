@@ -8,19 +8,6 @@ class UndefinedVar(object):
     def __eq__(self, other):
         return self.__class__ == other.__class__ and self.num == other.num
 
-    def __hash__(self):
-        return hash((self.__class__, self.num,))
-
-    def __repr__(self):
-        return "Undefined({0})".format(self.num)
-
-    # def __deepcopy__(self, memo):
-    #     cls = self.__class__
-    #     result = cls.__new__(cls)
-    #     memo[id(self)] = result
-    #     for k, v in self.__dict__.items():
-    #         setattr(result, k, deepcopy(v, memo))
-    #     return result
 
 class StateVariable(object):
     """The class to model state variables"""
@@ -34,8 +21,6 @@ class StateVariable(object):
                 self.var == other.var and \
                 self.val == other.val
 
-    def __hash__(self):
-        return hash((self.var, self.val,))
 
     def __str__(self):
         s = ""
@@ -53,5 +38,3 @@ class StateVariable(object):
 
     def __gt__(self, other):
         return str(self) > str(other)
-
-

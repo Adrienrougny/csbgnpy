@@ -14,9 +14,6 @@ class Entity(object):
     def __eq__(self, other):
         return self.__class__ == other.__class__
 
-    def __hash__(self):
-        return hash((self.__class__))
-
     def __str__(self):
         s = self.__class__.__name__ + "("
         if hasattr(self, "components"):
@@ -83,7 +80,7 @@ class StatefulEntity(Entity):
         if ui not in self.uis:
             self.uis.append(ui)
 
-    def get_ui(self, val, by_ui = False, by_id = False, by_hash = False):
+    def get_ui(self, val, by_ui = False, by_id = False):
         """Retrieves a unit of information from the entity pool
 
         Possible ways of searching for the unit of information are: by object, id, or hash.
@@ -93,7 +90,6 @@ class StatefulEntity(Entity):
         :param val: the value to be searched
         :param by_ui: if True, search by object
         :param by_id: if True, search by id
-        :param by_hash: if True, search by hash
         :return: the unit of information or None
         """
         for ui in self.uis:
@@ -103,12 +99,9 @@ class StatefulEntity(Entity):
             if by_id:
                 if ui.id == val:
                     return ui
-            if by_hash:
-                if hash(ui) == val:
-                    return ui
         return None
 
-    def get_sv(self, val, by_sv = False, by_id = False, by_hash = False):
+    def get_sv(self, val, by_sv = False, by_id = False):
         """Retrieves a state variable from the entity pool
 
         Possible ways of searching for the state variable are: by object, id, or hash.
@@ -118,7 +111,6 @@ class StatefulEntity(Entity):
         :param val: the value to be searched
         :param by_sv: if True, search by object
         :param by_id: if True, search by id
-        :param by_hash: if True, search by hash
         :return: the state variable or None
         """
         for sv in self.svs:
@@ -128,20 +120,15 @@ class StatefulEntity(Entity):
             if by_id:
                 if sv.id == val:
                     return sv
-            if by_hash:
-                if hash(sv) == val:
-                    return sv
         return None
 
     def __eq__(self, other):
         return self.__class__ == other.__class__ and \
             self.label == other.label and \
             self.compartment == other.compartment and \
-            set(self.svs) == set(other.svs) and \
-            set(self.uis) == set(other.uis)
+            sorted(self.svs) == sorted(other.svs) and \
+            sorted(self.uis) == sorted(other.uis)
 
-    def __hash__(self):
-        return hash((self.__class__, self.label, self.compartment, frozenset(self.svs), frozenset(self.uis)))
 
 class StatelessEntity(Entity):
     """The class to model stateless entity pools"""
@@ -155,8 +142,6 @@ class StatelessEntity(Entity):
             self.label == other.label and \
             self.compartment == other.compartment
 
-    def __hash__(self):
-        return hash((self.__class__, self.label, self.compartment))
 
 class UnspecifiedEntity(StatelessEntity):
     """The class to model pools of unspecified entity pools"""
@@ -197,12 +182,10 @@ class Complex(StatefulEntity):
         return self.__class__ == other.__class__ and \
             self.label == other.label and \
             self.compartment == other.compartment and \
-            set(self.svs) == set(other.svs) and \
-            set(self.uis) == set(other.uis) and \
-            set(self.components) == set(other.components)
+            sorted(self.svs) == sorted(other.svs) and \
+            sorted(self.uis) == sorted(other.uis) and \
+            sorted(self.components) == sorted(other.components)
 
-    def __hash__(self):
-        return hash((self.__class__, self.label, self.compartment, frozenset(self.svs), frozenset(self.uis), frozenset(self.components)))
 
 class Multimer(StatefulEntity):
     """The class to model multimer pools"""
@@ -224,7 +207,3 @@ class ComplexMultimer(Complex, Multimer):
     """The class to model complex multimer pools"""
     def __init__(self, label = None, compartment = None, svs = None, uis = None, components = None, id = None):
         super().__init__(label, compartment, svs, uis, components, id)
-
-    #maybe not useful:
-    def __hash__(self):
-        return super().__hash__()

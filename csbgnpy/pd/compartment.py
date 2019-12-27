@@ -13,10 +13,7 @@ class Compartment(object):
     def __eq__(self, other):
         return isinstance(other, Compartment) and \
                 self.label == other.label and \
-                self.uis == other.uis
-
-    def __hash__(self):
-        return hash((self.label, frozenset(self.uis),))
+                sorted(self.uis) == sorted(other.uis)
 
     def __str__(self):
         return "Compartment([{}]{})".format("|".join(sorted([str(ui) for ui in self.uis])), self.label)
@@ -26,5 +23,3 @@ class Compartment(object):
 
     def __gt__(self, other):
         return str(self) > str(other)
-
-

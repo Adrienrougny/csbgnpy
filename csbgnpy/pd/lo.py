@@ -6,6 +6,7 @@ class LogicalOperator(object):
         self.children = children if children else []
         self.id = id
 
+
     def add_child(self, child):
         """Adds a child to the logical operator
 
@@ -15,12 +16,10 @@ class LogicalOperator(object):
         if child not in self.children:
             self.children.append(child)
 
-    def __hash__(self):
-        return hash((self.__class__, frozenset(self.children)))
 
     def __eq__(self, other):
         return self.__class__ == other.__class__ and \
-        set(self.children) == set(other.children)
+        sorted(self.children) == sorted(other.children)
 
     def __str__(self):
         s = self.__class__.__name__
@@ -46,5 +45,3 @@ class OrOperator(LogicalOperator):
 class NotOperator(LogicalOperator):
     """The class to model not operators"""
     pass
-
-

@@ -38,9 +38,6 @@ class NonStoichiometricProcess(Process):
         return self.__class__ == other.__class__ and \
                 self.label == other.label
 
-    def __hash__(self):
-        return hash((self.__class__, self.label))
-
 class Phenotype(NonStoichiometricProcess):
     """The class to model phenotypes"""
     pass
@@ -76,9 +73,6 @@ class StoichiometricProcess(Process):
         return self.__class__ == other.__class__ and \
                 sorted(self.reactants) == sorted(other.reactants) and \
                 sorted(self.products) == sorted(other.products)
-
-    def __hash__(self):
-        return hash((self.__class__, tuple(sorted(self.reactants)), tuple(sorted(self.products))))
 
 class GenericProcess(StoichiometricProcess):
     """The class to model generic processes"""

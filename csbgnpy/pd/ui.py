@@ -12,9 +12,6 @@ class UnitOfInformation(object):
                 self.prefix == other.prefix and \
                 self.label == other.label
 
-    def __hash__(self):
-        return hash((self.prefix, self.label))
-
     def __str__(self):
         s = escape_string(self.label)
         if self.prefix:
@@ -26,5 +23,3 @@ class UnitOfInformation(object):
 
     def __gt__(self, other):
         return str(self) > str(other)
-
-

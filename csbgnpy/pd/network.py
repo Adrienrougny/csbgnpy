@@ -167,16 +167,16 @@ class Network(object):
         if isinstance(entity, str):
             parser = Parser()
             entity =  parser.entity.parseString(entity)[0]
-        toremove = set()
+        toremove = []
         for process in self.processes:
             if entity in process.reactants or entity in process.products:
-                toremove.add(process)
+                toremove.append(process)
         for process in toremove:
             self.remove_process(process)
-        toremove = set()
+        toremove = []
         for modulation in self.modulations:
             if modulation.source == entity:
-                toremove.add(modulation)
+                toremove.append(modulation)
         for modulation in toremove:
             self.remove_modulation(modulation)
         self.entities.remove(entity)
@@ -207,7 +207,7 @@ class Network(object):
             parser = Parser()
             op =  parser.lo.parseString(op)[0]
         self.los.remove(op)
-        toremove = set()
+        toremove = []
         for child in op.children:
             if isinstance(child, LogicalOperator):
                 remove_child = True
@@ -223,7 +223,7 @@ class Network(object):
                         if mod.source == child:
                             remove_child = False
                 if remove_child:
-                    toremove.add(child)
+                    toremove.append(child)
         for child in toremove:
             self.remove_lo(child)
         self.modulations = [mod for mod in self.modulations if mod.source != op]
@@ -251,7 +251,7 @@ class Network(object):
                     return
             self.remove_lo(modulation.source)
 
-    def get_compartment(self, val, by_compartment = False, by_id = False, by_label = False, by_hash = False, by_string = False):
+    def get_compartment(self, val, by_compartment = False, by_id = False, by_label = False, by_string = False):
         """Retrieves a compartment from the map
 
         Possible ways of searching for the compartment: by object, id, hash or sbgntxt string.
@@ -261,7 +261,6 @@ class Network(object):
         :param val: the value to be searched
         :param by_compartment: if True, search by object
         :param by_id: if True, search by id
-        :param by_hash: if True, search by hash
         :param by_string: if True, search by sbgntxt string
         :return: the unit of information or None
         """
@@ -279,12 +278,9 @@ class Network(object):
                 if hasattr(c, "label"):
                     if c.label == val:
                         return c
-            if by_hash:
-                if hash(c) == val:
-                    return c
         return None
 
-    def get_lo(self, val, by_lo = False, by_id = False, by_hash = False, by_string = False):
+    def get_lo(self, val, by_lo = False, by_id = False, by_string = False):
         """Retrieves a logical operator from the map
 
         Possible ways of searching for the logical operator: by object, id, hash or sbgntxt string.
@@ -294,7 +290,6 @@ class Network(object):
         :param val: the value to be searched
         :param by_lo: if True, search by object
         :param by_id: if True, search by id
-        :param by_hash: if True, search by hash
         :param by_string: if True, search by sbgntxt string
         :return: the unit of information or None
         """
@@ -308,12 +303,9 @@ class Network(object):
             if by_id:
                 if o.id == val:
                     return o
-            if by_hash:
-                if hash(o) == val:
-                    return o
         return None
 
-    def get_modulation(self, val, by_modulation = False, by_id = False, by_hash = False, by_string = False):
+    def get_modulation(self, val, by_modulation = False, by_id = False, by_string = False):
         """Retrieves a modulation from the map
 
         Possible ways of searching for the modulation: by object, id, hash or sbgntxt string.
@@ -323,7 +315,6 @@ class Network(object):
         :param val: the value to be searched
         :param by_ui: if True, search by object
         :param by_modulation: if True, search by id
-        :param by_hash: if True, search by hash
         :param by_string: if True, search by sbgntxt string
         :return: the unit of information or None
         """
@@ -337,12 +328,9 @@ class Network(object):
             if by_id:
                 if m.id == val:
                     return m
-            if by_hash:
-                if hash(m) == val:
-                    return m
         return None
 
-    def get_process(self, val, by_process = False, by_id = False, by_label = False, by_hash = False, by_string = False):
+    def get_process(self, val, by_process = False, by_id = False, by_label = False, by_string = False):
         """Retrieves a process from the map
 
         Possible ways of searching for the process: by object, id, hash or sbgntxt string.
@@ -352,7 +340,6 @@ class Network(object):
         :param val: the value to be searched
         :param by_process: if True, search by object
         :param by_id: if True, search by id
-        :param by_hash: if True, search by hash
         :param by_string: if True, search by sbgntxt string
         :return: the unit of information or None
         """
@@ -370,12 +357,9 @@ class Network(object):
                 if hasattr(p, "label"):
                     if p.label == val:
                         return p
-            if by_hash:
-                if hash(p) == val:
-                    return p
         return None
 
-    def get_entity(self, val, by_entity = True, by_id = False, by_label = False, by_hash = False, by_string = False):
+    def get_entity(self, val, by_entity = True, by_id = False, by_label = False, by_string = False):
         """Retrieves a entity pool from the map
 
         Possible ways of searching for the entity pool: by object, id, hash or sbgntxt string.
@@ -385,7 +369,6 @@ class Network(object):
         :param val: the value to be searched
         :param by_entity: if True, search by object
         :param by_id: if True, search by id
-        :param by_hash: if True, search by hash
         :param by_string: if True, search by sbgntxt string
         :return: the unit of information or None
         """
@@ -403,9 +386,6 @@ class Network(object):
                 if hasattr(e, "label"):
                     if e.label == val:
                         return e
-            if by_hash:
-                if hash(e) == val:
-                    return e
         return None
 
     def replace_entity(self, e1, e2):
@@ -777,11 +757,7 @@ class Network(object):
             if o in other.los:
                 new.add_compartment(deepcopy(o))
         return new
-        # new.entities = list(set(self.entities).intersection(set(other.entities)))
-        # new.processes = list(set(self.processes).intersection(set(other.processes)))
-        # new.modulations = list(set(self.modulations).intersection(set(other.modulations)))
-        # new.los = list(set(self.los).intersection(set(other.los)))
-        # new.compartments = list(set(self.compartments).intersection(set(other.compartments)))
+
 
     def difference(self, other):
         """Returns the difference of the map with another map
@@ -805,11 +781,6 @@ class Network(object):
         for o in self.los:
             if o not in other.los:
                 new.add_lo(deepcopy(o))
-        # new.entities = list(set(self.entities).difference(set(other.entities)))
-        # new.processes = list(set(self.processes).difference(set(other.processes)))
-        # new.modulations = list(set(self.modulations).difference(set(other.modulations)))
-        # new.los = list(set(self.los).difference(set(other.los)))
-        # new.compartments = list(set(self.compartments).difference(set(other.compartments)))
         return new
 
     def simplify_gene_expressions(self):
@@ -838,21 +809,12 @@ class Network(object):
 
     def __eq__(self, other):
         return isinstance(other, Network) and \
-                set(self.entities) == set(other.entities) and \
-                set(self.processes) == set(other.processes) and \
-                set(self.compartments) == set(other.compartments) and \
-                set(self.los) == set(other.los) and \
-                set(self.modulations) == set(other.modulations)
+                sorted(self.entities) == sorted(other.entities) and \
+                sorted(self.processes) == sorted(other.processes) and \
+                sorted(self.compartments) == sorted(other.compartments) and \
+                sorted(self.los) == sorted(other.los) and \
+                sorted(self.modulations) == sorted(other.modulations)
 
-    def __hash__(self):
-        return hash(
-            (self.__class__,
-            frozenset(self.entities),
-            frozenset(self.processes),
-            frozenset(self.compartments),
-            frozenset(self.los),
-            frozenset(self.modulations))
-        )
 
     def __str__(self):
         # we sort all elements to make the method deterministic
