@@ -7,6 +7,7 @@ from csbgnpy.pd.ui import *
 from csbgnpy.pd.compartment import *
 from csbgnpy.pd.entity import *
 from csbgnpy.utils import deescape_string
+import csbgnpy.pd.network
 
 def read(*filenames):
     """Builds a map from SBGNtxt files
@@ -14,8 +15,7 @@ def read(*filenames):
     :param filenames: names of files to be read
     :return: a map that is the union of the maps described in the input files
      """
-    from csbgnpy.pd.network import Network
-    net = Network()
+    net = csbgnpy.pd.network.Network()
     parser = Parser()
     for filename in filenames:
         with open(filename) as f:
@@ -66,6 +66,7 @@ def network_to_strings(net):
 class Parser(object):
     """The class to parse SBGNtxt elements"""
     def __init__(self, debug = False):
+        # self.escaped_string = Combine(OneOrMore(oneOf(" ".join(["\{}".format(c) for c in RESERVED_CHARS])) | Word(pyparsing_unicode.printables + " ", excludeChars = RESERVED_CHARS, exact = 1)))
         self.escaped_string = Combine(OneOrMore(oneOf(" ".join(["\{}".format(c) for c in RESERVED_CHARS])) | Word(pyparsing_unicode.Latin1.printables + pyparsing_unicode.Greek.printables + " ", excludeChars = RESERVED_CHARS, exact = 1)))
         self.sep = "|"
         self.left = "["
@@ -162,6 +163,26 @@ class Parser(object):
                 Literal(")")
         self.modulation.setParseAction(self._toks_to_modulation)
 
+        self.compartments = Suppress(self.left) + Optional(delimitedList(self.compartment, delim = self.sep)) + Suppress(self.right)
+
+        self.entities = Suppress(self.left) + Optional(delimitedList(self.entity, delim = self.sep)) + Suppress(self.right)
+
+        self.processes = Suppress(self.left) + Optional(delimitedList(self.process, delim = self.sep)) + Suppress(self.right)
+
+        self.los = Suppress(self.left) + Optional(delimitedList(self.lo, delim = self.sep)) + Suppress(self.right)
+
+        self.modulations = Suppress(self.left) + Optional(delimitedList(self.modulation, delim = self.sep)) + Suppress(self.right)
+
+        self.network = Literal("Network") + \
+                Literal("(") + \
+                self.compartments("compartments") + \
+                self.entities("entities") + \
+                self.processes("processes") + \
+                self.los("los") + \
+                self.modulations("modulations") + \
+                Literal(")")
+        self.network.setParseAction(self._toks_to_network)
+
         self.entry = (self.entity ^ self.process ^ self.lo ^ self.compartment ^ self.modulation) + Optional(Literal("#") + OneOrMore(Word(pyparsing_unicode.Latin1.alphanums + pyparsing_unicode.Greek.alphanums)))
 
     def _toks_to_sv(self, toks):
@@ -203,11 +224,13 @@ class Parser(object):
             for sv in toks.svs:
                 entity.add_sv(sv)
         if toks.uis:
-            entity.uis = toks.uis
+            for ui in toks.uis:
+                entity.add_ui(ui)
         if toks.compartment:
             entity.compartment = toks.compartment
         if toks.components:
-            entity.components = toks.components
+            for component in toks.components:
+                entity.add_component(component)
         return entity
 
     def _toks_to_subentity_class(self, toks):
@@ -224,9 +247,11 @@ class Parser(object):
             for sv in toks.svs:
                 subentity.add_sv(sv)
         if toks.uis:
-            subentity.uis = toks.uis
+            for ui in toks.uis:
+                subentity.add_ui(ui)
         if toks.components:
-            subentity.components = toks.components
+            for component in toks.components:
+                subentity.add_component(component)
         return subentity
 
     def _toks_to_process_class(self, toks):
@@ -274,3 +299,17 @@ class Parser(object):
         for child in toks.children:
             op.add_child(child)
         return op
+
+    def _toks_to_network(self, toks):
+        net = csbgnpy.pd.network.Network()
+        for comp in toks.compartments:
+            net.add_compartment(comp)
+        for entity in toks.entities:
+            net.add_entity(entity)
+        for process in toks.processes:
+            net.add_process(process)
+        for op in toks.los:
+            net.add(op)
+        for modulation in toks.modulations:
+            net.add_modulation(modulation)
+        return net

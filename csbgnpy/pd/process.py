@@ -14,9 +14,17 @@ class Process(object):
     def __str__(self):
         s = self.__class__.__name__ + "("
         if hasattr(self, "reactants"):
-            s += "[" + "|".join(["{}:{}".format(stoech, entity) for (stoech, entity) in sorted([(self.reactants.count(i), i) for i in set(self.reactants)], key = lambda tup: str(tup[1]))]) + "]"
+            reacs = []
+            for reac in self.reactants:
+                if reac not in reacs:
+                    reacs.append(reac)
+            s += "[" + "|".join(["{}:{}".format(stoech, entity) for (stoech, entity) in sorted([(self.reactants.count(i), i) for i in reacs], key = lambda tup: str(tup[1]))]) + "]"
         if hasattr(self, "products"):
-            s += "[" + "|".join(["{}:{}".format(stoech, entity) for (stoech, entity) in sorted([(self.products.count(i), i) for i in set(self.products)], key = lambda tup: str(tup[1]))]) + "]"
+            prods = []
+            for prod in self.products:
+                if prod not in prods:
+                    prods.append(prod)
+            s += "[" + "|".join(["{}:{}".format(stoech, entity) for (stoech, entity) in sorted([(self.products.count(i), i) for i in prods], key = lambda tup: str(tup[1]))]) + "]"
         if hasattr(self, "label"):
             s += escape_string(self.label)
         s += ")"

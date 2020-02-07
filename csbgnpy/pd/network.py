@@ -152,9 +152,12 @@ class Network(object):
         if isinstance(process, str):
             parser = Parser()
             process =  parser.process.parseString(process)[0]
+        to_remove = []
         for modulation in self.modulations:
             if modulation.target == process:
-                self.remove_modulation(modulation)
+                to_remove.append(modulation)
+        for modulation in to_remove:
+            self.remove_modulation(modulation)
         self.processes.remove(process)
 
     def remove_entity(self, entity):
@@ -818,18 +821,13 @@ class Network(object):
 
     def __str__(self):
         # we sort all elements to make the method deterministic
-        l = []
-        for compartment in sorted(self.compartments):
-            l.append(str(compartment))
-        for entity in sorted(self.entities):
-            l.append(str(entity))
-        for process in sorted(self.processes):
-            l.append(str(process))
-        for op in sorted(self.los):
-            l.append(str(op))
-        for modulation in sorted(self.modulations):
-            l.append(str(modulation))
-        return "\n".join(l)
+        s = "Network([{}][{}][{}][{}][{}])".format(
+                "|".join(sorted([str(comp) for comp in self.compartments])),
+                "|".join(sorted([str(entity) for entity in self.entities])),
+                "|".join(sorted([str(proc) for proc in self.processes])),
+                "|".join(sorted([str(op) for op in self.los])),
+                "|".join(sorted([str(mod) for mod in self.modulations])))
+        return s
 
     def _renew_id_of_entity(self, entity, i):
             entity.id = "epn_{0}".format(i)

@@ -28,11 +28,6 @@ def read(*filenames):
     :return: a map that is the union of the maps described in the input files
     """
     net = Network()
-    compartments = set([])
-    entities = set([])
-    los = []
-    processes = []
-    modulations = set([])
     for filename in filenames:
         dids = {}
         sbgn = libsbgn.parse(filename, silence=True)
@@ -40,34 +35,34 @@ def read(*filenames):
         for glyph in sbgnmap.get_glyph(): # making compartments
             if glyph.get_class().name == "COMPARTMENT":
                 comp = _make_compartment_from_glyph(glyph)
-                if comp not in compartments:
-                    compartments.add(comp)
+                if comp not in net.compartments:
+                    net.add_compartment(comp)
                     dids[comp.id] = comp
                 else:
-                    dids[comp.id] = _obj_from_coll(comp, compartments)
+                    dids[comp.id] = _obj_from_coll(comp, net.compartments)
         for glyph in sbgnmap.get_glyph():
             if glyph.get_class().name in [attribute.name for attribute in list(EntityEnum)]:
                 entity = _make_entity_from_glyph(glyph, dids)
-                if entity not in entities:
-                    entities.add(entity)
+                if entity not in net.entities:
+                    net.add_entity(entity)
                     dids[entity.id] = entity
                 else:
-                    dids[entity.id] = _obj_from_coll(entity, entities)
+                    dids[entity.id] = _obj_from_coll(entity, net.entities)
                 for port in glyph.get_port():
                     dids[port.id] = entity
             elif glyph.get_class().name in [attribute.name for attribute in list(LogicalOperatorEnum)]:
                 op  = _make_lo_node_from_glyph(glyph)
-                los.append(op)
+                net.add_lo(op)
                 dids[op.id] = op
                 for port in glyph.get_port():
                     dids[port.id] = op
             elif glyph.get_class().name in [attribute.name for attribute in list(ProcessEnum)]:
                 proc = _make_process_node_from_glyph(glyph)
-                processes.append(proc)
+                net.processes.append(proc)
                 dids[proc.id] = proc
                 for port in glyph.get_port():
                     dids[port.id] = proc
-        for arc in sbgnmap.get_arc(): # making modulations
+        for arc in sbgnmap.get_arc():
             if arc.get_class().name == "CONSUMPTION":
                 _make_reactant_from_arc(arc, dids)
             elif arc.get_class().name == "PRODUCTION":
@@ -76,22 +71,15 @@ def read(*filenames):
                 _make_lo_child_from_arc(arc, dids)
             elif arc.get_class().name in [attribute.name for attribute in list(ModulationEnum)]:
                 mod = _make_modulation_from_arc(arc, dids)
-                modulations.add(mod)
-    processes = set(processes)
-    los = set(los)
-    for op in los:
+                net.add_modulation(mod)
+    for op in net.los:
         for i, child in enumerate(op.children):
             if isinstance(child, LogicalOperator):
-                op.children[i] = _obj_from_coll(child, los)
-    for mod in modulations:
+                op.children[i] = _obj_from_coll(child, net.los)
+    for mod in net.modulations:
         if isinstance(mod.source, LogicalOperator):
-            mod.source = _obj_from_coll(mod.source, los)
-        mod.target = _obj_from_coll(mod.target, processes)
-    net.entities = list(entities)
-    net.compartments = list(compartments)
-    net.processes = list(processes)
-    net.los = list(los)
-    net.modulations = list(modulations)
+            mod.source = _obj_from_coll(mod.source, net.los)
+        mod.target = _obj_from_coll(mod.target, net.processes)
     return net
 
 def _make_ui_from_glyph(glyph):
@@ -111,6 +99,8 @@ def _make_sv_from_glyph(glyph, i):
     sv.id = glyph.get_id()
     if glyph.get_state() is not None:
         sv.val = glyph.get_state().get_value()
+        if sv.val == "":
+            sv.val = None
         if glyph.get_state().get_variable() is None:
             sv.var = UndefinedVar(i)
         else:
@@ -217,7 +207,6 @@ def _make_lo_child_from_arc(arc, dids):
     target_id = arc.get_target()
     dids[target_id].add_child(dids[source_id])
 
-"""Still have to take into account stoech !"""
 def _make_process_node_from_glyph(glyph):
     proc = ProcessEnum[glyph.get_class().name].value()
     proc.id = glyph.get_id()
@@ -261,15 +250,15 @@ def write(net, filename, renew_ids = False):
     for comp in net.compartments:
         g = _make_glyph_from_compartment(comp)
         sbgnmap.add_glyph(g)
-        dids[comp] = g.get_id()
+        dids[str(comp)] = g.get_id()
     for entity in net.entities:
         g = _make_glyph_from_entity(entity, dids)
         sbgnmap.add_glyph(g)
-        dids[entity] = g.get_id()
+        dids[str(entity)] = g.get_id()
     for op in net.los:
         g = _make_glyph_from_lo(op)
         sbgnmap.add_glyph(g)
-        dids[op] = g.get_id()
+        dids[str(op)] = g.get_id()
     for op in net.los:
         arcs = _make_arcs_from_lo(op, dids)
         for arc in arcs:
@@ -277,7 +266,7 @@ def write(net, filename, renew_ids = False):
     for process in net.processes:
         p = _make_glyph_from_process(process)
         sbgnmap.add_glyph(p)
-        dids[process] = p.get_id()
+        dids[str(process)] = p.get_id()
         arcs = _make_arcs_from_process(process, dids)
         for arc in arcs:
             sbgnmap.add_arc(arc)
@@ -318,7 +307,7 @@ def _make_glyph_from_entity(entity, dids):
         g.set_label(label)
     if hasattr(entity, "compartment"):
         if entity.compartment is not None:
-            g.set_compartmentRef(dids[entity.compartment])
+            g.set_compartmentRef(dids[str(entity.compartment)])
     if hasattr(entity, "components"):
         for subentity in entity.components:
             gc = _make_glyph_from_subentity(subentity, dids)
@@ -446,10 +435,10 @@ def _make_arcs_from_process(process, dids):
             arc = libsbgn.arc()
             start = libsbgn.startType(0, 0)
             end = libsbgn.endType(0, 0)
-            arc.set_source(dids[reactant])
+            arc.set_source(dids[str(reactant)])
             # arc.set_target("{0}.1".format(process.getId()))
-            arc.set_target(dids[process])
-            arc.set_id("cons_{0}_{1}".format(dids[reactant], dids[process]))
+            arc.set_target(dids[str(process)])
+            arc.set_id("cons_{0}_{1}".format(dids[str(reactant)], dids[str(process)]))
             arc.set_start(start)
             arc.set_end(end)
             arc.set_class(libsbgn.ArcClass.CONSUMPTION)
@@ -460,9 +449,9 @@ def _make_arcs_from_process(process, dids):
             start = libsbgn.startType(0, 0)
             end = libsbgn.endType(0, 0)
             # arc.set_source("{0}.2".format(process.getId()))
-            arc.set_source(dids[process])
-            arc.set_target(dids[product])
-            arc.set_id("prod_{0}_{1}".format(dids[process], dids[product]))
+            arc.set_source(dids[str(process)])
+            arc.set_target(dids[str(product)])
+            arc.set_id("prod_{0}_{1}".format(dids[str(process)], dids[str(product)]))
             arc.set_start(start)
             arc.set_end(end)
             arc.set_class(libsbgn.ArcClass.PRODUCTION)
@@ -473,8 +462,8 @@ def _make_arc_from_modulation(modulation, dids):
     arc = libsbgn.arc()
     start = libsbgn.startType(0, 0)
     end = libsbgn.endType(0, 0)
-    arc.set_source(dids[modulation.source])
-    arc.set_target(dids[modulation.target])
+    arc.set_source(dids[str(modulation.source)])
+    arc.set_target(dids[str(modulation.target)])
     arc.set_id(modulation.id)
     arc.set_start(start)
     arc.set_end(end)
@@ -482,16 +471,16 @@ def _make_arc_from_modulation(modulation, dids):
     return arc
 
 def _make_arcs_from_lo(op, dids):
-    arcs = set()
+    arcs = []
     for child in op.children:
         arc = libsbgn.arc()
         start = libsbgn.startType(0, 0)
         end = libsbgn.endType(0, 0)
-        arc.set_source(dids[child])
-        arc.set_target(dids[op])
-        arc.set_id("log_{0}_{1}".format(dids[child], dids[op]))
+        arc.set_source(dids[str(child)])
+        arc.set_target(dids[str(op)])
+        arc.set_id("log_{0}_{1}".format(dids[str(child)], dids[str(op)]))
         arc.set_start(start)
         arc.set_end(end)
         arc.set_class(libsbgn.ArcClass["LOGIC_ARC"])
-        arcs.add(arc)
+        arcs.append(arc)
     return arcs

@@ -12,7 +12,6 @@ def read(*filenames):
     :param filenames: names of files to be read
     :return: a map that is the union of the maps described in the input files
     """
-    print('aaa')
     CONVERTER = os.path.join(csbgnpy.config.CD2SBGNML_PATH, "cd2sbgnml.sh")
     sbgnfiles = []
     for filename in filenames:

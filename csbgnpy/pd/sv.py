@@ -6,7 +6,7 @@ class UndefinedVar(object):
         self.num = num
 
     def __eq__(self, other):
-        return self.__class__ == other.__class__ and self.num == other.num
+        return isinstance(other, UndefinedVar) and self.num == other.num
 
 
 class StateVariable(object):
