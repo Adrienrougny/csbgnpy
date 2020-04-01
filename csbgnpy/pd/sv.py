@@ -16,6 +16,14 @@ class StateVariable(object):
         self.val = val
         self.id = id
 
+    @property
+    def value(self):
+        return self.value
+
+    @property
+    def variable(self):
+        return self.var
+
     def __eq__(self, other):
         return isinstance(other, StateVariable) and \
                 self.var == other.var and \
