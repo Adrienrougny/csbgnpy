@@ -18,7 +18,7 @@ class StateVariable(object):
 
     @property
     def value(self):
-        return self.value
+        return self.val
 
     @property
     def variable(self):
