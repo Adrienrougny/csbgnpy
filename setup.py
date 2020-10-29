@@ -4,10 +4,9 @@ setup(name='csbgnpy',
       version='0.1',
       description='Conceptual SBGN',
       author='Adrien Rougny',
-      author_email='rougny.adrien@aist.go.jp',
+      author_email='adrienrougny@gmail.com',
       packages=['csbgnpy'],
       install_requires = [
         "libsbgnpy",
       ],
-      scripts = ["scripts/merge_sbgnml", "scripts/cd2sbgnml"]
      )
