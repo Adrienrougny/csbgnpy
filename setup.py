@@ -5,7 +5,7 @@ setup(name='csbgnpy',
       description='Conceptual SBGN',
       author='Adrien Rougny',
       author_email='adrienrougny@gmail.com',
-      packages=['csbgnpy'],
+      packages = ["csbgnpy", "csbgnpy.pd", "csbgnpy.pd.io"],
       install_requires = [
         "libsbgnpy",
       ],
